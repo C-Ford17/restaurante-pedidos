@@ -51,7 +51,7 @@ app.get('/api/ip', (req, res) => {
 });
 // ============= FUNCIONES AUXILIARES =============
 
-// Helper: Ejecutar query y devolver promesa
+// Helpers para consultas seguras con PostgreSQL (!!! Cambia ? por $n en todos los queries !!!)
 const runAsync = async (query, params = []) => {
   await pool.query(query, params);
 };
@@ -189,28 +189,28 @@ initializeTablesPostgres();
 
 // POST /api/auth/login
 app.post('/api/auth/login', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-
-        if (!username || !password) {
-            return res.status(400).json({ error: 'Usuario y contraseña requeridos' });
-        }
-
-        const user = await getAsync('SELECT * FROM usuarios WHERE username = ? AND password = ?', [username, password]);
-
-        if (user) {
-            res.json({
-                id: user.id,
-                nombre: user.nombre,
-                rol: user.rol,
-                username: user.username
-            });
-        } else {
-            res.status(401).json({ error: 'Credenciales inválidas' });
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Usuario y contraseña requeridos' });
     }
+    const user = await getAsync(
+      'SELECT * FROM usuarios WHERE username = $1 AND password = $2',
+      [username, password]
+    );
+    if (user) {
+      res.json({
+        id: user.id,
+        nombre: user.nombre,
+        rol: user.rol,
+        username: user.username
+      });
+    } else {
+      res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // ============= RUTAS: GESTIÓN DE USUARIOS (ADMIN) =============
@@ -227,27 +227,25 @@ app.get('/api/users', async (req, res) => {
 
 // POST /api/users - Crear usuario
 app.post('/api/users', async (req, res) => {
-    try {
-        const { username, password, nombre, rol } = req.body;
-        if (!username || !password || !rol) {
-            return res.status(400).json({ error: 'Faltan datos requeridos' });
-        }
-
-        // Verificar si ya existe
-        const existing = await getAsync('SELECT id FROM usuarios WHERE username = ?', [username]);
-        if (existing) {
-            return res.status(400).json({ error: 'El nombre de usuario ya existe' });
-        }
-
-        const id = uuidv4();
-        await runAsync(
-            'INSERT INTO usuarios (id, username, password, nombre, rol) VALUES (?, ?, ?, ?, ?)',
-            [id, username, password, nombre, rol]
-        );
-        res.json({ id, username, nombre, rol, message: 'Usuario creado' });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+  try {
+    const { username, password, nombre, rol } = req.body;
+    if (!username || !password || !rol) {
+      return res.status(400).json({ error: 'Faltan datos requeridos' });
     }
+    // Verificar si ya existe
+    const existing = await getAsync('SELECT id FROM usuarios WHERE username = $1', [username]);
+    if (existing) {
+      return res.status(400).json({ error: 'El nombre de usuario ya existe' });
+    }
+    const id = uuidv4();
+    await runAsync(
+      'INSERT INTO usuarios (id, username, password, nombre, rol) VALUES ($1, $2, $3, $4, $5)',
+      [id, username, password, nombre, rol]
+    );
+    res.json({ id, username, nombre, rol, message: 'Usuario creado' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // DELETE /api/users/:id - Eliminar usuario
@@ -283,9 +281,10 @@ app.post('/api/menu', async (req, res) => {
 
         const id = uuidv4();
         const query = `
-      INSERT INTO menu_items (id, nombre, descripcion, categoria, precio, tiempo_preparacion_min)
-      VALUES (?, ?, ?, ?, ?, ?)
-                `;
+  INSERT INTO menu_items (id, nombre, descripcion, categoria, precio, tiempo_preparacion_min)
+  VALUES ($1, $2, $3, $4, $5, $6)
+`;
+
 
         await runAsync(query, [id, nombre, descripcion || null, categoria, precio, tiempo_preparacion_min || 15]);
 
