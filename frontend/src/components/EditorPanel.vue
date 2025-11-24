@@ -537,7 +537,13 @@ input, textarea {
   cursor: pointer;
   font-size: 12px;
 }
-
+.img-preview img {
+  max-width: 100%;   /* Que la imagen no sobrepase el ancho del contenedor */
+  max-height: 200px; /* O el tamaño máximo que consideres adecuado */
+  object-fit: contain; /* Para que la imagen mantenga proporción y no se distorsione */
+  border-radius: 8px; /* Opcional, para estética */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Opcional */
+}
 /* ESTILOS VISTA PREVIA / IMPRESIÓN */
 .preview-view {
   background: white;
