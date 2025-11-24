@@ -172,19 +172,7 @@ const activeTab = ref('menu');
 const loading = ref(false);
 const urlMenu = ref("https://restaurante-pedidos.vercel.app/menu");
 
-// Obtener IP local del servidor para el QR
-const obtenerIP = async () => {
-  try {
-    const res = await api.getIp(); // Necesito agregar esto a api.js
-    if (res.data && res.data.ip) {
-      // El usuario prefiere explícitamente el puerto 3000 (backend/producción)
-      // para que funcione en los teléfonos.
-      urlMenu.value = `http://${res.data.ip}:3000/menu`;
-    }
-  } catch (err) {
-    console.error('Error obteniendo IP:', err);
-  }
-};
+
 
 // Estado Menú
 const menuItems = ref([]);
