@@ -63,12 +63,14 @@
                   class="item-line"
                   :class="{ 'item-done': item.estado === 'listo' }"
                 >
-                  <input
-                    type="checkbox"
-                    :checked="item.estado === 'listo'"
-                    @change="marcarItemListo(item.id, item.estado)"
-                    class="item-checkbox"
-                  />
+                  <label class="item-checkbox-label">
+  <input
+    type="checkbox"
+    :checked="item.estado === 'listo'"
+    @change="marcarItemListo(item.id, item.estado)"
+    class="item-checkbox"
+  />
+</label>
                   <span class="qty">{{ item.cantidad }}x</span>
                   <span class="name">{{ item.nombre }}</span>
                 </div>
@@ -309,17 +311,24 @@ onUnmounted(() => {
 .item-line {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
+  gap: 16px;
+  padding: 12px;
   margin: 4px 0;
 }
 
 .item-checkbox {
-  width: 20px;
-  height: 20px;
+  width: 32px;      /* Mínimo recomendando para touch */
+  height: 32px;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
-
+.item-checkbox-label {
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  /* Opcional: background para depurar la zona táctil */
+}
 .item-done {
   opacity: 0.5;
   text-decoration: line-through;
