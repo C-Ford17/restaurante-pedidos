@@ -1,7 +1,28 @@
 import axios from 'axios';
 
-// Usar variable de entorno VITE_API_URL o localhost para desarrollo local
-const API_URL = import.meta.env.VITE_API_URL;
+// Determinar URL de la API dinámicamente
+const getApiUrl = () => {
+  const hostname = window.location.hostname;
+
+  // Si estamos en localhost o una IP local (192.168.x.x, 10.x.x.x, 172.16.x.x)
+  const isLocal = hostname === 'localhost' ||
+    hostname.startsWith('192.168.') ||
+    hostname.startsWith('10.') ||
+    (hostname.startsWith('172.') && parseInt(hostname.split('.')[1]) >= 16 && parseInt(hostname.split('.')[1]) <= 31);
+
+  if (isLocal) {
+    // Modo Local: Conectar al backend en el mismo host, puerto 3000
+    console.log('🔌 Modo Local detectado: Conectando a backend local');
+    return `http://${hostname}:3000/api`;
+  } else {
+    // Modo Online: Usar URL de producción (Render)
+    console.log('☁️ Modo Online detectado: Conectando a backend remoto');
+    return import.meta.env.VITE_API_URL || 'https://restaurante-pedidos-backend.onrender.com/api';
+  }
+};
+
+const API_URL = getApiUrl();
+
 const api = axios.create({
   baseURL: API_URL,
   headers: {

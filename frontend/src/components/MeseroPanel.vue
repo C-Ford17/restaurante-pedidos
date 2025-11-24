@@ -644,6 +644,7 @@ onMounted(() => {
   flex-direction: column;
   gap: 12px;
   max-width: 350px;
+  pointer-events: none;
 }
 
 .notificacion {
@@ -657,6 +658,7 @@ onMounted(() => {
   border-left: 4px solid #999;
   animation: slideIn 0.3s ease-out;
   font-weight: 600;
+  pointer-events: auto;
 }
 
 .btn-cerrar-notif {

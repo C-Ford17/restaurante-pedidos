@@ -6,6 +6,23 @@ export function useNotificaciones(rol) {
     const ultimaVerificacion = ref(Date.now());
     let intervalo = null;
 
+    // Cargar notificaciones cerradas del localStorage
+    const getNotificacionesCerradas = () => {
+        const cerradas = localStorage.getItem(`notificaciones_cerradas_${rol}`);
+        return cerradas ? JSON.parse(cerradas) : [];
+    };
+
+    // Guardar ID de notificación cerrada
+    const marcarComoCerrada = (id) => {
+        const cerradas = getNotificacionesCerradas();
+        if (!cerradas.includes(id)) {
+            cerradas.push(id);
+            // Limitar historial para no llenar localStorage indefinidamente (opcional, ej: ultimos 100)
+            if (cerradas.length > 200) cerradas.shift();
+            localStorage.setItem(`notificaciones_cerradas_${rol}`, JSON.stringify(cerradas));
+        }
+    };
+
     // Reproducir sonido
     const reproducirSonido = () => {
         try {
@@ -31,13 +48,17 @@ export function useNotificaciones(rol) {
     };
 
     // Mostrar notificación
-    const mostrarNotificacion = (titulo, tipo = 'info') => {
-        // Verificar si ya existe una notificación similar
-        const existe = notificaciones.value.some(n => n.titulo === titulo);
+    const mostrarNotificacion = (id, titulo, tipo = 'info') => {
+        // 1. Verificar si ya fue cerrada anteriormente (persistencia)
+        const cerradas = getNotificacionesCerradas();
+        if (cerradas.includes(id)) return;
+
+        // 2. Verificar si ya está visible actualmente
+        const existe = notificaciones.value.some(n => n.id === id);
         if (existe) return;
 
         const notif = {
-            id: Date.now(),
+            id,
             titulo,
             tipo,
             timestamp: new Date()
@@ -46,7 +67,7 @@ export function useNotificaciones(rol) {
         notificaciones.value.push(notif);
         console.log(`🔔 ${tipo.toUpperCase()}: ${titulo}`);
 
-        // Reproducir sonido
+        // Reproducir sonido solo cuando aparece por primera vez
         reproducirSonido();
 
         // Vibrar (si es móvil)
@@ -63,15 +84,15 @@ export function useNotificaciones(rol) {
             });
         }
 
-        // Desaparecer en 5 segundos
-        setTimeout(() => {
-            notificaciones.value = notificaciones.value.filter(n => n.id !== notif.id);
-        }, 5000);
+        // YA NO desaparece automáticamente
     };
 
     // Cerrar notificación manualmente
     const cerrarNotificacion = (notifId) => {
+        // Remover de la lista visible
         notificaciones.value = notificaciones.value.filter(n => n.id !== notifId);
+        // Marcar como cerrada permanentemente
+        marcarComoCerrada(notifId);
     };
 
     // Verificar nuevas notificaciones cada 3 segundos
@@ -85,6 +106,7 @@ export function useNotificaciones(rol) {
                 if (pedidosNuevos.length > 0) {
                     pedidosNuevos.forEach(pedido => {
                         mostrarNotificacion(
+                            `pedido-${pedido.id}-nuevo`, // ID determinista
                             `🆕 Mesa ${pedido.mesa_numero}: Nuevo pedido (${pedido.items_count} items)`,
                             'nuevo'
                         );
@@ -99,6 +121,7 @@ export function useNotificaciones(rol) {
                 if (pedidosListos.length > 0) {
                     pedidosListos.forEach(pedido => {
                         mostrarNotificacion(
+                            `pedido-${pedido.id}-listo`, // ID determinista
                             `✅ Mesa ${pedido.mesa_numero}: ¡Pedido LISTO! 🎉`,
                             'listo'
                         );
@@ -113,6 +136,7 @@ export function useNotificaciones(rol) {
                 if (pedidosListosPagar.length > 0) {
                     pedidosListosPagar.forEach(pedido => {
                         mostrarNotificacion(
+                            `pedido-${pedido.id}-pago`, // ID determinista
                             `💰 Mesa ${pedido.mesa_numero}: Listo para pagar ($${pedido.total})`,
                             'pago'
                         );

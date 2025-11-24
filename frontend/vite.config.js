@@ -6,7 +6,9 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: false,
-    host: '0.0.0.0',
+    host: '0.0.0.0', // Permitir acceso desde la red
+    // Proxy ya no es estrictamente necesario si api.js maneja la URL completa,
+    // pero lo dejamos por si acaso se usa /api relativo en algún lugar.
     proxy: {
       '/api': {
         target: 'http://localhost:3000',

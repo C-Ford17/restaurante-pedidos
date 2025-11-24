@@ -419,13 +419,11 @@ onUnmounted(() => {
 }
 .notificaciones-container {
   position: fixed;
-  bottom: 20px;
   right: 20px;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  bottom: 20px;
   max-width: 350px;
+  z-index: 1000;
+  pointer-events: none;
 }
 
 .notificacion {
@@ -440,6 +438,7 @@ onUnmounted(() => {
   border-left: 4px solid #999;
   animation: slideIn 0.3s ease-out;
   font-weight: 600;
+  pointer-events: auto;
 }
 
 .btn-cerrar-notif {
