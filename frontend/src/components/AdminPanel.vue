@@ -220,7 +220,7 @@
           
           <div v-if="loadingTopPlatos" class="loading-small">Cargando top platos...</div>
           
-          <div v-else-if="topPlatos.length > 0" class="table-container">
+          <div v-else-if="topPlatos && topPlatos.length > 0" class="table-container">
             <table class="data-table">
               <thead>
                 <tr>
@@ -233,10 +233,13 @@
                 </tr>
               </thead>
               <tbody>
+                <!-- Usamos index para el ranking -->
                 <tr v-for="(plato, index) in topPlatos" :key="plato.id">
                   <td class="text-center"><strong>{{ index + 1 }}</strong></td>
                   <td><strong>{{ plato.nombre }}</strong></td>
                   <td><span class="categoria-badge">{{ plato.categoria }}</span></td>
+                  
+                  <!-- Renderizado seguro con Number() -->
                   <td class="text-center"><strong>{{ plato.total_pedidos }}</strong></td>
                   <td class="text-center">${{ Number(plato.ingresos_totales).toFixed(2) }}</td>
                   <td class="text-center">${{ Number(plato.precio).toFixed(2) }}</td>
