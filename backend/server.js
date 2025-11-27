@@ -1,3 +1,4 @@
+process.env.TZ = 'UTC';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -187,6 +188,12 @@ app.get('/api/config', async (req, res) => {
 // ============= SOCKET.IO =============
 io.on('connection', (socket) => {
     console.log('🔌 Cliente conectado:', socket.id);
+
+    // Cliente solicita la cuenta - retransmitir al mesero
+    socket.on('solicitar_cuenta', (data) => {
+        console.log('💳 Cuenta solicitada:', data);
+        io.emit('solicitar_cuenta', data);
+    });
 
     socket.on('disconnect', () => {
         console.log('❌ Cliente desconectado:', socket.id);

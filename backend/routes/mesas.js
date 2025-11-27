@@ -102,11 +102,33 @@ router.get('/:numero/pedido-actual', async (req, res) => {
             progreso_porcentaje: progresoPorcentaje
         };
 
-        res.json({ pedido, items, estadisticas });
+        // ✅ NUEVO: Calcular tiempo transcurrido
+        const tiempoTranscurrido = pedido.started_at
+            ? Math.floor((new Date() - new Date(pedido.started_at)) / 60000)
+            : 0;
+
+        console.log('🕐 DEBUG Mesa:', {
+            started_at: pedido.started_at,
+            tiempoTranscurrido: tiempoTranscurrido,
+            ahora: new Date()
+        });
+
+        // ✅ CAMBIO: Asignar explícitamente
+        const pedidoConTiempo = {
+            ...pedido,
+            tiempoTranscurrido
+        };
+
+        res.json({
+            pedido: pedidoConTiempo,
+            items,
+            estadisticas
+        });
     } catch (error) {
         console.error('Error en /mesas/:numero/pedido-actual:', error);
         res.status(500).json({ error: error.message });
     }
 });
+
 
 export default router;

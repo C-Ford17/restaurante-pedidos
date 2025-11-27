@@ -132,44 +132,69 @@ router.post('/', async (req, res) => {
 // GET /api/pedidos/activos - Obtener pedidos activos
 router.get('/activos', async (req, res) => {
     try {
+        // 1. Obtener pedidos
         const query = `
             SELECT 
                 p.id,
-            p.mesa_numero,
-            p.usuario_mesero_id,
-            p.estado,
-            p.total,
-            p.notas,
-            p.created_at,
-            p.started_at,
-            p.completed_at,
-            u.nombre as mesero,
-            COUNT(pi.id) as items_count
+                p.mesa_numero,
+                p.usuario_mesero_id,
+                p.estado,
+                p.total,
+                p.notas,
+                p.created_at,
+                p.started_at,
+                p.completed_at,
+                u.nombre as mesero,
+                COUNT(pi.id) as items_count
             FROM pedidos p
             LEFT JOIN pedido_items pi ON p.id = pi.pedido_id
             LEFT JOIN usuarios u ON p.usuario_mesero_id = u.id
             WHERE p.estado IN('nuevo', 'en_cocina', 'listo', 'servido', 'listo_pagar', 'en_caja')
             GROUP BY p.id, u.nombre
             ORDER BY p.created_at ASC
-            `;
+        `;
 
         const pedidos = await allAsync(query);
 
+        // 2. Obtener items y calcular tiempos para CADA pedido
         for (let pedido of pedidos) {
             const itemsQuery = `
-                SELECT pi.id, pi.menu_item_id, mi.nombre, pi.cantidad, pi.precio_unitario, pi.estado, pi.notas, pi.started_at
+                SELECT 
+                    pi.id, pi.menu_item_id, mi.nombre, pi.cantidad, 
+                    pi.precio_unitario, pi.estado, pi.notas, 
+                    pi.started_at, pi.completed_at
                 FROM pedido_items pi
                 JOIN menu_items mi ON pi.menu_item_id = mi.id
                 WHERE pi.pedido_id = $1
             `;
-            pedido.items = await allAsync(itemsQuery, [pedido.id]);
+            const items = await allAsync(itemsQuery, [pedido.id]);
+
+            // ✅ AQUÍ ESTÁ LA MAGIA: Calcular tiempo en el backend (UTC safe)
+            pedido.items = items.map(item => {
+                let tiempoDesdeReady = null;
+
+                if (item.estado === 'listo' && item.completed_at) {
+                    // Calcular diferencia en minutos
+                    const completedTime = new Date(item.completed_at).getTime();
+                    const now = Date.now(); // Node.js en UTC (gracias al process.env.TZ)
+                    tiempoDesdeReady = Math.floor((now - completedTime) / 60000);
+                }
+
+                return {
+                    ...item,
+                    tiempoDesdeReady // Enviamos el número calculado
+                };
+            });
         }
 
         res.json(pedidos);
     } catch (error) {
+        console.error('Error en /activos:', error);
         res.status(500).json({ error: error.message });
     }
 });
+
+
 
 // GET /api/pedidos/:id - Obtener pedido específico
 router.get('/:id', async (req, res) => {
@@ -247,13 +272,13 @@ router.put('/:id/estado', async (req, res) => {
 router.put('/items/:id/start', async (req, res) => {
     try {
         const itemId = req.params.id;
-        const now = new Date();
 
+        // ✅ CAMBIO: Usa CURRENT_TIMESTAMP de PostgreSQL
         await runAsync(`
             UPDATE pedido_items 
-            SET started_at = $1, estado = 'en_preparacion'
-            WHERE id = $2
-            `, [now, itemId]);
+            SET started_at = CURRENT_TIMESTAMP, estado = 'en_preparacion'
+            WHERE id = $1
+            `, [itemId]);
 
         const item = await getAsync(`
             SELECT pi.*, mi.nombre, p.mesa_numero, p.usuario_mesero_id
@@ -283,11 +308,10 @@ router.put('/items/:id/start', async (req, res) => {
     }
 });
 
-// PUT /api/pedido-items/:id/complete - Completar preparación de un item
+
 router.put('/items/:id/complete', async (req, res) => {
     try {
         const itemId = req.params.id;
-        const now = new Date();
 
         const item = await getAsync(`
             SELECT pi.*, mi.nombre, p.mesa_numero, p.usuario_mesero_id
@@ -303,15 +327,18 @@ router.put('/items/:id/complete', async (req, res) => {
 
         let tiempoReal = null;
         if (item.started_at) {
-            const startTime = new Date(item.started_at);
-            tiempoReal = Math.round((now - startTime) / 60000);
+            const startTime = new Date(item.started_at).getTime();
+            tiempoReal = Math.round((Date.now() - startTime) / 60000);
         }
+
+        // ✅ NUEVO: Calcular tiempo transcurrido desde que está listo
+        const tiempoDesdeReady = 0; // Empezará en 0, se incrementará en el frontend
 
         await runAsync(`
             UPDATE pedido_items 
-            SET completed_at = $1, estado = 'listo', tiempo_real = $2
-            WHERE id = $3
-            `, [now, tiempoReal, itemId]);
+            SET completed_at = CURRENT_TIMESTAMP, estado = 'listo', tiempo_real = $1
+            WHERE id = $2
+            `, [tiempoReal, itemId]);
 
         if (tiempoReal !== null && item.menu_item_id) {
             await actualizarEstadisticasTiempo(item.menu_item_id, tiempoReal);
@@ -334,13 +361,16 @@ router.put('/items/:id/complete', async (req, res) => {
             });
         }
 
+        // ✅ MODIFICADO: Enviar tiempo transcurrido desde el backend
         req.app.get('io').emit('item_ready', {
             item_id: itemId,
             pedido_id: item.pedido_id,
             mesa_numero: item.mesa_numero,
             item_nombre: item.nombre,
             mesero_id: item.usuario_mesero_id,
-            cantidad: item.cantidad
+            cantidad: item.cantidad,
+            completed_at: new Date().toISOString(), // Timestamp ISO
+            tiempoDesdeReady: 0 // Inicialmente 0 minutos
         });
 
         res.json({ message: '✓ Item completado', item });
@@ -350,17 +380,19 @@ router.put('/items/:id/complete', async (req, res) => {
     }
 });
 
+
+
 // PUT /api/pedido-items/:id/serve - Marcar item como servido
 router.put('/items/:id/serve', async (req, res) => {
     try {
         const itemId = req.params.id;
-        const now = new Date();
 
+        // ✅ CAMBIO: Usa CURRENT_TIMESTAMP
         await runAsync(`
             UPDATE pedido_items 
-            SET served_at = $1, estado = 'servido'
-            WHERE id = $2
-            `, [now, itemId]);
+            SET served_at = CURRENT_TIMESTAMP, estado = 'servido'
+            WHERE id = $1
+            `, [itemId]);
 
         const item = await getAsync(`
             SELECT pedido_id FROM pedido_items WHERE id = $1
@@ -374,9 +406,10 @@ router.put('/items/:id/serve', async (req, res) => {
         const todosServidos = allItems.every(i => i.estado === 'servido');
 
         if (todosServidos) {
+            // ✅ CAMBIO: Usa CURRENT_TIMESTAMP aquí también
             await runAsync(`
-                UPDATE pedidos SET estado = 'servido', delivered_at = $1 WHERE id = $2
-            `, [now, item.pedido_id]);
+                UPDATE pedidos SET estado = 'servido', delivered_at = CURRENT_TIMESTAMP WHERE id = $1
+            `, [item.pedido_id]);
 
             req.app.get('io').emit('pedido_actualizado', {
                 id: item.pedido_id,
@@ -395,7 +428,8 @@ router.put('/items/:id/serve', async (req, res) => {
     }
 });
 
-// GET /api/pedidos/:id/status-publico - Estado del pedido para clientes (SIN AUTH)
+
+// GET /api/pedidos/:id/status-publico
 router.get('/:id/status-publico', async (req, res) => {
     try {
         const pedido = await getAsync(`
@@ -412,13 +446,13 @@ router.get('/:id/status-publico', async (req, res) => {
         const items = await allAsync(`
             SELECT
                 pi.id,
-            pi.cantidad,
-            pi.estado,
-            pi.started_at,
-            pi.completed_at,
-            pi.tiempo_real,
-            mi.nombre,
-            mi.tiempo_estimado
+                pi.cantidad,
+                pi.estado,
+                pi.started_at,
+                pi.completed_at,
+                pi.tiempo_real,
+                mi.nombre,
+                mi.tiempo_estimado
             FROM pedido_items pi
             JOIN menu_items mi ON pi.menu_item_id = mi.id
             WHERE pi.pedido_id = $1
@@ -432,9 +466,32 @@ router.get('/:id/status-publico', async (req, res) => {
 
         const progreso = totalItems > 0 ? Math.round(((itemsServidos + itemsListos) / totalItems) * 100) : 0;
 
+        const tiempoTranscurrido = pedido.started_at
+            ? Math.floor((new Date() - new Date(pedido.started_at)) / 60000)
+            : 0;
+
+        console.log('🕐 DEBUG Backend:', {
+            started_at: pedido.started_at,
+            tiempoTranscurrido: tiempoTranscurrido,
+            ahora: new Date(),
+            diferencia_ms: new Date() - new Date(pedido.started_at)
+        });
+
+
+        // ✅ CAMBIO: Asignar explícitamente
+        const pedidoConTiempo = {
+            ...pedido,
+            tiempoTranscurrido
+        };
+
         res.json({
-            pedido,
-            items,
+            pedido: pedidoConTiempo,
+            items: items.map(item => ({
+                ...item,
+                tiempoTranscurrido: item.started_at
+                    ? Math.floor((new Date() - new Date(item.started_at)) / 60000)
+                    : 0
+            })),
             estadisticas: {
                 total_items: totalItems,
                 servidos: itemsServidos,
@@ -445,6 +502,7 @@ router.get('/:id/status-publico', async (req, res) => {
             }
         });
     } catch (error) {
+        console.error('Error:', error);
         res.status(500).json({ error: error.message });
     }
 });

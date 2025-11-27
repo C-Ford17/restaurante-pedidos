@@ -134,6 +134,7 @@ const { notificaciones, cerrarNotificacion } = useNotificaciones('cocinero');
 
 const pedidoStore = usePedidoStore();
 const loading = ref(false);
+const now = ref(Date.now()); // Reactive time reference
 let autoRefreshInterval = null;
 let timerInterval = null;
 
@@ -188,12 +189,11 @@ const completarItem = async (itemId) => {
   }
 };
 
-// Calcular tiempo transcurrido desde que se inició
+// Calcular tiempo transcurrido desde que se inició (usa now.value para reactividad)
 const getTiempoTranscurrido = (startedAt) => {
   if (!startedAt) return '0min';
-  const start = new Date(startedAt);
-  const now = new Date();
-  const diffMinutes = Math.floor((now - start) / 60000);
+  const start = new Date(startedAt).getTime();
+  const diffMinutes = Math.floor((now.value - start) / 60000);
   return `${diffMinutes}min`;
 };
 
@@ -233,11 +233,15 @@ onMounted(() => {
       pedidoStore.cargarPedidosActivos();
   });
   
-  // Actualizar timers cada minuto
+  socket.on('item_served', () => {
+      console.log('🍽️ Item servido');
+      pedidoStore.cargarPedidosActivos();
+  });
+  
+  // Actualizar 'now' cada segundo para timers en tiempo real
   timerInterval = setInterval(() => {
-    // Forzar re-render para actualizar timers
-    pedidoStore.cargarPedidosActivos();
-  }, 60000);
+    now.value = Date.now();
+  }, 1000); // Cada segundo para actualización fluida
 });
 
 onUnmounted(() => {
@@ -245,6 +249,7 @@ onUnmounted(() => {
   socket.off('pedido_actualizado');
   socket.off('item_started');
   socket.off('item_ready');
+  socket.off('item_served');
   
   if (timerInterval) {
     clearInterval(timerInterval);

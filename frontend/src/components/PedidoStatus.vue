@@ -30,8 +30,8 @@
         <div class="status-text">
           <h2>{{ getEstadoTexto(pedido.estado) }}</h2>
           <p>{{ getEstadoDescripcion(pedido.estado) }}</p>
-          <div v-if="pedido.started_at" class="timer-badge">
-            ⏱️ {{ getTiempoTranscurrido(pedido.started_at) }}
+          <div v-if="pedido.tiempoTranscurrido !== undefined" class="timer-badge">
+            ⏱️ {{ getTiempoTranscurrido(pedido.tiempoTranscurrido) }}
           </div>
         </div>
       </div>
@@ -89,6 +89,20 @@
         </div>
       </div>
 
+      <!-- Botón Pedir Cuenta -->
+      <div v-if="pedido.estado === 'servido'" class="pedir-cuenta-section">
+        <button 
+          @click="pedirCuenta" 
+          class="btn-pedir-cuenta"
+          :disabled="cuentaSolicitada"
+        >
+          {{ cuentaSolicitada ? '✅ Cuenta Solicitada' : '💳 Pedir la Cuenta' }}
+        </button>
+        <p v-if="cuentaSolicitada" class="cuenta-solicitada-msg">
+          Tu mesero ha sido notificado y se acercará pronto.
+        </p>
+      </div>
+
       <div class="footer-note">
         <p>¡Gracias por tu visita! Si necesitas ayuda, llama a un mesero.</p>
       </div>
@@ -112,24 +126,36 @@ const loading = ref(true);
 const error = ref(null);
 const esMesa = routeType === 'mesa';
 const mesaNumero = ref(esMesa ? routeId : null);
-
+const items = ref([]);
+const estadisticas = ref(null);
+const now = ref(Date.now());
+const cuentaSolicitada = ref(false);
 const cargarPedido = async () => {
   loading.value = true;
   error.value = null;
   try {
     let response;
     
+    console.log('🎲 Ruta actual:', routeType, 'ID:', routeId); // ✅ DEBUG
+    
     if (esMesa) {
-      // Cargar pedido actual de la mesa
+      console.log('📞 Llamando a getMesaPedidoActual'); // ✅ DEBUG
       response = await api.getMesaPedidoActual(routeId);
     } else {
-      // Cargar pedido específico
+      console.log('📞 Llamando a getPedidoStatusPublico'); // ✅ DEBUG
       response = await api.getPedidoStatusPublico(routeId);
     }
     
     pedido.value = response.data.pedido;
     items.value = response.data.items;
     estadisticas.value = response.data.estadisticas;
+    // ✅ DEBUG
+    console.log('📊 Respuesta:', {
+      tiempoTranscurrido: pedido.value.tiempoTranscurrido,
+      estado: pedido.value.estado,
+      started_at: pedido.value.started_at
+    });
+
   } catch (err) {
     if (esMesa && err.response?.status === 404) {
       error.value = 'No hay un pedido activo en esta mesa. ¡Escanea el código del menú para ordenar!';
@@ -141,10 +167,6 @@ const cargarPedido = async () => {
     loading.value = false;
   }
 };
-
-const items = ref([]);
-const estadisticas = ref(null);
-const now = ref(Date.now());
 
 const porcentajeProgreso = computed(() => {
   if (!estadisticas.value) return 0;
@@ -177,24 +199,23 @@ const getEstadoDescripcion = (estado) => {
   return desc[estado] || '';
 };
 
-// Calcular tiempo transcurrido desde que inició
-const getTiempoTranscurrido = (startedAt) => {
-  if (!startedAt) return '0min';
-  const start = new Date(startedAt);
-  // Usar Date.now() directamente, el componente se re-renderiza por el timer
-  const diffMinutes = Math.floor((Date.now() - start) / 60000);
-  
-  if (diffMinutes < 1) return 'Recién iniciado';
-  if (diffMinutes === 1) return '1 min';
-  return `${diffMinutes} min`;
+// ✅ Simplificado al máximo
+const getTiempoTranscurrido = (tiempoMinutos) => {
+  if (tiempoMinutos < 1) return 'Recién iniciado';
+  if (tiempoMinutos === 1) return '1 min';
+  return `${tiempoMinutos} min`;
 };
 
+
+// ✅ MODIFICAR: getItemProgress igual
 const getItemProgress = (item) => {
   if (item.estado === 'servido' || item.estado === 'listo') return 100;
   if (item.estado === 'pendiente' || !item.started_at) return 5;
   
+  const drift = window.__clockDrift || 0;
+  const nowSync = Date.now() + drift;
   const startTime = new Date(item.started_at).getTime();
-  const elapsed = now.value - startTime;
+  const elapsed = nowSync - startTime;
   const estimadoMs = (item.tiempo_estimado || 15) * 60 * 1000;
   
   let percent = (elapsed / estimadoMs) * 100;
@@ -213,6 +234,22 @@ const getStatusClass = (item) => {
   if (item.estado === 'listo') return 'bg-ready';
   if (item.estado === 'en_preparacion') return 'bg-cooking';
   return 'bg-pending';
+};
+
+const pedirCuenta = () => {
+  if (!pedido.value || cuentaSolicitada.value) return;
+  
+  cuentaSolicitada.value = true;
+  
+  // Emitir evento socket para notificar al mesero
+  socket.emit('solicitar_cuenta', {
+    pedido_id: pedido.value.id,
+    mesa_numero: pedido.value.mesa_numero,
+    mesero_id: pedido.value.usuario_mesero_id
+  });
+  
+  // Feedback visual
+  alert('\u2705 Tu mesero ha sido notificado y se acercar\u00e1 pronto para el pago.');
 };
 
 const setupRealTime = () => {
@@ -250,11 +287,10 @@ onMounted(() => {
   cargarPedido();
   setupRealTime();
   
-  // Actualizar cada minuto para refrescar timers
+  // Actualizar 'now' cada segundo para timers en tiempo real
   timerInterval = setInterval(() => {
-    // Forzar actualización del componente
-    cargarPedido();
-  }, 60000); // Cada minuto
+    now.value = Date.now();
+  }, 1000); // Cada segundo para actualización fluida
 });
 
 onUnmounted(() => {
@@ -508,5 +544,46 @@ onUnmounted(() => {
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.pedir-cuenta-section {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 24px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-pedir-cuenta {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  width: 100%;
+}
+
+.btn-pedir-cuenta:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.btn-pedir-cuenta:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.cuenta-solicitada-msg {
+  margin-top: 12px;
+  color: #059669;
+  font-size: 14px;
+  font-weight: 600;
 }
 </style>

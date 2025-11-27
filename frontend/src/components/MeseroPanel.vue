@@ -124,7 +124,9 @@
             <div v-for="itemListo in misItemsListos" :key="itemListo.item_id" class="item-listo-card">
               <div class="item-listo-header">
                 <span class="mesa-badge-listo">Mesa {{ itemListo.mesa_numero }}</span>
-                <span class="tiempo-listo">Listo hace {{ calcularTiempoDesde(itemListo.completed_at) }}</span>
+                <span class="tiempo-listo">
+                  Listo hace {{ calcularTiempoDesde(itemListo.tiempoDesdeReady) }}
+                </span>
               </div>
               <div class="item-listo-body">
                 <div class="item-info">
@@ -261,30 +263,32 @@ const misPedidos = computed(() => {
   return pedidoStore.pedidos.filter(p => String(p.usuario_mesero_id) === String(usuarioStore.usuario.id));
 });
 
-const misPedidosListos = computed(() => {
-  if (!usuarioStore.usuario?.id) return [];
-  return pedidoStore.pedidos.filter(
-    p => String(p.usuario_mesero_id) === String(usuarioStore.usuario.id) && p.estado === 'listo'
-  );
-});
-
-// Nuevo: Items individuales listos para servir
 const misItemsListos = computed(() => {
   if (!usuarioStore.usuario?.id) return [];
   
+  const _tick = now.value; 
+  
   const itemsListos = [];
   
-  // Recorrer todos los pedidos en cocina o listos
   pedidoStore.pedidos.forEach(pedido => {
     if (String(pedido.usuario_mesero_id) !== String(usuarioStore.usuario.id)) return;
     if (pedido.estado !== 'en_cocina' && pedido.estado !== 'listo') return;
+    if (!pedido.items) return;
     
-    // Agrupar items por nombre y estado 'listo'
     const itemsAgrupados = {};
     
     pedido.items.forEach(item => {
       if (item.estado === 'listo') {
         const key = `${pedido.id}-${item.menu_item_id}`;
+        
+        // Cálculo en tiempo real usando el reloj del cliente
+        let minutosDinámicos = 0;
+        if (item.completed_at) {
+            const completedTime = new Date(item.completed_at).getTime();
+            // Calculamos la diferencia con el reloj actual (_tick)
+            minutosDinámicos = Math.floor((_tick - completedTime) / 60000);
+        }
+
         if (!itemsAgrupados[key]) {
           itemsAgrupados[key] = {
             item_id: item.id,
@@ -292,10 +296,12 @@ const misItemsListos = computed(() => {
             mesa_numero: pedido.mesa_numero,
             nombre: item.nombre,
             cantidad_lista: 0,
-            completed_at: item.completed_at
+            completed_at: item.completed_at,
+            // ✅ Usamos el cálculo dinámico en lugar del estático del backend
+            tiempoDesdeReady: minutosDinámicos 
           };
         }
-        itemsAgrupados[key].cantidad_lista += item.cantidad;
+        itemsAgrupados[key].cantidad_lista += (item.cantidad || 1);
       }
     });
     
@@ -304,6 +310,9 @@ const misItemsListos = computed(() => {
   
   return itemsListos.sort((a, b) => new Date(a.completed_at) - new Date(b.completed_at));
 });
+
+
+
 
 const misPedidosServidos = computed(() => {
   if (!usuarioStore.usuario?.id) return [];
@@ -405,31 +414,34 @@ const marcarComoServido = async (pedidoId) => {
 };
 
 // Marcar item individual como servido
+// DESPUÉS (correcta)
 const marcarItemComoServido = async (itemId) => {
   try {
     await api.servirItem(itemId);
-    await cargarDatos(); // Recargar para actualizar la lista
+    // ✅ Solo recarga pedidos, no todo
+    await pedidoStore.cargarPedidosActivos();
   } catch (err) {
     console.error('Error marcando item como servido:', err);
     alert('❌ Error al marcar item como servido');
   }
 };
 
-// Calcular tiempo desde que se completó
-const calcularTiempoDesde = (timestamp) => {
-  if (!timestamp) return '0min';
-  const completedTime = new Date(timestamp);
-  // Usar Date.now() directamente
-  const diffMinutes = Math.floor((Date.now() - completedTime) / 60000);
+
+// ✅ MODIFICADO: Usar el tiempo calculado por el backend
+const calcularTiempoDesde = (minutos) => {
+  // Si es null o undefined, no mostrar nada
+  if (minutos === null || minutos === undefined) return '';
   
-  if (diffMinutes < 1) return 'Ahora';
-  if (diffMinutes === 1) return '1 minuto';
-  if (diffMinutes < 60) return `${diffMinutes} minutos`;
+  if (minutos < 1) return 'Ahora';
+  if (minutos === 1) return '1 min';
+  if (minutos < 60) return `${minutos} min`;
   
-  const hours = Math.floor(diffMinutes / 60);
-  const mins = diffMinutes % 60;
+  const hours = Math.floor(minutos / 60);
+  const mins = minutos % 60;
   return `${hours}h ${mins}min`;
 };
+
+
 
 const marcarListoPagar = async (pedidoId) => {
   try {
@@ -526,10 +538,18 @@ onMounted(() => {
       }
   });
 
-  // Actualizar 'now' y recargar pedidos cada minuto
+  socket.on('solicitar_cuenta', (pedido) => {
+      // Si es un pedido de este mesero, recargar
+      if (String(pedido.usuario_mesero_id) === String(usuarioStore.usuario?.id)) {
+          console.log('💰 Mi pedido solicitado');
+          pedidoStore.cargarPedidosActivos();
+      }
+  });
+
+  // Actualizar 'now' cada segundo para timers en tiempo real
   timerInterval = setInterval(() => {
-    pedidoStore.cargarPedidosActivos(); // Recargar para actualizar timers
-  }, 60000); // Cada minuto
+    now.value = Date.now();
+  }, 1000); // Cada segundo para actualización fluida
 });
 
 onUnmounted(() => {
@@ -537,733 +557,9 @@ onUnmounted(() => {
     socket.off('item_completed');
     socket.off('pedido_actualizado');
     socket.off('nuevo_pedido');
+    socket.off('solicitar_cuenta');
     if (timerInterval) clearInterval(timerInterval);
 });
 </script>
 
-<style scoped>
-.mesero-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  max-width: 1200px;
-}
-
-.btn-info {
-  background: #3b82f6;
-  color: white;
-  border: none;
-}
-
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.section {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.section h3 {
-  margin: 0 0 16px 0;
-  font-size: 18px;
-}
-
-.mesas-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 10px;
-}
-
-.mesa-btn {
-  padding: 16px;
-  border: 2px solid var(--color-border);
-  background: white;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s;
-}
-
-.mesa-btn:hover {
-  border-color: var(--color-primary);
-}
-
-.mesa-btn.mesa-active {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
-}
-
-.categorias-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-  overflow-x: auto;
-  flex-wrap: wrap;
-}
-
-.tab {
-  padding: 8px 16px;
-  border: 2px solid var(--color-border);
-  background: white;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 14px;
-  white-space: nowrap;
-}
-
-.tab.tab-active {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
-}
-
-.items-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
-}
-
-.item-card {
-  padding: 12px;
-  border: 2px solid var(--color-border);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s;
-  text-align: center;
-}
-
-.item-card:hover {
-  border-color: var(--color-primary);
-  background: rgba(102, 126, 234, 0.05);
-}
-
-.item-nombre {
-  font-weight: 600;
-  font-size: 14px;
-  margin-bottom: 4px;
-}
-
-.item-precio {
-  color: var(--color-success);
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-
-.item-tiempo {
-  font-size: 12px;
-  color: #666;
-}
-
-/* Inventory Status Styles */
-.item-stock {
-  font-size: 11px;
-  color: #6b7280;
-  margin-top: 4px;
-}
-
-.item-agotado {
-  margin-top: 8px;
-  padding: 4px 8px;
-  background: #fee2e2;
-  color: #991b1b;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.item-warning {
-  margin-top: 8px;
-  padding: 4px 8px;
-  background: #fef3c7;
-  color: #92400e;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.item-disabled {
-  opacity: 0.5;
-  cursor: not-allowed !important;
-  background: #f3f4f6;
-  border-color: #d1d5db;
-}
-
-.item-disabled:hover {
-  border-color: #d1d5db !important;
-  background: #f3f4f6 !important;
-}
-
-.item-low-stock {
-  border-color: #fbbf24;
-  background: rgba(251, 191, 36, 0.05);
-}
-
-.item-low-stock:hover {
-  border-color: #f59e0b;
-  background: rgba(251, 191, 36, 0.1);
-}
-
-.pedido-summary {
-  margin-bottom: 16px;
-}
-
-.summary-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.item-info {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.cantidad {
-  font-weight: 700;
-  color: var(--color-primary);
-}
-
-.item-acciones {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.precio {
-  font-weight: 600;
-  color: var(--color-success);
-}
-
-.btn-remove {
-  background: var(--color-error);
-  color: white;
-  border: none;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.pedido-total {
-  display: flex;
-  justify-content: space-between;
-  padding: 12px;
-  background: var(--color-bg);
-  border-radius: 6px;
-  margin-bottom: 16px;
-  font-weight: 600;
-}
-
-.total-amount {
-  color: var(--color-success);
-  font-size: 18px;
-}
-
-.notas-input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  font-family: inherit;
-  margin-bottom: 16px;
-}
-
-.btn-submit {
-  width: 100%;
-}
-
-.pedidos-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.pedido-item {
-  padding: 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-}
-
-.pedido-header {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.mesa-badge {
-  background: var(--color-primary);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-}
-
-.estado-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.estado-nuevo {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.estado-en_cocina {
-  background: #fed7aa;
-  color: #92400e;
-}
-
-.estado-listo {
-  background: #bbf7d0;
-  color: #065f46;
-}
-
-.pedido-detalles {
-  display: flex;
-  gap: 16px;
-  font-size: 14px;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 40px;
-  color: #999;
-}
-
-.loading {
-  text-align: center;
-  padding: 40px;
-}
-
-@media (max-width: 768px) {
-  .items-grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  }
-
-  .mesas-grid {
-    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-  }
-}
-.notificaciones-container {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 350px;
-  pointer-events: none;
-}
-
-.notificacion {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: white;
-  padding: 16px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  border-left: 4px solid #999;
-  animation: slideIn 0.3s ease-out;
-  font-weight: 600;
-  pointer-events: auto;
-}
-
-.btn-cerrar-notif {
-  background: none;
-  border: none;
-  color: inherit;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 0;
-  margin-left: 12px;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-  flex-shrink: 0;
-}
-
-.btn-cerrar-notif:hover {
-  opacity: 1;
-}
-
-.notif-nuevo {
-  border-left-color: #ef4444;
-  background: #fee2e2;
-}
-
-.notif-listo {
-  border-left-color: #10b981;
-  background: #ecfdf5;
-}
-
-.notif-pago {
-  border-left-color: #f59e0b;
-  background: #fef3c7;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(400px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@media (max-width: 768px) {
-  .notificaciones-container {
-    right: 10px;
-    left: 10px;
-    top: 70px;
-  }
-}
-
-/* Pedidos Listos para Servir */
-.pedidos-listos-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Items Listos para Servir (Individual) */
-.items-listos-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.item-listo-card {
-  padding: 16px;
-  border: 2px solid #10b981;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-  animation: pulse-border 2s ease-in-out infinite;
-  transition: all 0.2s;
-}
-
-.item-listo-card:hover {
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-}
-
-.item-listo-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.mesa-badge-listo {
-  background: #10b981;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.tiempo-listo {
-  font-size: 12px;
-  color: #059669;
-  font-weight: 600;
-}
-
-.item-listo-body {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.item-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-}
-
-.item-nombre {
-  font-weight: 700;
-  font-size: 16px;
-  color: #065f46;
-}
-
-.item-cantidad {
-  background: #10b981;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.btn-servir-item {
-  background: #10b981;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.btn-servir-item:hover {
-  background: #059669;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-}
-
-.badge-count {
-  background: #ef4444;
-  color: white;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 14px;
-  margin-left: 8px;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.8;
-    transform: scale(1.05);
-  }
-}
-
-.pedidos-listos-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.pedido-listo-item {
-  padding: 16px;
-  border: 2px solid #10b981;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-  animation: pulse-border 2s ease-in-out infinite;
-}
-
-@keyframes pulse-border {
-  0%, 100% {
-    border-color: #10b981;
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
-  }
-  50% {
-    border-color: #059669;
-    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
-  }
-}
-
-.pedido-listo-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.mesa-badge-listo {
-  background: #10b981;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.tiempo-badge {
-  background: rgba(16, 185, 129, 0.2);
-  color: #065f46;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.pedido-listo-detalles {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.pedido-listo-detalles .info {
-  display: flex;
-  gap: 16px;
-  font-size: 14px;
-  color: #065f46;
-}
-
-.pedido-listo-detalles .total {
-  font-weight: 700;
-  font-size: 16px;
-  color: #059669;
-}
-
-.btn-servir {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.3s;
-  white-space: nowrap;
-}
-
-.btn-servir:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.btn-servir:active {
-  transform: translateY(0);
-}
-
-@media (max-width: 768px) {
-  .pedido-listo-detalles {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .btn-servir {
-    width: 100%;
-  }
-}
-
-/* Pedidos Servidos - Listos para Cobrar */
-.pedidos-servidos-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.pedido-servido-item {
-  padding: 16px;
-  border: 2px solid #f59e0b;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-}
-
-.pedido-servido-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.mesa-badge-servido {
-  background: #f59e0b;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.total-badge {
-  background: rgba(245, 158, 11, 0.2);
-  color: #92400e;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.pedido-servido-detalles {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.pedido-servido-detalles .info {
-  display: flex;
-  gap: 16px;
-  font-size: 14px;
-  color: #92400e;
-}
-
-.btn-pagar {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.3s;
-  white-space: nowrap;
-}
-
-.btn-pagar:hover {
-  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-}
-
-.btn-pagar:active {
-  transform: translateY(0);
-}
-
-@media (max-width: 768px) {
-  .pedido-servido-detalles {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .btn-pagar {
-    width: 100%;
-  }
-}
-
-.qr-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-}
-
-.qr-modal {
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  text-align: center;
-  max-width: 90%;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-}
-</style>
+<style src="../assets/styles/MeseroPanel.css" scoped></style>
