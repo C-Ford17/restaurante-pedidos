@@ -214,7 +214,7 @@
             No hay estadísticas de tiempos para el período seleccionado
           </div>
         </div>
-        <!-- Top Platos Más Pedidos -->
+                <!-- Top Platos Más Pedidos -->
         <div class="section">
           <h3>🏆 Top Platos Más Pedidos</h3>
           
@@ -239,10 +239,12 @@
                   <td><strong>{{ plato.nombre }}</strong></td>
                   <td><span class="categoria-badge">{{ plato.categoria }}</span></td>
                   
-                  <!-- Renderizado seguro con Number() -->
-                  <td class="text-center"><strong>{{ plato.total_pedidos }}</strong></td>
-                  <td class="text-center">${{ Number(plato.ingresos_totales).toFixed(2) }}</td>
-                  <td class="text-center">${{ Number(plato.precio).toFixed(2) }}</td>
+                  <!-- Renderizado seguro: Si es null/undefined, usa 0 -->
+                  <td class="text-center"><strong>{{ plato.total_pedidos || 0 }}</strong></td>
+                  
+                  <!-- ✅ CORRECCIÓN AQUÍ: Agregado '|| 0' para evitar NaN -->
+                  <td class="text-center">${{ Number(plato.ingresos_totales || 0).toFixed(2) }}</td>
+                  <td class="text-center">${{ Number(plato.precio || 0).toFixed(2) }}</td>
                 </tr>
               </tbody>
             </table>
