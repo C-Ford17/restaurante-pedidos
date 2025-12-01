@@ -124,8 +124,13 @@
                 </div>
                 
                 <div class="item-card-body">
-                  <textarea v-model="item.descripcion" class="edit-input desc-input" @change="actualizarItem(item)" rows="2"></textarea>
-                  
+                  <textarea 
+                    v-model="item.descripcion" 
+                    class="edit-input desc-input" 
+                    @change="actualizarItem(item)" 
+                    rows="2"
+                    placeholder="Agrega una descripción..." 
+                  ></textarea>
                   <div class="price-time-row">
                     <div class="input-wrapper symbol">
                       <input v-model.number="item.precio" type="number" class="edit-input" @change="actualizarItem(item)" />

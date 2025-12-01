@@ -372,19 +372,39 @@ select:focus {
     justify-content: center;
 }
 
+/* En src/assets/styles/EditorPanel.css */
+
 .desc-input {
+    width: 100%;
+    background-color: #f9fafb;
+    /* Fondo gris muy claro */
+    border: 1px solid #e5e7eb;
+    /* Borde sutil */
+    border-radius: 8px;
+    padding: 8px 12px;
     font-size: 13px;
-    color: #6b7280;
-    border-color: transparent;
-    background: transparent;
-    resize: none;
+    color: #4b5563;
+    resize: vertical;
+    /* Permite estirar hacia abajo */
+    min-height: 60px;
     margin-bottom: 12px;
+    transition: all 0.2s;
+    font-family: inherit;
 }
 
 .desc-input:focus {
-    background: #fff;
-    border-color: #e5e7eb;
+    background-color: #ffffff;
+    border-color: #6366f1;
+    /* Color primario al escribir */
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
+
+.desc-input::placeholder {
+    color: #9ca3af;
+    font-style: italic;
+}
+
 
 .price-time-row {
     display: flex;
