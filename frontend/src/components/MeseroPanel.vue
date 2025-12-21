@@ -383,7 +383,7 @@ const misItemsListos = computed(() => {
   
   pedidoStore.pedidos.forEach(pedido => {
     if (String(pedido.usuario_mesero_id) !== String(usuarioStore.usuario.id)) return;
-    if (pedido.estado !== 'en_cocina' && pedido.estado !== 'listo') return;
+    if (!['nuevo', 'en_cocina', 'listo'].includes(pedido.estado)) return;
     if (!pedido.items) return;
     
     const itemsAgrupados = {};
