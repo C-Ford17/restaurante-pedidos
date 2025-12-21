@@ -88,11 +88,11 @@ const cuentaId = pathParts[2]; // ID después de /cuenta/
 const itemsAgrupados = computed(() => {
   const grupos = {};
   (items.value || []).forEach(item => {
-    const key = item.menu_item_id || item.nombre;
+    const key = item.nombre; // o item.id/menu_item_id si lo agregas
     if (!grupos[key]) {
       grupos[key] = {
         nombre: item.nombre,
-        precio: Number(item.precio_unitario || item.precio || 0),
+        precio: Number(item.precio_unitario || 0), // ✅ usa precio_unitario
         cantidad: 0,
       };
     }
@@ -103,9 +103,10 @@ const itemsAgrupados = computed(() => {
 
 const total = computed(() => {
   return itemsAgrupados.value.reduce((sum, item) => {
-    return sum + (item.precio * item.cantidad);
+    return sum + item.precio * item.cantidad;
   }, 0);
 });
+
 
 const cargarPedido = async () => {
   loading.value = true;
