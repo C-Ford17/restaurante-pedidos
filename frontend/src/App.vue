@@ -9,6 +9,9 @@
     <!-- Vista Pública del Estado del Pedido -->
     <PedidoStatus v-else-if="isPublicPedidoStatus" />
 
+    <!-- ✅ Vista Pública de la Cuenta -->
+    <CuentaView v-else-if="isPublicCuenta" />
+    
     <!-- Aplicación Principal -->
     <template v-else>
       <!-- Si no hay usuario logueado, mostrar login -->
@@ -57,12 +60,15 @@ import AdminPanel from './components/AdminPanel.vue';
 import MesasQR from './components/MesasQR.vue';
 import MenuView from './components/MenuView.vue';
 import PedidoStatus from './components/PedidoStatus.vue';
+import CuentaView from './views/CuentaView.vue';
+
 import socket from './socket';
 
 const isPublicMenu = ref(false);
 const isPublicMesasQR = ref(false);
 const isPublicPedidoStatus = ref(false);
 const isConnected = ref(false);
+const isPublicCuenta = ref(false);
 
 // Agrega botón para mostrar/ocultar en el navbar
 
@@ -94,6 +100,8 @@ onMounted(() => {
     isPublicPedidoStatus.value = true; // Reutilizamos el componente PedidoStatus
   } else if (path === '/mesas-qr') {
     isPublicMesasQR.value = true;
+  } else if (path.startsWith('/cuenta/')) {      // ✅ NUEVO
+    isPublicCuenta.value = true;
   }
 });
 
