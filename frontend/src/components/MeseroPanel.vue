@@ -192,7 +192,7 @@
                   ✏️ Editar
                 </button>
                 <button 
-                  v-if="['nuevo'].includes(pedido.estado)"
+                  v-if="['nuevo', 'en_cocina'].includes(pedido.estado)"
                   @click="cancelarPedido(pedido.id)"
                   class="btn btn-secondary btn-small"
                 >
