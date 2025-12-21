@@ -107,6 +107,17 @@
         </p>
       </div>
 
+      <!-- NUEVO: Botón Ver cuenta (cuando haya pedido) -->
+      <div v-if="pedido" class="pedir-cuenta-section" style="margin-top: 12px;">
+        <button 
+          @click="verCuenta"
+          class="btn-pedir-cuenta"
+          style="background: #4b5563; box-shadow: none;"
+        >
+          🧾 Ver cuenta
+        </button>
+      </div>
+
       <div class="footer-note">
         <p>¡Gracias por tu visita! Si necesitas ayuda, llama a un mesero.</p>
       </div>
@@ -118,6 +129,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import api from '../api';
 import socket from '../socket';
+import { verCuentaEnVentana } from '../utils/ticketViewer';
 
 // Detectar tipo de ruta y extraer ID
 const path = window.location.pathname;
@@ -210,6 +222,46 @@ const getTiempoTranscurrido = (tiempoMinutos) => {
   return `${tiempoMinutos} min`;
 };
 
+  const verCuenta = async () => {
+  try {
+    // Si la vista se abrió por mesa (/mesa/:numero),
+    // ya tienes el pedido completo en `pedido.value` y sus items en `items.value`.
+    // Si quieres asegurarte, podrías volver a pedirlo por ID:
+    // const res = await api.getPedido(pedido.value.id);
+    // const pedidoCompleto = res.data;
+
+    const pedidoActual = pedido.value;
+    const itemsPedido = items.value || [];
+
+    // Agrupar items igual que en CajaPanel
+    const itemsAgrupados = {};
+    itemsPedido.forEach(item => {
+      const key = item.menu_item_id || item.nombre;
+      if (!itemsAgrupados[key]) {
+        itemsAgrupados[key] = {
+          nombre: item.nombre,
+          precio: Number(item.precio_unitario || item.precio || 0),
+          cantidad: 0,
+        };
+      }
+      itemsAgrupados[key].cantidad += (item.cantidad || 1);
+    });
+
+    const ticketData = {
+      mesa: pedidoActual.mesa_numero,
+      total: pedidoActual.total,
+      items: Object.values(itemsAgrupados),
+      cajero: '',        // aquí no necesitas cajero
+      metodoPago: null,  // es solo vista de cuenta
+      tipo: 'cuenta',
+    };
+
+    verCuentaEnVentana(ticketData);
+  } catch (err) {
+    console.error('Error generando cuenta en vista pública:', err);
+    alert('❌ No se pudo mostrar la cuenta');
+  }
+};
 
 // ✅ MODIFICAR: getItemProgress igual
 const getItemProgress = (item) => {
