@@ -452,94 +452,78 @@ router.put('/items/:id/serve', async (req, res) => {
 
 // GET /api/pedidos/:id/status-publico
 router.get('/:id/status-publico', async (req, res) => {
-    try {
-        const pedido = await getAsync(`
-            SELECT p.*, u.nombre as mesero
-            FROM pedidos p
-            LEFT JOIN usuarios u ON p.usuario_mesero_id = u.id
-            WHERE p.id = $1
-            `, [req.params.id]);
+  try {
+    const pedido = await getAsync(`
+      SELECT p.*, u.nombre as mesero
+      FROM pedidos p
+      LEFT JOIN usuarios u ON p.usuario_mesero_id = u.id
+      WHERE p.id = $1
+    `, [req.params.id]);
 
-        if (!pedido) {
-            return res.status(404).json({ error: 'Pedido no encontrado' });
-        }
-
-        const items = await allAsync(`
-            SELECT
-                pi.id,
-                pi.cantidad,
-                pi.estado,
-                pi.started_at,
-                pi.completed_at,
-                pi.tiempo_real,
-                mi.nombre,
-                mi.tiempo_estimado
-            FROM pedido_items pi
-            JOIN menu_items mi ON pi.menu_item_id = mi.id
-            WHERE pi.pedido_id = $1
-            ORDER BY pi.id
-            `, [req.params.id]);
-
-        const totalItems = items.length;
-        const itemsServidos = items.filter(i => i.estado === 'servido').length;
-        const itemsListos = items.filter(i => i.estado === 'listo').length;
-        const itemsEnPreparacion = items.filter(i => i.estado === 'en_preparacion').length;
-
-        const progreso = totalItems > 0 ? Math.round(((itemsServidos + itemsListos) / totalItems) * 100) : 0;
-
-        // ✅ LÓGICA MEJORADA DEL TIMER
-        let tiempoTranscurrido = 0;
-        if (pedido.started_at) {
-            const inicio = new Date(pedido.started_at);
-            // Si el pedido tiene fecha de entrega (servido), usamos esa. Si no, usamos ahora.
-            // Nota: Asegúrate de que 'delivered_at' o 'completed_at' se guarde cuando marcas como servido/pagado.
-            // Si usas 'delivered_at' en tu tabla, cámbialo aquí. Si usas 'completed_at', usa ese.
-            // Asumiré que cuando está servido ya tienes una fecha final, o si el estado es 'servido'/'pagado' usamos la fecha de ese momento si la tienes, o 'ahora' si no ha terminado.
-
-            let fin = new Date(); // Por defecto ahora
-
-            // Si ya finalizó (servido, pagado, etc), intentamos usar la fecha real de fin
-            if (['servido', 'listo_pagar', 'en_caja', 'pagado'].includes(pedido.estado)) {
-                if (pedido.delivered_at) fin = new Date(pedido.delivered_at);
-                else if (pedido.completed_at) fin = new Date(pedido.completed_at);
-                // Si no hay fecha guardada, el timer seguirá corriendo hasta que se guarde una fecha en BD
-            }
-
-            tiempoTranscurrido = Math.floor((fin - inicio) / 60000);
-        }
-
-        console.log('🕐 DEBUG Backend:', {
-            started_at: pedido.started_at,
-            estado: pedido.estado,
-            tiempoTranscurrido: tiempoTranscurrido
-        });
-
-        const pedidoConTiempo = {
-            ...pedido,
-            tiempoTranscurrido
-        };
-
-        res.json({
-            pedido: pedidoConTiempo,
-            items: items.map(item => ({
-                ...item,
-                tiempoTranscurrido: item.started_at
-                    ? Math.floor((new Date() - new Date(item.started_at)) / 60000)
-                    : 0
-            })),
-            estadisticas: {
-                total_items: totalItems,
-                servidos: itemsServidos,
-                listos: itemsListos,
-                en_preparacion: itemsEnPreparacion,
-                pendientes: totalItems - itemsServidos - itemsListos - itemsEnPreparacion,
-                progreso_porcentaje: progreso
-            }
-        });
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ error: error.message });
+    if (!pedido) {
+      return res.status(404).json({ error: 'Pedido no encontrado' });
     }
+
+    const items = await allAsync(`
+      SELECT
+        pi.id,
+        pi.cantidad,
+        pi.estado,
+        pi.started_at,
+        pi.completed_at,
+        pi.tiempo_real,
+        mi.nombre,
+        mi.tiempo_estimado,
+        mi.precio AS precio_unitario       -- ✅ AÑADIDO
+      FROM pedido_items pi
+      JOIN menu_items mi ON pi.menu_item_id = mi.id
+      WHERE pi.pedido_id = $1
+      ORDER BY pi.id
+    `, [req.params.id]);
+
+    const totalItems = items.length;
+    const itemsServidos = items.filter(i => i.estado === 'servido').length;
+    const itemsListos = items.filter(i => i.estado === 'listo').length;
+    const itemsEnPreparacion = items.filter(i => i.estado === 'en_preparacion').length;
+
+    const progreso = totalItems > 0
+      ? Math.round(((itemsServidos + itemsListos) / totalItems) * 100)
+      : 0;
+
+    let tiempoTranscurrido = 0;
+    if (pedido.started_at) {
+      const inicio = new Date(pedido.started_at);
+      let fin = new Date();
+      if (['servido', 'listo_pagar', 'en_caja', 'pagado'].includes(pedido.estado)) {
+        if (pedido.delivered_at) fin = new Date(pedido.delivered_at);
+        else if (pedido.completed_at) fin = new Date(pedido.completed_at);
+      }
+      tiempoTranscurrido = Math.floor((fin - inicio) / 60000);
+    }
+
+    const pedidoConTiempo = { ...pedido, tiempoTranscurrido };
+
+    res.json({
+      pedido: pedidoConTiempo,
+      items: items.map(item => ({
+        ...item,
+        tiempoTranscurrido: item.started_at
+          ? Math.floor((new Date() - new Date(item.started_at)) / 60000)
+          : 0
+      })),
+      estadisticas: {
+        total_items: totalItems,
+        servidos: itemsServidos,
+        listos: itemsListos,
+        en_preparacion: itemsEnPreparacion,
+        pendientes: totalItems - itemsServidos - itemsListos - itemsEnPreparacion,
+        progreso_porcentaje: progreso
+      }
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 
