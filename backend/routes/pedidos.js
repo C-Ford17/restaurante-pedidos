@@ -690,19 +690,24 @@ router.delete('/:id/items/:itemId', async (req, res) => {
             return res.status(404).json({ error: 'Item no encontrado en este pedido' });
         }
 
-        // Validar estado del item
-        if (item.estado === 'listo') {
-            return res.status(400).json({
-                error: 'No se puede eliminar un item que ya está listo. El plato ya fue preparado.',
-                estado: item.estado
-            });
+        // 2) Servido: solo permitir con confirmación fuerte
+        if (item.estado === 'servido' && confirmar !== 'true') {
+          return res.status(409).json({
+            error: 'Este item ya fue servido al cliente.',
+            requiereConfirmacion: true,
+            estado: item.estado,
+            mensaje: `¿Estás seguro de eliminar "${item.nombre}"? Ya fue servido.`
+          });
         }
-
-        if (item.estado === 'servido') {
-            return res.status(400).json({
-                error: 'No se puede eliminar un item que ya fue servido.',
-                estado: item.estado
-            });
+    
+        // 3) Listo: también requiere confirmación
+        if (item.estado === 'listo' && confirmar !== 'true') {
+          return res.status(409).json({
+            error: 'Este item ya fue preparado.',
+            requiereConfirmacion: true,
+            estado: item.estado,
+            mensaje: `¿Estás seguro de eliminar "${item.nombre}"? Ya está listo en cocina.`
+          });
         }
 
         if (item.estado === 'en_preparacion' && confirmar !== 'true') {
