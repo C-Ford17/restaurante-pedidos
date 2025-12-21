@@ -234,14 +234,15 @@
             <div class="item-edicion-acciones">
               <span class="item-precio">${{ item.precio_unitario }}</span>
               <button 
-                v-if="item.estado === 'pendiente' || item.estado === 'en_preparacion'"
+                v-if="['pendiente','en_preparacion','listo','servido'].includes(item.estado)"
                 @click="eliminarItemDelPedido(item)" 
                 class="btn-eliminar-item"
-                :title="item.estado === 'en_preparacion' ? 'En preparación - se pedirá confirmación' : 'Eliminar item'"
+                :title="getHintEliminar(item)"
               >
                 🗑️
               </button>
               <span v-else class="item-no-editable">🔒</span>
+
             </div>
           </div>
         </div>
@@ -331,6 +332,20 @@ const itemsPorCategoriaEdicion = computed(() => {
   return pedidoStore.menu.filter(item => item.categoria === categoriaEdicion.value);
 });
 
+const getHintEliminar = (item) => {
+  if (item.estado === 'en_preparacion') {
+    return 'En preparación - se pedirá confirmación';
+  }
+  if (item.estado === 'listo') {
+    return 'Listo en cocina - se pedirá confirmación';
+  }
+  if (item.estado === 'servido') {
+    return 'Servido al cliente - se pedirá confirmación fuerte';
+  }
+  return 'Eliminar item';
+};
+
+  
 const abrirQRMesas = () => {
   // Opción A: Si usas Vue Router con nombre
   const routeData = router.resolve({ name: 'mesas-qr' });
@@ -663,36 +678,43 @@ const confirmarAgregarItems = async () => {
 };
 
 const eliminarItemDelPedido = async (item) => {
-  const esEnPreparacion = item.estado === 'en_preparacion';
-  
-  if (esEnPreparacion) {
-    const confirmado = confirm(
-      `⚠️ "${item.nombre}" ya está en preparación.\n\n` +
-      `Eliminarlo causará desperdicio de ingredientes.\n\n` +
-      `¿Estás seguro de eliminarlo?`
-    );
-    if (!confirmado) return;
-  }
-  
-  try {
+  const intentoEliminar = async (forzar = false) => {
     await api.eliminarItemDePedido(
-      pedidoEditando.value.id, 
-      item.id, 
-      esEnPreparacion
+      pedidoEditando.value.id,
+      item.id,
+      forzar // este lo mapearás a ?confirmar=true en la capa api
     );
-    
-    // Recargar pedido y datos
+
     await pedidoStore.cargarPedidosActivos();
     const response = await api.getPedido(pedidoEditando.value.id);
     pedidoEditando.value = response.data;
-    
+
     alert(`✅ "${item.nombre}" eliminado del pedido`);
+  };
+
+  try {
+    await intentoEliminar(false);
   } catch (err) {
-    console.error('Error eliminando item:', err);
-    const errorMsg = err.response?.data?.error || 'No se pudo eliminar el item';
-    alert('❌ ' + errorMsg);
+    const data = err.response?.data;
+
+    // Caso: backend pide confirmación (en_preparacion, listo, servido)
+    if (data?.requiereConfirmacion) {
+      const ok = confirm(data.mensaje || data.error || '¿Confirmar eliminación del item?');
+      if (!ok) return;
+
+      try {
+        await intentoEliminar(true);
+      } catch (err2) {
+        const msg2 = err2.response?.data?.error || 'No se pudo eliminar el item';
+        alert('❌ ' + msg2);
+      }
+    } else {
+      const msg = data?.error || 'No se pudo eliminar el item';
+      alert('❌ ' + msg);
+    }
   }
 };
+
 
 const calcularTiempoEspera = (createdAt) => {
   const creado = new Date(createdAt);
