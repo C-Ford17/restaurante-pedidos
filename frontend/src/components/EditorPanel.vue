@@ -215,6 +215,12 @@
             <label>Nombre Restaurante</label>
             <input v-model="config.nombre" />
           </div>
+
+          <!-- ✅ Campo Nombre Corto -->
+          <div class="form-group">
+            <label>Nombre Corto (App Móvil) <small>(Máx 12 letras)</small></label>
+            <input v-model="config.nombre_corto" type="text" placeholder="Ej: SierraNevada" maxlength="15" />
+          </div>
           <div class="form-group">
             <label>Slogan / Subtítulo</label>
             <input v-model="config.subtitulo" />
@@ -421,12 +427,13 @@ const newItem = ref({
 // Estado Configuración
 const config = ref({
   nombre: 'Restaurante Sierra Nevada',
+  nombre_corto: 'Restaurante', // ✅ NUEVO
   subtitulo: 'Menú Digital',
   imagenPortada: '',
   imagenFondoMenu: '',
   ocultarTextoPortada: false,
-  color_primario: '#667eea', // ✅ NUEVO
-  color_secundario: '#764ba2' // ✅ NUEVO
+  color_primario: '#667eea',
+  color_secundario: '#764ba2'
 });
 
 // ✅ NUEVO: Porcentaje de propina
