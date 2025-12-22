@@ -109,9 +109,6 @@ const pedidoStore = usePedidoStore();
 onMounted(() => {
   usuarioStore.cargarUsuarioGuardado();
   pedidoStore.iniciarRealTime(); // Iniciar listeners de Socket.io
-onMounted(() => {
-  usuarioStore.cargarUsuarioGuardado();
-  pedidoStore.iniciarRealTime(); // Iniciar listeners de Socket.io
   cargarConfiguracion(); // ✅ NUEVO: Cargar config completa (nombre + colores)
   
   // Monitorear conexión
