@@ -72,7 +72,7 @@
               </div>
               <div class="form-group">
                 <label>Tiempo (min)</label>
-                <input v-model.number="newItem.tiempo_preparacion_min" type="number" placeholder="15" />
+                <input v-model.number="newItem.tiempo_estimado" type="number" placeholder="15" />
               </div>
             </div>
             
@@ -172,7 +172,7 @@
                       <input v-model.number="item.precio" type="number" class="edit-input" @change="actualizarItem(item)" />
                     </div>
                     <div class="input-wrapper suffix">
-                      <input v-model.number="item.tiempo_preparacion_min" type="number" class="edit-input" @change="actualizarItem(item)" />
+                      <input v-model.number="item.tiempo_estimado" type="number" class="edit-input" @change="actualizarItem(item)" />
                     </div>
                   </div>
 
@@ -415,7 +415,7 @@ const newItem = ref({
   descripcion: '',
   precio: 0,
   categoria: '',
-  tiempo_preparacion_min: 15,
+  tiempo_estimado: 15,
   usa_inventario: false,
   stock_actual: 0,
   stock_minimo: 0,
@@ -585,7 +585,7 @@ const crearItem = async () => {
       descripcion: newItem.value.descripcion,
       categoria: newItem.value.categoria,
       precio: newItem.value.precio,
-      tiempo_preparacion_min: newItem.value.tiempo_preparacion_min,
+      tiempo_estimado: newItem.value.tiempo_estimado,
       disponible: true,
       usa_inventario: newItem.value.usa_inventario,
       stock_actual: newItem.value.usa_inventario ? newItem.value.stock_actual : null,
@@ -602,7 +602,7 @@ const crearItem = async () => {
       categoria: '', 
       precio: 0,
       descripcion: '', 
-      tiempo_preparacion_min: 15,
+      tiempo_estimado: 15,
       usa_inventario: false,
       stock_actual: 0,
       stock_minimo: 0,
