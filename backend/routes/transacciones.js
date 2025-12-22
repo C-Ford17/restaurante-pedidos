@@ -25,22 +25,51 @@ router.post('/', async (req, res) => {
 
     const totalPedido = parseFloat(pedido.total);
 
-    // 2) Insertar la transacción (un pago más, parcial o total)
+    // 🚫 No permitir pagos sobre pedidos ya cerrados
+    if (['pagado', 'cancelado'].includes(pedido.estado)) {
+      return res.status(400).json({
+        error: 'El pedido ya está cerrado. No se pueden registrar más pagos.',
+        estado: pedido.estado
+      });
+    }
+
+    // 2) Calcular cuánto se ha pagado HASTA AHORA
+    const sumaAntes = await getAsync(
+      `SELECT COALESCE(SUM(monto), 0) AS total_pagado
+       FROM transacciones
+       WHERE pedido_id = $1`,
+      [pedido_id]
+    );
+
+    const totalPagadoAntes = parseFloat(sumaAntes.total_pagado);
+    const montoNumber = Number(monto);
+
+    // 🚫 No permitir que el nuevo pago se pase del total
+    if (totalPagadoAntes + montoNumber > totalPedido + 1e-6) {
+      return res.status(400).json({
+        error: 'El pago excede el total del pedido',
+        total_pedido: totalPedido,
+        total_pagado: totalPagadoAntes,
+        intento: montoNumber
+      });
+    }
+
+    // 3) Insertar la transacción (un pago más, parcial o total)
     const transaccion_id = uuidv4();
 
     await runAsync(
       `INSERT INTO transacciones
          (id, pedido_id, usuario_facturero_id, monto, metodo_pago, completada, created_at)
        VALUES ($1, $2, $3, $4, $5, TRUE, CURRENT_TIMESTAMP)`,
-      [transaccion_id, pedido_id, usuario_facturero_id, monto, metodo_pago]
+      [transaccion_id, pedido_id, usuario_facturero_id, montoNumber, metodo_pago]
     );
 
-    // 3) Calcular cuánto se ha pagado en total para este pedido
+    // 4) Recalcular total pagado después de este pago
     const suma = await getAsync(
       `SELECT COALESCE(SUM(monto), 0) AS total_pagado
        FROM transacciones
        WHERE pedido_id = $1`,
-       [pedido_id]
+      [pedido_id]
     );
 
     const totalPagado = parseFloat(suma.total_pagado);
@@ -48,9 +77,8 @@ router.post('/', async (req, res) => {
 
     let nuevoEstado = pedido.estado;
 
-    // 4) Actualizar estado del pedido según lo pagado
+    // 5) Actualizar estado del pedido según lo pagado
     if (totalPagado >= totalPedido) {
-      // Ya se cubrió todo el total
       nuevoEstado = 'pagado';
       await runAsync(
         `UPDATE pedidos
@@ -64,7 +92,6 @@ router.post('/', async (req, res) => {
         estado: 'pagado'
       });
     } else {
-      // Pagado parcialmente: puedes marcar como "en_caja" o dejar el estado actual
       if (pedido.estado !== 'pagado' && pedido.estado !== 'cancelado') {
         nuevoEstado = 'en_caja';
         await runAsync(
@@ -81,11 +108,11 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // 5) Notificar pago registrado (opcional, por si tienes listeners específicos)
+    // 6) Notificar pago registrado
     req.app.get('io').emit('pedido_pagado', {
       pedido_id,
       estado: nuevoEstado,
-      monto,
+      monto: montoNumber,
       metodo_pago,
       total_pagado: totalPagado,
       pendiente
@@ -104,5 +131,6 @@ router.post('/', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 export default router;
