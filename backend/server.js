@@ -17,8 +17,9 @@ import pedidosRoutes from './routes/pedidos.js';
 import reportesRoutes from './routes/reportes.js';
 import transaccionesRoutes from './routes/transacciones.js';
 import uploadRoutes from './routes/upload.js';
-import manifestRoutes from './routes/manifest.js'; // ✅ NUEVO
-import iconsRoutes from './routes/icons.js'; // ✅ NUEVO // ✅ NUEVO
+import manifestRoutes from './routes/manifest.js';
+import iconsRoutes from './routes/icons.js';
+import wellKnownRoutes from './routes/well-known.js'; // ✅ NUEVO
 
 dotenv.config();
 
@@ -229,6 +230,7 @@ app.use('/api/transacciones', transaccionesRoutes);
 app.use('/api/upload', uploadRoutes); // ✅ NUEVO
 app.use('/api/manifest', manifestRoutes); // ✅ NUEVO - Manifest dinámico
 app.use('/api/icons', iconsRoutes); // ✅ NUEVO - Iconos dinámicos
+app.use('/api/well-known', wellKnownRoutes); // ✅ Well-known dinámico
 
 // ============= CONFIGURACIÓN =============
 app.get('/api/config', async (req, res) => {

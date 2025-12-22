@@ -6,6 +6,15 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
 
+  // Limpiar URL para que no tenga doble /api
+  let apiUrl = env.VITE_API_URL || '';
+  if (apiUrl.endsWith('/api')) {
+    apiUrl = apiUrl.substring(0, apiUrl.length - 4);
+  }
+  if (apiUrl.endsWith('/')) {
+    apiUrl = apiUrl.substring(0, apiUrl.length - 1);
+  }
+
   return {
     plugins: [
       vue(),
@@ -16,6 +25,7 @@ export default defineConfig(({ mode }) => {
             title: env.VITE_APP_TITLE,
             description: env.VITE_APP_DESCRIPTION,
             themeColor: env.VITE_THEME_COLOR,
+            apiUrl: apiUrl, // ✅ URL limpia (sin /api al final)
           },
         },
       }),

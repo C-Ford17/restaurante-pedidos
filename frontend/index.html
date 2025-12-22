@@ -2,11 +2,11 @@
 <html lang="es">
 
 <meta charset="UTF-8" />
-<!-- Iconos dinámicos servidos por el backend -->
-<link rel="icon" type="image/x-icon" href="/api/icons/favicon" />
-<link rel="icon" type="image/png" sizes="192x192" href="/api/icons/icon-192" />
-<link rel="icon" type="image/png" sizes="512x512" href="/api/icons/icon-512" />
-<link rel="apple-touch-icon" href="/api/icons/apple-touch-icon" />
+<!-- Iconos dinámicos servidos por el backend (Absolutos) -->
+<link rel="icon" type="image/x-icon" href="<%= apiUrl %>/api/icons/favicon" />
+<link rel="icon" type="image/png" sizes="192x192" href="<%= apiUrl %>/api/icons/icon-192" />
+<link rel="icon" type="image/png" sizes="512x512" href="<%= apiUrl %>/api/icons/icon-512" />
+<link rel="apple-touch-icon" href="<%= apiUrl %>/api/icons/apple-touch-icon" />
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="description" content="<%= description %>" />
@@ -18,7 +18,7 @@
 <meta name="apple-mobile-web-app-title" content="<%= title %>" />
 
 <!-- Manifest dinámico -->
-<link rel="manifest" href="/api/manifest" />
+<link rel="manifest" href="<%= apiUrl %>/api/manifest" />
 
 <title>
   <%= title %>
