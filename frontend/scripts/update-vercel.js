@@ -30,6 +30,10 @@ const vercelConfig = {
             "destination": `${backendUrl}/api/well-known/$1`
         },
         {
+            "source": "/api/(.*)",
+            "destination": `${backendUrl}/api/$1`
+        },
+        {
             "source": "/(.*)",
             "destination": "/"
         }
