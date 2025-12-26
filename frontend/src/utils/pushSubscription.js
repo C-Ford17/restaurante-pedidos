@@ -70,15 +70,11 @@ export async function subscribeToPush(userId, role) {
         console.log('✅ Push subscription created:', subscription.endpoint);
 
         // Send subscription to backend
-        const token = localStorage.getItem('token');
-        const response = await api.post('/push/subscribe', {
+        // El interceptor en api.js se encarga del token
+        await api.subscribePush({
             subscription: subscription.toJSON(),
             userId,
             role
-        }, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
         });
 
         // Axios throws on error by default, but let's keep logic simple
@@ -104,13 +100,8 @@ export async function unsubscribeFromPush() {
             await subscription.unsubscribe();
 
             // Remove from backend
-            const token = localStorage.getItem('token');
-            await api.post('/push/unsubscribe', {
+            await api.unsubscribePush({
                 endpoint: subscription.endpoint
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
             });
 
             console.log('✅ Unsubscribed from push notifications');

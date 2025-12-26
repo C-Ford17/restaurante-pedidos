@@ -30,6 +30,17 @@ const api = axios.create({
   },
 });
 
+// ✅ Interceptor para agregar token automáticamente
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}, error => {
+  return Promise.reject(error);
+});
+
 export default {
   // ============= AUTENTICACIÓN =============
   login(username, password) {
@@ -234,4 +245,8 @@ export default {
 
   // ✅ NUEVO: Update user language preference
   updateUserLanguage: (userId, language) => api.put(`/users/${userId}/language`, { language }),
+
+  // ✅ NUEVO: Push Notifications
+  subscribePush: (data) => api.post('/push/subscribe', data),
+  unsubscribePush: (data) => api.post('/push/unsubscribe', data),
 };
