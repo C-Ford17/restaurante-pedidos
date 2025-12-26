@@ -1,4 +1,5 @@
 // Push Notification Subscription Utility
+import api from '../api';
 
 /**
  * Convert VAPID public key from base64 to Uint8Array
@@ -70,23 +71,17 @@ export async function subscribeToPush(userId, role) {
 
         // Send subscription to backend
         const token = localStorage.getItem('token');
-        const response = await fetch('/api/push/subscribe', {
-            method: 'POST',
+        const response = await api.post('/push/subscribe', {
+            subscription: subscription.toJSON(),
+            userId,
+            role
+        }, {
             headers: {
-                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                subscription: subscription.toJSON(),
-                userId,
-                role
-            })
+            }
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to save subscription to server');
-        }
-
+        // Axios throws on error by default, but let's keep logic simple
         console.log('✅ Push subscription saved to server');
         return subscription;
 
@@ -110,15 +105,12 @@ export async function unsubscribeFromPush() {
 
             // Remove from backend
             const token = localStorage.getItem('token');
-            await fetch('/api/push/unsubscribe', {
-                method: 'POST',
+            await api.post('/push/unsubscribe', {
+                endpoint: subscription.endpoint
+            }, {
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    endpoint: subscription.endpoint
-                })
+                }
             });
 
             console.log('✅ Unsubscribed from push notifications');
