@@ -929,20 +929,29 @@ const confirmarAgregarItems = async () => {
   const confirmado = confirm(t('waiter.confirm_add_items'));
   if (!confirmado) return;
   
+  // ✅ FIX: Capturar ID antes de operaciones async para evitar error si se cierra el modal
+  const pedidoId = pedidoEditando.value ? pedidoEditando.value.id : null;
+  if (!pedidoId) return;
+
+
+
   agregandoItems.value = true;
   try {
-    await api.agregarItemsAPedido(pedidoEditando.value.id, itemsParaAgregar.value);
+    await api.agregarItemsAPedido(pedidoId, itemsParaAgregar.value);
     
-    // Recargar pedido para ver cambios
-    const response = await api.getPedido(pedidoEditando.value.id);
-    pedidoEditando.value = response.data;
+    // Recargar SOLO pedido actual para ver cambios
+    const response = await api.getPedido(pedidoId);
+    if (pedidoEditando.value && pedidoEditando.value.id === pedidoId) {
+        pedidoEditando.value = response.data;
+    }
     
     // Limpiar items pendientes y search
     itemsParaAgregar.value = [];
     busquedaEdicion.value = '';
     
-    // Recargar pedidos activos en el store
-    await pedidoStore.cargarPedidosActivos();
+    // ⚠️ OPTIMIZACIÓN: No recargar TODOS los pedidos activos aquí.
+    // El socket 'pedido_actualizado' lo hará si es necesario.
+    // await pedidoStore.cargarPedidosActivos();
     
     alert(t('waiter.alert_items_added'));
   } catch (err) {
@@ -955,17 +964,25 @@ const confirmarAgregarItems = async () => {
 
 const eliminarItemDelPedido = async (item) => {
   const intentoEliminar = async (forzar = false) => {
+    // ✅ FIX: Capturar ID
+    const pedidoId = pedidoEditando.value ? pedidoEditando.value.id : null;
+    if (!pedidoId) return;
+
     await api.eliminarItemDePedido(
-      pedidoEditando.value.id,
+      pedidoId,
       item.id,
       forzar 
     );
 
-    await pedidoStore.cargarPedidosActivos();
-    const response = await api.getPedido(pedidoEditando.value.id);
-    pedidoEditando.value = response.data;
+    // ⚠️ OPTIMIZACIÓN: No recargar todos
+    // await pedidoStore.cargarPedidosActivos();
+    
+    const response = await api.getPedido(pedidoId);
+    if (pedidoEditando.value && pedidoEditando.value.id === pedidoId) {
+        pedidoEditando.value = response.data;
+    }
 
-    alert(t('waiter.item_added', { name: item.nombre }));
+    alert(`✅ ${item.nombre} eliminado`);
   };
 
   try {

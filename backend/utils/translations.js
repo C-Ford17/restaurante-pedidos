@@ -10,7 +10,9 @@ const translations = {
         payment_ready: '💰 Listo para Pagar',
         payment_ready_body: (mesa, total) => `Mesa ${mesa}: $${total} listo para facturar`,
         order_cancelled: '❌ Pedido Cancelado',
-        order_cancelled_body: (mesa) => `Mesa ${mesa} canceló el pedido`
+        order_cancelled_body: (mesa) => `Mesa ${mesa} canceló el pedido`,
+        order_updated: '📝 Pedido Actualizado',
+        order_updated_body: (mesa, count) => `Mesa ${mesa}: +${count} items nuevos`
     },
     en: {
         new_order: '🆕 New Order',
@@ -22,7 +24,9 @@ const translations = {
         payment_ready: '💰 Ready to Pay',
         payment_ready_body: (mesa, total) => `Table ${mesa}: $${total} ready to bill`,
         order_cancelled: '❌ Order Cancelled',
-        order_cancelled_body: (mesa) => `Table ${mesa} cancelled the order`
+        order_cancelled_body: (mesa) => `Table ${mesa} cancelled the order`,
+        order_updated: '📝 Order Updated',
+        order_updated_body: (mesa, count) => `Table ${mesa}: +${count} new items`
     }
 };
 

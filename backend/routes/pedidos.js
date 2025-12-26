@@ -369,7 +369,7 @@ router.put('/:id/estado', async (req, res) => {
                 );
 
                 if (pedido) {
-                    await sendPushToRole('cajero',
+                    await sendPushToRole('facturero',
                         'payment_ready',
                         'payment_ready_body',
                         [pedido.mesa_numero, pedido.total.toFixed(2)],
@@ -799,6 +799,27 @@ router.post('/:id/items', async (req, res) => {
             id: pedidoId,
             estado: nuevoEstadoPedido
         });
+
+        // ✅ NUEVO: Send push notification to kitchen for NEW cookable items
+        try {
+            // Filter cookable items (those starting as 'pendiente')
+            const cookableItems = nuevosItems.filter(i => i.estado === 'pendiente');
+
+            if (cookableItems.length > 0) {
+                await sendPushToRole('cocinero',
+                    'order_updated',
+                    'order_updated_body',
+                    [pedido.mesa_numero, cookableItems.length],
+                    {
+                        url: '/',
+                        pedidoId: pedidoId,
+                        mesa: pedido.mesa_numero
+                    }
+                );
+            }
+        } catch (pushError) {
+            console.warn('⚠️ Push notification failed:', pushError);
+        }
 
         res.json({
             message: '✓ Items agregados al pedido',

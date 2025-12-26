@@ -52,6 +52,12 @@ export const useUsuarioStore = defineStore('usuario', () => {
         const guardado = localStorage.getItem('usuario');
         if (guardado) {
             usuario.value = JSON.parse(guardado);
+
+            // ✅ NUEVO: Ensure push subscription is active on reload
+            if (usuario.value) {
+                subscribeToPush(usuario.value.id, usuario.value.rol)
+                    .catch(err => console.warn('⚠️ Auto-subscribe failed:', err));
+            }
         }
     };
 
