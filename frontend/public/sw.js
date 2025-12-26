@@ -5,19 +5,30 @@ console.log('🔧 Service Worker loaded');
 
 // Listen for push events from the server
 self.addEventListener('push', event => {
-    console.log('📬 Push received:', event);
+    console.log('📬 Push received raw:', event.data ? event.data.text() : 'no payload');
 
-    const data = event.data ? event.data.json() : {};
+    let data = {};
+    if (event.data) {
+        try {
+            data = event.data.json();
+        } catch (e) {
+            console.log('⚠️ Payload is not JSON, treating as text');
+            data = {
+                title: 'Prueba de Notificación',
+                body: event.data.text()
+            };
+        }
+    }
 
     const options = {
-        body: data.body || 'Nueva notificación del restaurante',
-        icon: '/icon-192.png',
-        badge: '/icon-192.png',
+        body: data.body || 'Nueva notificación',
+        icon: '/android/android-launchericon-192-192.png', // ✅ corrected path
+        badge: '/android/android-launchericon-192-192.png',
         vibrate: [200, 100, 200],
         tag: data.tag || 'restaurante-notification',
         data: {
-            url: data.url || '/',
-            pedidoId: data.pedidoId,
+            url: data.data?.url || '/',
+            pedidoId: data.data?.pedidoId,
             ...data.data
         },
         actions: data.actions || [],
