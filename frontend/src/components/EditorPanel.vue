@@ -146,11 +146,27 @@
           </form>
         </div>
 
-        <!-- Lista de Items -->
+        <!-- Buscador y Filtros -->
+        <div class="menu-tools no-print" style="margin-bottom: 16px;">
+          <input 
+            v-model="searchQuery" 
+            placeholder="🔍 Buscar plato..." 
+            class="search-input"
+          />
+        </div>
+
+        <!-- Lista de Items (Acordeón) -->
         <div class="menu-list">
-          <div v-for="(items, categoria) in menuPorCategoria" :key="categoria" class="category-group">
-            <h3 class="category-title">{{ categoria }} <span class="count">{{ items.length }}</span></h3>
-            <div class="items-grid">
+          <div v-for="(items, categoria) in filteredMenu" :key="categoria" class="category-group">
+            <h3 
+              class="category-title accordion-header" 
+              @click="toggleCategoria(categoria)"
+            >
+              <span>{{ categoria }} <span class="count">{{ items.length }}</span></span>
+              <span class="accordion-icon">{{ isCategoriaOpen(categoria) ? '▼' : '▶' }}</span>
+            </h3>
+            
+            <div v-show="isCategoriaOpen(categoria)" class="items-grid fade-in">
               <div v-for="item in items" :key="item.id" class="item-card">
                 <div class="item-card-header">
                   <input v-model="item.nombre" class="edit-input title-input" @change="actualizarItem(item)" />
@@ -541,7 +557,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n'; // Import useI18n
 import api from '../api';
 import GeneradorQR from './GeneradorQR.vue';
@@ -550,6 +566,11 @@ const { t } = useI18n(); // Destructure t function
 const emit = defineEmits(['volver']);
 
 const activeTab = ref('menu');
+
+// ✅ Scroll al inicio al cambiar de pestaña
+watch(activeTab, () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
 const loading = ref(false);
 // ✅ URL DINÁMICA: Detecta si es localhost o vercel
 const urlMenuDinamica = computed(() => {
@@ -598,10 +619,34 @@ const itemEditandoImagen = ref(null); // ID del item cuya imagen se está subien
 const mesas = ref([]);
 const newMesa = ref({ numero: '', capacidad: 4 });
 
-// Computed: Agrupar menú por categoría
-const menuPorCategoria = computed(() => {
+// ✅ NUEVO: Estado de Búsqueda y Acordeón
+const searchQuery = ref('');
+const openCategories = ref(new Set()); // Categorías abiertas
+
+const toggleCategoria = (categoria) => {
+  if (openCategories.value.has(categoria)) {
+    openCategories.value.delete(categoria);
+  } else {
+    openCategories.value.add(categoria);
+  }
+};
+
+const isCategoriaOpen = (categoria) => {
+  // Si hay búsqueda, forzamos abrir todo donde haya coincidencias
+  if (searchQuery.value.trim()) return true;
+  return openCategories.value.has(categoria);
+};
+
+// Computed: Filtrar y Agrupar menú
+const filteredMenu = computed(() => {
+  const query = searchQuery.value.toLowerCase().trim();
+  const itemsFiltrados = menuItems.value.filter(item => {
+    return item.nombre.toLowerCase().includes(query) || 
+           (item.descripcion && item.descripcion.toLowerCase().includes(query));
+  });
+
   const grupos = {};
-  menuItems.value.forEach(item => {
+  itemsFiltrados.forEach(item => {
     if (!grupos[item.categoria]) grupos[item.categoria] = [];
     grupos[item.categoria].push(item);
   });
@@ -1154,5 +1199,43 @@ onMounted(() => {
    display: flex;
    gap: 8px;
    align-items: center;
+}
+
+.menu-tools {
+  margin-bottom: 20px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 15px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: #667eea;
+  outline: none;
+}
+
+.accordion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px;
+  background-color: #f3f4f6;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.accordion-header:hover {
+  background-color: #e5e7eb;
+}
+
+.accordion-icon {
+  font-size: 12px;
+  color: #6b7280;
 }
 </style>
