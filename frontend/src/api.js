@@ -232,6 +232,31 @@ export default {
     return api.delete(`/payment-methods/${id}`);
   },
 
+  // ============= INVENTARIO =============
+  getInventory() {
+    return api.get('/inventory');
+  },
+  createInventoryItem(item) {
+    return api.post('/inventory', item);
+  },
+  updateInventoryItem(id, item) {
+    return api.put(`/inventory/${id}`, item);
+  },
+  deleteInventoryItem(id) {
+    return api.delete(`/inventory/${id}`);
+  },
+  updateStock(id, quantity, operation) {
+    return api.put(`/inventory/${id}/stock`, { quantity, operation });
+  },
+
+  // Recetas
+  getRecipe(menuItemId) {
+    return api.get(`/inventory/recipe/${menuItemId}`);
+  },
+  saveRecipe(menuItemId, ingredients) {
+    return api.post('/inventory/recipe', { menuItemId, ingredients });
+  },
+
   // Configuración
   getConfig: () => api.get('/config'),
   updateConfig: (clave, valor) => api.put(`/config/${clave}`, { valor }),

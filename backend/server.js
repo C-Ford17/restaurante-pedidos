@@ -24,6 +24,7 @@ import iconsRoutes from './routes/icons.js';
 import wellKnownRoutes from './routes/well-known.js';
 import configItemsRoutes from './routes/configItems.js'; // ✅ NUEVO
 import pushRoutes from './routes/push.js'; // ✅ NUEVO: Push notifications
+import inventoryRoutes from './routes/inventory.js'; // ✅ NUEVO: Inventory
 import { sendPushToRole, sendPushToUser } from './utils/pushNotifications.js'; // ✅ NUEVO
 
 // dotenv.config();
@@ -127,6 +128,32 @@ async function initDatabase() {
                 capacidad INTEGER DEFAULT 4,
                 estado TEXT DEFAULT 'disponible' CHECK(estado IN ('disponible', 'ocupada', 'reservada')),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // ✅ NUEVO: Tabla de Materia Prima (Inventory)
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS inventory_items (
+                id UUID PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                unit VARCHAR(20) DEFAULT 'kg',
+                current_stock NUMERIC(10, 4) DEFAULT 0,
+                min_stock NUMERIC(10, 4) DEFAULT 0,
+                cost_per_unit NUMERIC(10, 2) DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // ✅ NUEVO: Tabla de Recetas
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS dish_ingredients (
+                id SERIAL PRIMARY KEY,
+                menu_item_id TEXT NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
+                inventory_item_id UUID NOT NULL REFERENCES inventory_items(id) ON DELETE CASCADE,
+                quantity_required NUMERIC(10, 4) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(menu_item_id, inventory_item_id)
             )
         `);
 
@@ -363,13 +390,11 @@ app.use('/api/upload', uploadRoutes); // ✅ NUEVO
 app.use('/api/manifest', manifestRoutes); // ✅ NUEVO - Manifest dinámico
 app.use('/api/icons', iconsRoutes); // ✅ NUEVO - Iconos dinámicos
 app.use('/api/well-known', wellKnownRoutes); // ✅ Well-known dinámico
-
+app.use('/api/inventory', inventoryRoutes); // ✅ NUEVO
+app.use('/api/push', pushRoutes); // ✅ NUEVO
 
 // Rutas de administración de configuración (Categorías y Métodos de Pago)
 app.use('/api', configItemsRoutes);
-
-// ✅ NUEVO: Rutas de push notifications
-app.use('/api/push', pushRoutes);
 
 // ============= CONFIGURACIÓN =============
 app.get('/api/config', async (req, res) => {

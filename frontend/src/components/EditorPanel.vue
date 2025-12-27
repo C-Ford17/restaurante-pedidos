@@ -259,11 +259,46 @@
                       <option value="poco_stock">⚠️ {{ $t('editor.stock.low') }}</option>
                       <option value="no_disponible">❌ {{ $t('editor.stock.out') }}</option>
                     </select>
+                    <!-- ✅ BOTÓN RECETA (Solo si no es directo) -->
+                    <button v-if="!item.es_directo" @click="openRecipeModal(item)" class="btn-recipe" title="Configurar Receta">
+                      📝 Receta
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+        
+        <!-- ✅ MODAL DE RECETAS -->
+        <div v-if="recipeModalOpen" class="modal-overlay">
+            <div class="modal">
+                <h3>📜 Receta: {{ currentRecipeItem?.nombre }}</h3>
+                <p class="modal-subtitle">Define los ingredientes que se descontarán del inventario por cada unidad vendida.</p>
+                
+                <div class="recipe-form">
+                    <div v-for="(ing, index) in currentRecipeIngredients" :key="index" class="recipe-row">
+                        <select v-model="ing.inventory_item_id" class="recipe-select">
+                            <option value="">Seleccionar Insumo</option>
+                            <option v-for="inv in inventoryList" :key="inv.id" :value="inv.id">
+                                {{ inv.name }} ({{ inv.unit }})
+                            </option>
+                        </select>
+                        <div class="recipe-qty-group">
+                            <input v-model.number="ing.quantity_required" type="number" step="0.0001" placeholder="Cant." />
+                            <span class="unit-label">{{ getIngredientUnit(ing.inventory_item_id) }}</span>
+                        </div>
+                        <button @click="removeIngredientRow(index)" class="btn-icon delete">✕</button>
+                    </div>
+                    
+                    <button @click="addIngredientRow" class="btn-add-row">+ Agregar Ingrediente</button>
+                </div>
+
+                <div class="modal-actions">
+                    <button @click="closeRecipeModal" class="btn-cancel">Cancelar</button>
+                    <button @click="saveRecipe" class="btn-save">Guardar Receta</button>
+                </div>
+            </div>
         </div>
       </div>
 
@@ -618,6 +653,80 @@ const itemEditandoImagen = ref(null); // ID del item cuya imagen se está subien
 // Estado Mesas
 const mesas = ref([]);
 const newMesa = ref({ numero: '', capacidad: 4 });
+
+// ✅ NUEVO: Estado de Inventario y Recetas
+const inventoryList = ref([]);
+const recipeModalOpen = ref(false);
+const currentRecipeItem = ref(null);
+const currentRecipeIngredients = ref([]); // [{ inventory_item_id, quantity_required }]
+
+const loadInventory = async () => {
+    try {
+        const res = await api.getInventory();
+        inventoryList.value = res.data;
+    } catch (err) {
+        console.error('Error cargando inventario:', err);
+    }
+};
+
+const openRecipeModal = async (item) => {
+    currentRecipeItem.value = item;
+    currentRecipeIngredients.value = [];
+    recipeModalOpen.value = true;
+    
+    // Load existing recipe
+    try {
+        const res = await api.getRecipe(item.id);
+        if (res.data) {
+            currentRecipeIngredients.value = res.data.map(i => ({
+                inventory_item_id: i.inventory_item_id,
+                quantity_required: i.quantity_required,
+                unit: i.unit // Helper for display
+            }));
+        }
+    } catch (err) {
+        console.error('Error cargando receta:', err);
+    }
+};
+
+const closeRecipeModal = () => {
+    recipeModalOpen.value = false;
+    currentRecipeItem.value = null;
+    currentRecipeIngredients.value = [];
+};
+
+const addIngredientRow = () => {
+    currentRecipeIngredients.value.push({
+        inventory_item_id: '',
+        quantity_required: 0
+    });
+};
+
+const removeIngredientRow = (index) => {
+    currentRecipeIngredients.value.splice(index, 1);
+};
+
+const saveRecipe = async () => {
+    if (!currentRecipeItem.value) return;
+    
+    // Validate
+    const validIngredients = currentRecipeIngredients.value.filter(i => i.inventory_item_id && i.quantity_required > 0);
+    
+    try {
+        await api.saveRecipe(currentRecipeItem.value.id, validIngredients);
+        alert('✅ Receta guardada');
+        closeRecipeModal();
+    } catch (err) {
+        console.error('Error guardando receta:', err);
+        alert('❌ Error guardando receta');
+    }
+};
+
+// Helper to get unit of selected item
+const getIngredientUnit = (id) => {
+    const item = inventoryList.value.find(i => i.id === id);
+    return item ? item.unit : '';
+};
 
 // ✅ NUEVO: Estado de Búsqueda y Acordeón
 const searchQuery = ref('');
@@ -1095,6 +1204,7 @@ onMounted(() => {
   cargarConfig();
   cargarCategories(); // ✅ NUEVO
   cargarPaymentMethods(); // ✅ NUEVO
+  loadInventory(); // ✅ NUEVO
   // obtenerIP();
 });
 </script>

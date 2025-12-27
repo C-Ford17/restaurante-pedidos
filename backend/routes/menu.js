@@ -8,13 +8,11 @@ const router = express.Router();
 // GET /api/menu - Obtener todos los items del menú
 router.get('/', async (req, res) => {
     try {
-        // ✅ Check cache (5 min TTL)
-        const cached = getFromCache('menu_items', 300000);
-        if (cached) {
-            return res.json(cached);
-        }
+        // ⚠️ CACHE DESACTIVADO TEMPORALMENTE para soportar inventario en tiempo real
+        // const cached = getFromCache('menu_items', 300000);
+        // if (cached) return res.json(cached);
 
-        // ✅ COALESCE para manejar ambas columnas de tiempo
+        // 1. Obtener items del menú
         const items = await allAsync(`
             SELECT id, nombre, categoria, precio, 
                    COALESCE(tiempo_estimado, tiempo_preparacion_min, 15) as tiempo_estimado, 
@@ -26,10 +24,60 @@ router.get('/', async (req, res) => {
             ORDER BY categoria, nombre
         `);
 
-        // ✅ Cache result
-        setCache('menu_items', items);
+        // 2. Obtener TODAS las recetas y stock de insumos en una sola consulta
+        const allRecipes = await allAsync(`
+            SELECT di.menu_item_id, di.quantity_required, ii.current_stock, ii.name as ing_name
+            FROM dish_ingredients di
+            JOIN inventory_items ii ON di.inventory_item_id = ii.id
+        `);
 
-        res.json(items);
+        // 3. Agrupar recetas por menu_item_id
+        const recipeMap = {};
+        allRecipes.forEach(r => {
+            if (!recipeMap[r.menu_item_id]) recipeMap[r.menu_item_id] = [];
+            recipeMap[r.menu_item_id].push(r);
+        });
+
+        // 4. Calcular stock lógico para cada item
+        const itemsWithCalculatedStock = items.map(item => {
+            // Solo procesar si usa inventario y NO es directo (los directos usan stock simple manual)
+            if (item.usa_inventario && !item.es_directo && recipeMap[item.id]) {
+                const ingredients = recipeMap[item.id];
+
+                // Calcular cuántos platos se pueden hacer con el stock actual de cada ingrediente
+                // El stock del plato es limitado por el ingrediente más escaso (Reactivo Limitante)
+                let maxServings = Infinity;
+
+                for (const ing of ingredients) {
+                    if (ing.quantity_required > 0) {
+                        const servings = Math.floor(ing.current_stock / ing.quantity_required);
+                        if (servings < maxServings) {
+                            maxServings = servings;
+                        }
+                    }
+                }
+
+                if (maxServings === Infinity) maxServings = 0; // Fallback freak case
+
+                // ✅ OVERRIDE: Usar el stock calculado
+                item.stock_actual = maxServings;
+
+                // ✅ OVERRIDE STATUS: Actualizar estado visual basado en el cálculo real
+                // "La opcion de marcar como disponible... dejala pero la cantidad que se maneje con los ingredientes"
+                // Interpretación: El estado visual debe reflejar la realidad del stock calculado.
+                if (maxServings <= 0) {
+                    item.estado_inventario = 'no_disponible';
+                } else if (item.stock_minimo && maxServings <= item.stock_minimo) {
+                    item.estado_inventario = 'poco_stock';
+                } else {
+                    item.estado_inventario = 'disponible';
+                }
+            }
+            return item;
+        });
+
+        // setCache('menu_items', itemsWithCalculatedStock);
+        res.json(itemsWithCalculatedStock);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

@@ -12,19 +12,18 @@ export const usePedidoStore = defineStore('pedido', () => {
     const error = ref(null);
 
     const cargarMenu = async () => {
-        // ✅ NUEVO: Check cache first (5 min TTL)
-        const cached = cacheGet('menu', 300000);
-        if (cached) {
-            menu.value = cached;
-            return;
-        }
+        // ⚠️ CACHE DISABLED for real-time inventory
+        // const cached = cacheGet('menu', 300000);
+        // if (cached) {
+        //     menu.value = cached;
+        //     return;
+        // }
 
         loading.value = true;
         try {
             const response = await api.getMenu();
             menu.value = response.data;
-            // ✅ NUEVO: Cache the result
-            cacheSet('menu', response.data);
+            // cacheSet('menu', response.data);
         } catch (err) {
             error.value = 'Error cargando menú';
             console.error(err);

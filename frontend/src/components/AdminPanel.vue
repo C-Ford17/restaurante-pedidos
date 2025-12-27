@@ -6,6 +6,9 @@
     <!-- Vista de Editor de Menú/Mesas -->
     <EditorPanel v-else-if="mostrarEditor" @volver="mostrarEditor = false" />
 
+    <!-- Vista de Inventario -->
+    <AdminInventory v-else-if="mostrarInventario" @volver="mostrarInventario = false" />
+
     <!-- Vista Principal del Dashboard -->
     <div v-else class="dashboard-view">
       <div class="panel-header">
@@ -16,6 +19,9 @@
           </button>
           <button @click="mostrarUsuarios = true" class="btn btn-primary">
             👥 {{ $t('admin.users') }}
+          </button>
+          <button @click="mostrarInventario = true" class="btn btn-primary">
+            📦 Inventario
           </button>
           <button @click="cargarReportes" class="btn btn-secondary" :disabled="loading">
              {{ $t('cashier.update') }}
@@ -398,6 +404,7 @@ import socket from '../socket';
 import GeneradorQR from './GeneradorQR.vue';
 import AdminUsers from './AdminUsers.vue';
 import EditorPanel from './EditorPanel.vue';
+import AdminInventory from './AdminInventory.vue'; // ✅ NUEVO
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
@@ -405,6 +412,7 @@ const { t } = useI18n();
 const mostrarGeneradorQR = ref(false);
 const mostrarUsuarios = ref(false);
 const mostrarEditor = ref(false);
+const mostrarInventario = ref(false); // ✅ NUEVO
 
 
 const loading = ref(false);

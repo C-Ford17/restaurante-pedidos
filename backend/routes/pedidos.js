@@ -112,31 +112,58 @@ router.post('/', async (req, res) => {
                 }
             }
 
-            // ✅ NUEVA LÓGICA: Reservar stock en lugar de descontarlo
-            if (menuItemData && menuItemData.usa_inventario) {
-                const stockDisponible = (menuItemData.stock_actual || 0) - (menuItemData.stock_reservado || 0);
+            // ✅ GESTIÓN DE INVENTARIO (Raw Materials & Direct Stock)
+            // 1. Si usa inventario directo (legacy/simple)
+            if (menuItemData && menuItemData.usa_inventario && !menuItemData.es_directo) {
+                // Check if it has a recipe
+                const ingredients = await allAsync('SELECT inventory_item_id, quantity_required FROM dish_ingredients WHERE menu_item_id = $1', [item.menu_item_id]);
 
-                // Validar que hay stock disponible
+                if (ingredients && ingredients.length > 0) {
+                    // DEDUCCIÓN DE MATERIA PRIMA (Receta)
+                    for (const ing of ingredients) {
+                        const totalRequired = ing.quantity_required * item.cantidad;
+
+                        // Check stock
+                        const invItem = await getAsync('SELECT current_stock, name FROM inventory_items WHERE id = $1', [ing.inventory_item_id]);
+                        if (!invItem || invItem.current_stock < totalRequired) {
+                            throw new Error(`Stock insuficiente de materia prima: ${invItem ? invItem.name : 'Unknown'} para ${item.nombre}`);
+                        }
+
+                        // Deduct stock
+                        await runAsync(`UPDATE inventory_items SET current_stock = current_stock - $1 WHERE id = $2`, [totalRequired, ing.inventory_item_id]);
+                    }
+                } else {
+                    // BACKWARD COMPATIBILITY: Logic for simple stock (menu_items.stock_actual)
+                    // If no recipe, fall back to decrementing menu_item stock directly if configured
+                    const stockDisponible = (menuItemData.stock_actual || 0) - (menuItemData.stock_reservado || 0);
+
+                    if (stockDisponible < item.cantidad) {
+                        throw new Error(`Stock insuficiente para ${item.nombre}. Disponible: ${stockDisponible}`);
+                    }
+
+                    const nuevoReservado = (menuItemData.stock_reservado || 0) + item.cantidad;
+                    let nuevoEstado = menuItemData.estado_inventario;
+
+                    const nuevoDisponible = stockDisponible - item.cantidad;
+                    if (nuevoDisponible <= 0) {
+                        nuevoEstado = 'no_disponible';
+                    } else if (nuevoDisponible <= menuItemData.stock_minimo) {
+                        nuevoEstado = 'poco_stock';
+                    }
+
+                    await runAsync(`
+                         UPDATE menu_items 
+                         SET stock_reservado = $1, estado_inventario = $2
+                         WHERE id = $3
+                     `, [nuevoReservado, nuevoEstado, item.menu_item_id]);
+                }
+            } else if (menuItemData && menuItemData.usa_inventario && menuItemData.es_directo) {
+                // Direct items (drinks) usually just decrement stock immediately or reserve
+                const stockDisponible = (menuItemData.stock_actual || 0) - (menuItemData.stock_reservado || 0);
                 if (stockDisponible < item.cantidad) {
                     throw new Error(`Stock insuficiente para ${item.nombre}. Disponible: ${stockDisponible}`);
                 }
-
-                const nuevoReservado = (menuItemData.stock_reservado || 0) + item.cantidad;
-                let nuevoEstado = menuItemData.estado_inventario;
-
-                // Actualizar estado basado en stock disponible
-                const nuevoDisponible = stockDisponible - item.cantidad;
-                if (nuevoDisponible <= 0) {
-                    nuevoEstado = 'no_disponible';
-                } else if (nuevoDisponible <= menuItemData.stock_minimo) {
-                    nuevoEstado = 'poco_stock';
-                }
-
-                await runAsync(`
-                    UPDATE menu_items 
-                    SET stock_reservado = $1, estado_inventario = $2
-                    WHERE id = $3
-                `, [nuevoReservado, nuevoEstado, item.menu_item_id]);
+                await runAsync(`UPDATE menu_items SET stock_actual = stock_actual - $1 WHERE id = $2`, [item.cantidad, item.menu_item_id]);
             }
         }
 
@@ -328,33 +355,45 @@ router.put('/:id/estado', async (req, res) => {
 
         await runAsync(updateQuery, params);
 
-        // ✅ NUEVO: Si se cancela el pedido, devolver stock_reservado
+        // ✅ RESTAURAR STOCK SI SE CANCELA
         if (estado === 'cancelado') {
             const items = await allAsync(`
                 SELECT pi.menu_item_id, SUM(pi.cantidad) as cantidad_total, 
-                       mi.stock_reservado, mi.stock_actual, mi.stock_minimo
+                       mi.stock_reservado, mi.stock_actual, mi.stock_minimo, mi.usa_inventario
                 FROM pedido_items pi
                 JOIN menu_items mi ON pi.menu_item_id = mi.id
                 WHERE pi.pedido_id = $1 AND mi.usa_inventario = TRUE
-                GROUP BY pi.menu_item_id, mi.stock_reservado, mi.stock_actual, mi.stock_minimo
+                GROUP BY pi.menu_item_id, mi.stock_reservado, mi.stock_actual, mi.stock_minimo, mi.usa_inventario
             `, [req.params.id]);
 
             for (const item of items) {
-                const nuevoReservado = Math.max((item.stock_reservado || 0) - item.cantidad_total, 0);
-                const stockDisponible = (item.stock_actual || 0) - nuevoReservado;
+                // 1. Check for recipe
+                const ingredients = await allAsync('SELECT inventory_item_id, quantity_required FROM dish_ingredients WHERE menu_item_id = $1', [item.menu_item_id]);
 
-                let nuevoEstado = 'disponible';
-                if (stockDisponible <= 0) {
-                    nuevoEstado = 'no_disponible';
-                } else if (stockDisponible <= item.stock_minimo) {
-                    nuevoEstado = 'poco_stock';
+                if (ingredients && ingredients.length > 0) {
+                    // Restore Raw Materials
+                    for (const ing of ingredients) {
+                        const totalToRestore = ing.quantity_required * item.cantidad_total;
+                        await runAsync(`UPDATE inventory_items SET current_stock = current_stock + $1 WHERE id = $2`, [totalToRestore, ing.inventory_item_id]);
+                    }
+                } else {
+                    // Fallback: Restore simple stock
+                    const nuevoReservado = Math.max((item.stock_reservado || 0) - item.cantidad_total, 0);
+                    const stockDisponible = (item.stock_actual || 0) - nuevoReservado;
+
+                    let nuevoEstado = 'disponible';
+                    if (stockDisponible <= 0) {
+                        nuevoEstado = 'no_disponible';
+                    } else if (stockDisponible <= item.stock_minimo) {
+                        nuevoEstado = 'poco_stock';
+                    }
+
+                    await runAsync(`
+                        UPDATE menu_items 
+                        SET stock_reservado = $1, estado_inventario = $2
+                        WHERE id = $3
+                    `, [nuevoReservado, nuevoEstado, item.menu_item_id]);
                 }
-
-                await runAsync(`
-                    UPDATE menu_items 
-                    SET stock_reservado = $1, estado_inventario = $2
-                    WHERE id = $3
-                `, [nuevoReservado, nuevoEstado, item.menu_item_id]);
             }
         }
 
@@ -883,25 +922,37 @@ router.delete('/:id/items/:itemId', async (req, res) => {
         // Eliminar el item
         await runAsync('DELETE FROM pedido_items WHERE id = $1', [itemId]);
 
-        // ✅ NUEVA LÓGICA: Devolver stock_reservado si el pedido NO está pagado
+        // ✅ RESTAURAR MATERIA PRIMA / STOCK
         const pedido = await getAsync('SELECT estado FROM pedidos WHERE id = $1', [pedidoId]);
 
         if (item.usa_inventario && pedido.estado !== 'pagado') {
-            const nuevoReservado = Math.max((item.stock_reservado || 0) - item.cantidad, 0);
-            const stockDisponible = (item.stock_actual || 0) - nuevoReservado;
+            // 1. Check for recipe
+            const ingredients = await allAsync('SELECT inventory_item_id, quantity_required FROM dish_ingredients WHERE menu_item_id = $1', [item.menu_item_id]);
 
-            let nuevoEstado = 'disponible';
-            if (stockDisponible <= 0) {
-                nuevoEstado = 'no_disponible';
-            } else if (stockDisponible <= item.stock_minimo) {
-                nuevoEstado = 'poco_stock';
+            if (ingredients && ingredients.length > 0) {
+                // Restore Raw Materials
+                for (const ing of ingredients) {
+                    const totalToRestore = ing.quantity_required * item.cantidad;
+                    await runAsync(`UPDATE inventory_items SET current_stock = current_stock + $1 WHERE id = $2`, [totalToRestore, ing.inventory_item_id]);
+                }
+            } else {
+                // Fallback: Restore simple stock (menu_items.stock_reservado)
+                const nuevoReservado = Math.max((item.stock_reservado || 0) - item.cantidad, 0);
+                const stockDisponible = (item.stock_actual || 0) - nuevoReservado;
+
+                let nuevoEstado = 'disponible';
+                if (stockDisponible <= 0) {
+                    nuevoEstado = 'no_disponible';
+                } else if (stockDisponible <= item.stock_minimo) {
+                    nuevoEstado = 'poco_stock';
+                }
+
+                await runAsync(`
+                    UPDATE menu_items 
+                    SET stock_reservado = $1, estado_inventario = $2
+                    WHERE id = $3
+                `, [nuevoReservado, nuevoEstado, item.menu_item_id]);
             }
-
-            await runAsync(`
-                UPDATE menu_items 
-                SET stock_reservado = $1, estado_inventario = $2
-                WHERE id = $3
-            `, [nuevoReservado, nuevoEstado, item.menu_item_id]);
         }
 
         // ✅ FIX: Recalcular subtotal, propina y total del pedido
