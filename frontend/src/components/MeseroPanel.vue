@@ -114,6 +114,15 @@
               </div>
               <div class="item-acciones">
                 <span class="precio">${{ (item.cantidad * item.precio).toFixed(2) }}</span>
+                <!-- ✅ NUEVO: Botón Desagrupar -->
+                <button 
+                  v-if="item.cantidad > 1" 
+                  @click="desagruparItem(idx)" 
+                  class="btn-split"
+                  title="Separar item para nota individual"
+                >
+                  ✂️
+                </button>
                 <button @click="removerItem(idx)" class="btn-remove">✕</button>
               </div>
               
@@ -761,6 +770,20 @@ const removerItem = (idx) => {
     item.cantidad--;
   } else {
     pedidoEnProgreso.value.splice(idx, 1);
+  }
+};
+
+// ✅ NUEVO: Desagrupar item para notas individuales
+const desagruparItem = (idx) => {
+  const item = pedidoEnProgreso.value[idx];
+  if (item.cantidad > 1) {
+    item.cantidad--;
+    
+    // Crear copia del item con cantidad 1 y sin notas previas
+    const individualItem = { ...item, cantidad: 1, notas: '' };
+    
+    // Insertar justo después del item actual para mejor UX
+    pedidoEnProgreso.value.splice(idx + 1, 0, individualItem);
   }
 };
 
