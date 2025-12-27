@@ -191,9 +191,10 @@ export const usePedidoStore = defineStore('pedido', () => {
     });
 
     // ✅ NUEVO: Actualizar notas
+    // ✅ NUEVO: Actualizar notas
     const actualizarNotasItem = async (itemId, notas) => {
         try {
-            await api.items.updateNotes(itemId, notas);
+            await api.actualizarNotasItem(itemId, notas);
         } catch (err) {
             console.error('Error updating notes:', err);
             throw err;
@@ -203,7 +204,7 @@ export const usePedidoStore = defineStore('pedido', () => {
     // ✅ NUEVO: Dividir item
     const dividirItem = async (itemId) => {
         try {
-            await api.items.split(itemId);
+            await api.dividirItem(itemId);
             // El socket actualizará la lisat
         } catch (err) {
             console.error('Error splitting item:', err);
