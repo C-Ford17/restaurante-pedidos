@@ -599,7 +599,21 @@ onMounted(() => {
   if (!socket.connected) socket.connect();
   
   socket.on('pedido_actualizado', (data) => {
-    console.log('📝 Pedido actualizado en caja:', data);
+    // ✅ OPTIMIZACIÓN: Solo actualizar si es relevante para cajero
+    // Estados que le importan al cajero: listo_pagar, en_caja, pagado, cancelado (para quitarlo)
+    const estadosRelevantes = ['listo_pagar', 'en_caja', 'pagado', 'cancelado'];
+    
+    // Verificar si el pedido ya estaba visible en la lista (para quitarlo si cambia de estado)
+    const estabaVisible = pedidosListosPagar.value.some(p => p.id === data.id);
+    
+    const esRelevante = estadosRelevantes.includes(data.estado) || estabaVisible;
+
+    if (!esRelevante) {
+        console.log('ignoring update', data.estado); // Debug log
+        return; 
+    }
+
+    console.log('📝 Pedido actualizado en caja (RELEVANTE):', data);
     
     // ✅ NUEVO: Si hay un pedido seleccionado (usuario trabajando), no recargar automáticamente
     if (pedidoSeleccionado.value) {

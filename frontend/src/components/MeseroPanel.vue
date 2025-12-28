@@ -544,11 +544,9 @@ const itemsPorCategoriaEdicion = computed(() => {
 const isTableBlocked = (mesa) => {
   if (!mesa.is_blockable) return false;
   
-  // Check if there is an active order for THIS table by the CURRENT waiter
-  // Requirement: "when he makes an order... said table can no longer be clicked"
-  
-  // Note: misPedidos is computed based on usuarioStore.usuario.id
-  const activeOrder = misPedidos.value.find(p => p.mesa_numero === mesa.numero);
+  // ✅ GLOBAL LOCK: Check ALL active orders, not just current waiter's
+  // "The blocked tables issue... make it be for all waiters"
+  const activeOrder = pedidoStore.pedidos.find(p => String(p.mesa_numero) === String(mesa.numero));
   
   if (activeOrder && ['nuevo', 'en_cocina', 'listo', 'servido', 'listo_pagar', 'en_caja'].includes(activeOrder.estado)) {
     return true;
@@ -1254,7 +1252,8 @@ onMounted(() => {
   cargarDatos();
   cargarEstadoLocal();
   
-  if (!socket.connected) socket.connect();
+  // ✅ FIX: Iniciar listeners del store para actualizaciones GLOBALES (bloqueo de mesas)
+  pedidoStore.iniciarRealTime();
 
   // Listeners para actualizaciones en tiempo real
   socket.on('item_ready', (data) => {
