@@ -484,6 +484,16 @@
           <div v-for="mesa in mesas" :key="mesa.id" class="mesa-card">
             <div class="mesa-number">{{ $t('common.table') }} {{ mesa.numero }}</div>
             <div class="mesa-capacity">👤 {{ mesa.capacidad }} {{ $t('common.people') }}</div>
+            
+            <!-- Blocking Toggle -->
+             <div class="mesa-blocking" style="margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+               <label class="switch small">
+                  <input type="checkbox" :checked="mesa.is_blockable" @change="toggleBlockableMesa(mesa)">
+                  <span class="slider round"></span>
+              </label>
+              <span style="font-size: 11px; color: #6b7280;">{{ mesa.is_blockable ? '🔒 Bloqueado' : '🔓 Libre' }}</span>
+            </div>
+
             <button @click="eliminarMesa(mesa.id)" class="btn-icon delete-mesa" title="Eliminar">✕</button>
           </div>
         </div>
@@ -1077,6 +1087,19 @@ const eliminarMesa = async (id) => {
     await cargarMesas();
   } catch (err) {
     alert('Error al eliminar mesa');
+  }
+};
+
+// ✅ NUEVO: Toggle Blocking for Editor
+const toggleBlockableMesa = async (mesa) => {
+  try {
+    const newValue = !mesa.is_blockable;
+    mesa.is_blockable = newValue; // Optimistic
+    await api.updateMesa(mesa.id, { is_blockable: newValue });
+  } catch (error) {
+    console.error('Error updating blockable:', error);
+    mesa.is_blockable = !mesa.is_blockable; // Revert
+    alert('Error actualizando mesa');
   }
 };
 

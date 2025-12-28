@@ -178,6 +178,10 @@
                     <button @click="verDetallesPedido(pedido.id)" class="btn btn-sm btn-info">
                      {{ $t('cashier.view') }}
                     </button>
+                    <!-- Delete Button for Order -->
+                     <button @click="eliminarPedido(pedido.id)" class="btn btn-sm btn-icon delete" style="margin-left: 5px;" title="Eliminar Pedido">
+                      🗑️
+                    </button>
                   </td>
                 </tr>
               </tbody>
@@ -527,6 +531,25 @@ const verDetallesPedido = async (pedidoId) => {
   } catch (err) {
     console.error('Error cargando detalles:', err);
     alert('❌ ' + t('common.error'));
+  }
+};
+
+const eliminarPedido = async (id) => {
+  if (!confirm('⚠️ ¿Estás SEGURO de eliminar este pedido?\n\nEsta acción eliminará el pedido, sus items y su historial de pagos.\nNO se puede deshacer.')) return;
+  
+  if (!confirm('¿De verdad? Confirma nuevamente para eliminar permanentemente.')) return;
+
+  try {
+    loading.value = true;
+    await api.deletePedido(id);
+    // Recargar reportes para actualizar la lista y totales
+    await cargarReportes();
+    alert('✅ Pedido eliminado correctamente');
+  } catch (err) {
+    console.error('Error eliminando pedido:', err);
+    alert('❌ Error al eliminar pedido');
+  } finally {
+    loading.value = false;
   }
 };
 

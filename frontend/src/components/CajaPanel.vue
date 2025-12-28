@@ -39,8 +39,16 @@
                 <button 
                   @click="verCuentaOnline(pedido.id)" 
                   class="btn btn-sm btn-info"
+                  :title="$t('cashier.view_bill_online')"
                 >
-                  👁️ {{ $t('cashier.view_bill_online') }}
+                  👁️
+                </button>
+                <button 
+                  @click="revertirPedido(pedido)" 
+                  class="btn btn-sm btn-warning"
+                  title="Devolver a Mesa (Reabrir)"
+                >
+                  ↩️
                 </button>
                 <button 
                   @click="pedirCuenta(pedido)" 
@@ -548,6 +556,22 @@ const pedirCuenta = async (pedido) => {
 const verCuentaOnline = (pedidoId) => {
   const baseUrl = window.location.origin;
   window.open(`${baseUrl}/cuenta/${pedidoId}`, '_blank');
+};
+
+const revertirPedido = async (pedido) => {
+  if (!confirm(`¿Desea devolver el pedido de la Mesa ${pedido.mesa_numero} a estado SERVIDO?\nEsto permitirá al mesero editarlo nuevamente.`)) return;
+  
+  try {
+    loading.value = true;
+    await api.updatePedidoStatus(pedido.id, 'servido');
+    alert('Pedido devuelto a estado servido exitosamente.');
+    await actualizarPedidos();
+  } catch (error) {
+    console.error('Error revirtiendo pedido:', error);
+    alert('Error al revertir el pedido');
+  } finally {
+    loading.value = false;
+  }
 };
 
 const verDetallesPago = async (pedidoId) => {

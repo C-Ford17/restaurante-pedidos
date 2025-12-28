@@ -1187,4 +1187,31 @@ router.put('/items/:itemId/notas', async (req, res) => {
     }
 });
 
+// DELETE /api/pedidos/:id - Eliminar pedido (Admin)
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Verificar si existe
+        const pedido = await getAsync('SELECT id FROM pedidos WHERE id = $1', [id]);
+        if (!pedido) {
+            return res.status(404).json({ error: 'Pedido no encontrado' });
+        }
+
+        // Eliminar items primero (aunque ON DELETE CASCADE debería manejarlo si está configurado, lo hacemos explícito por seguridad)
+        await runAsync('DELETE FROM pedido_items WHERE pedido_id = $1', [id]);
+
+        // Eliminar pagos asociados
+        await runAsync('DELETE FROM transacciones WHERE pedido_id = $1', [id]);
+
+        // Eliminar el pedido
+        await runAsync('DELETE FROM pedidos WHERE id = $1', [id]);
+
+        res.json({ message: '✓ Pedido eliminado correctamente' });
+    } catch (error) {
+        console.error('Error eliminando pedido:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;

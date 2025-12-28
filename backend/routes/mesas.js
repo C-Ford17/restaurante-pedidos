@@ -16,18 +16,19 @@ router.get('/', async (req, res) => {
 // POST /api/mesas - Crear mesas
 router.post('/', async (req, res) => {
     try {
-        const { numero, capacidad } = req.body;
+        const { numero, capacidad, is_blockable } = req.body;
 
         if (!numero) {
             return res.status(400).json({ error: 'Número de mesa requerido' });
         }
 
-        const query = `INSERT INTO mesas(numero, capacidad) VALUES($1, $2)`;
-        await runAsync(query, [numero, capacidad || 4]);
+        const query = `INSERT INTO mesas(numero, capacidad, is_blockable) VALUES($1, $2, $3)`;
+        await runAsync(query, [numero, capacidad || 4, is_blockable || false]);
 
         res.json({
             numero,
             capacidad,
+            is_blockable: is_blockable || false,
             estado: 'disponible',
             message: '✓ Mesa agregada'
         });
@@ -45,6 +46,37 @@ router.delete('/:id', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// PUT /api/mesas/:id - Actualizar mesa
+router.put('/:id', async (req, res) => {
+    try {
+        const { is_blockable } = req.body;
+        await runAsync('UPDATE mesas SET is_blockable = $1 WHERE id = $2', [is_blockable, req.params.id]);
+        res.json({ message: '✓ Mesa actualizada', is_blockable });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Initialize Schema
+(async () => {
+    try {
+        // Check if column exists
+        const checkColumn = await allAsync(`
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='mesas' AND column_name='is_blockable'
+        `);
+
+        if (checkColumn.length === 0) {
+            console.log('🔧 Agregando columna is_blockable a mesas...');
+            await runAsync('ALTER TABLE mesas ADD COLUMN is_blockable BOOLEAN DEFAULT FALSE');
+        }
+    } catch (err) {
+        console.error('Error checking schema:', err);
+    }
+})();
+
 
 // GET /api/mesas/:numero/pedido-actual - Obtener pedido actual de una mesa (PÚBLICO)
 router.get('/:numero/pedido-actual', async (req, res) => {

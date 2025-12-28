@@ -33,10 +33,15 @@
             <button
               v-for="mesa in pedidoStore.mesas"
               :key="mesa.numero"
-              @click="toggleMesa(mesa.numero)"
-              :class="['mesa-btn', { 'mesa-active': mesaSeleccionada === mesa.numero }]"
+              @click="!isTableBlocked(mesa) && toggleMesa(mesa.numero)"
+              :class="['mesa-btn', { 
+                'mesa-active': mesaSeleccionada === mesa.numero,
+                'mesa-blocked': isTableBlocked(mesa)
+              }]"
+              :disabled="isTableBlocked(mesa)"
             >
               {{ $t('common.table') }} {{ mesa.numero }}
+              <span v-if="isTableBlocked(mesa)" class="lock-icon">🔒</span>
             </button>
           </div>
         </div>
@@ -493,6 +498,22 @@ const itemsPorCategoriaEdicion = computed(() => {
   
   return items;
 });
+
+const isTableBlocked = (mesa) => {
+  if (!mesa.is_blockable) return false;
+  
+  // Check if there is an active order for THIS table by the CURRENT waiter
+  // Requirement: "when he makes an order... said table can no longer be clicked"
+  
+  // Note: misPedidos is computed based on usuarioStore.usuario.id
+  const activeOrder = misPedidos.value.find(p => p.mesa_numero === mesa.numero);
+  
+  if (activeOrder && ['nuevo', 'en_cocina', 'listo', 'servido', 'listo_pagar', 'en_caja'].includes(activeOrder.estado)) {
+    return true;
+  }
+  
+  return false;
+};
 
 const getHintEliminar = (item) => {
   // Simple hint logic, can be improved with i18n if needed
@@ -1239,5 +1260,16 @@ onUnmounted(() => {
 
 .close-btn:hover {
   color: #ef4444;
+}
+
+.mesa-blocked {
+  background-color: #d1d5db !important;
+  color: #6b7280 !important;
+  cursor: not-allowed !important;
+  opacity: 0.7;
+}
+
+.lock-icon {
+  margin-left: 5px;
 }
 </style>

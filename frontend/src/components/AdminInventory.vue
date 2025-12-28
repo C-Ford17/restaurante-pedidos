@@ -28,19 +28,19 @@
         </thead>
         <tbody>
           <tr v-for="item in items" :key="item.id">
-            <td>{{ item.name }}</td>
-            <td :class="getStockClass(item)">
+            <td data-label="Nombre">{{ item.name }}</td>
+            <td data-label="Stock Actual" :class="getStockClass(item)">
               {{ formatNumber(item.current_stock) }}
             </td>
-            <td>{{ item.unit }}</td>
-            <td>{{ formatNumber(item.min_stock) }}</td>
-            <td>${{ formatNumber(item.cost_per_unit) }}</td>
-            <td>
+            <td data-label="Und">{{ item.unit }}</td>
+            <td data-label="Stock Mínimo">{{ formatNumber(item.min_stock) }}</td>
+            <td data-label="Costo / Und">${{ formatNumber(item.cost_per_unit) }}</td>
+            <td data-label="Estado">
               <span class="status-badge" :class="getStatusClass(item)">
                 {{ getStatusLabel(item) }}
               </span>
             </td>
-            <td class="actions-cell">
+            <td data-label="Acciones" class="actions-cell">
               <button @click="openQuickStock(item, 'add')" class="btn-icon add" title="Reponer stock">+</button>
               <button @click="openEditModal(item)" class="btn-icon edit" title="Editar">✎</button>
               <button @click="deleteItem(item)" class="btn-icon delete" title="Eliminar">🗑</button>
@@ -452,4 +452,83 @@ async function applyStock(operation) {
   padding: 3rem;
   color: #6b7280;
 }
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .header h2 {
+    text-align: center;
+    font-size: 1.25rem;
+  }
+
+  .btn-volver {
+    width: 100%;
+    text-align: center;
+    padding: 0.75rem;
+  }
+
+  .inventory-table-container {
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .inventory-table thead {
+    display: none;
+  }
+
+  .inventory-table, .inventory-table tbody, .inventory-table tr, .inventory-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .inventory-table tr {
+    margin-bottom: 1rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+
+  .inventory-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    text-align: right;
+  }
+
+  .inventory-table td:last-child {
+    border-bottom: none;
+    justify-content: center;
+    padding: 1rem;
+    background: #f9fafb;
+  }
+
+  .inventory-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    text-align: left;
+  }
+
+  .actions-cell {
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .btn-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
+}
+
 </style>

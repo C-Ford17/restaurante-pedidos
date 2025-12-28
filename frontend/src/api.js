@@ -90,6 +90,10 @@ export default {
     return api.delete(`/mesas/${id}`);
   },
 
+  updateMesa(id, data) {
+    return api.put(`/mesas/${id}`, data);
+  },
+
   // ============= PEDIDOS =============
   crearPedido(mesa_numero, usuario_mesero_id, items, notas) {
     return api.post('/pedidos', { mesa_numero, usuario_mesero_id, items, notas });
@@ -105,6 +109,10 @@ export default {
 
   actualizarEstadoPedido(id, estado) {
     return api.put(`/pedidos/${id}/estado`, { estado });
+  },
+
+  deletePedido(id) {
+    return api.delete(`/pedidos/${id}`);
   },
 
   // ============= ITEMS DEL PEDIDO =============

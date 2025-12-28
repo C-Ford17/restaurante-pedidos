@@ -367,4 +367,8 @@ onMounted(() => {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+.close-btn:hover {
+  color: #ef4444;
+}
 </style>
