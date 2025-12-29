@@ -19,7 +19,7 @@
           <button @click="mostrarQR(mesa)" class="btn-qr">
             📱 {{ $t('qr_view.view_qr') }}
           </button>
-          <a :href="`/mesa/${mesa.numero}`" target="_blank" class="btn-link">
+          <a :href="`/mesa/${mesa.numero}/welcome`" target="_blank" class="btn-link">
             🔗 {{ $t('qr_view.open_order') }}
           </a>
         </div>
@@ -82,7 +82,7 @@ const cargarMesas = async () => {
 
 const getUrl = (numero) => {
   if (!numero) return '';
-  return `${window.location.origin}/mesa/${numero}`;
+  return `${window.location.origin}/mesa/${numero}/welcome`;
 };
 
 const mostrarQR = async (mesa) => {

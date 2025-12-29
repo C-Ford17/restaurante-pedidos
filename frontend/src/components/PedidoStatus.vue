@@ -177,10 +177,11 @@ const cargarPedido = async () => {
   } catch (err) {
     if (esMesa && err.response?.status === 404) {
       error.value = t('order_status.error_no_active_order');
+      // No console.error for expected 404s
     } else {
       error.value = t('order_status.error_not_found');
+      console.error(err);
     }
-    console.error(err);
   } finally {
     loading.value = false;
   }

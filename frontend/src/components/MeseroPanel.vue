@@ -1,38 +1,54 @@
 <template>
   <div class="mesero-panel">
     <div class="panel-header">
-      <h2>📝 {{ $t('waiter.title') }}</h2>
-      <div class="header-buttons">
-        <button @click="abrirQRMesas" class="btn btn-secondary" style="margin-right: 8px;">
-          🖨️ {{ $t('waiter.tables_qr') }}
-        </button>
-        <button @click="mostrarQRMenu" class="btn btn-info" style="margin-right: 8px;">
-          📱 {{ $t('waiter.menu_qr') }}
-        </button>
-        <button @click="cargarDatos" class="btn btn-secondary" :disabled="loading">
-          {{ $t('waiter.update') }}
-        </button>
-      </div> 
+      <div class="header-content">
+        <div class="header-title">
+          <h2><ClipboardList :size="28" class="text-primary" /> {{ $t('waiter.title') }}</h2>
+        </div>
+        <div class="header-buttons">
+          <button @click="abrirQRMesas" class="btn-icon-label" title="QR Mesas">
+            <Printer :size="18" /> {{ $t('waiter.tables_qr') }}
+          </button>
+          <button @click="mostrarQRMenu" class="btn-icon-label" title="QR Menú">
+            <QrCode :size="18" /> {{ $t('waiter.menu_qr') }}
+          </button>
+          <button @click="cargarDatos" class="btn-refresh" :disabled="loading" :class="{ 'spinning': loading }">
+            <RefreshCw :size="20" />
+          </button>
+        </div> 
+      </div>
     </div>
 
     <div class="panel-content">
-      <div v-if="loading" class="loading">{{ $t('waiter.loading') }}</div>
+      <div v-if="loading && !pedidoStore.mesas.length" class="loading-state">
+        <div class="spinner"></div>
+        <p>{{ $t('waiter.loading') }}</p>
+      </div>
 
       <template v-else>
         <!-- Notificaciones -->
-            <div v-if="notificaciones.length > 0" class="notificaciones-container">
+        <div v-if="notificaciones.length > 0" class="notificaciones-container">
+          <transition-group name="notification">
             <div v-for="notif in notificaciones" :key="notif.id" :class="['notificacion', `notif-${notif.tipo}`]">
-                {{ notif.titulo }}
-                <button @click="cerrarNotificacion(notif.id)" class="btn-cerrar-notif">✕</button>
+                <div class="notif-content">
+                  <Bell :size="16" v-if="notif.tipo === 'info'" />
+                  <AlertTriangle :size="16" v-else-if="notif.tipo === 'warning'" />
+                  <CheckCircle :size="16" v-else />
+                  <span>{{ notif.titulo }}</span>
+                </div>
+                <button @click="cerrarNotificacion(notif.id)" class="btn-cerrar-notif"><X :size="16" /></button>
             </div>
-            </div>
- <!-- Selector de Mesa -->
-        <div class="section">
-          <h3>{{ $t('waiter.select_table') }}</h3>
-          <div class="mesas-grid">
+          </transition-group>
+        </div>
+
+        <!-- Selector de Mesa -->
+        <div class="section tables-section">
+          <h3><LayoutGrid :size="20" class="text-muted" /> {{ $t('waiter.select_table') }}</h3>
+          <div class="mesas-grid" :class="{ 'single-table': mesaSeleccionada }">
             <button
               v-for="mesa in pedidoStore.mesas"
               :key="mesa.numero"
+              v-show="!mesaSeleccionada || mesaSeleccionada === mesa.numero"
               @click="!isTableBlocked(mesa) && toggleMesa(mesa.numero)"
               :class="['mesa-btn', { 
                 'mesa-active': mesaSeleccionada === mesa.numero,
@@ -40,35 +56,42 @@
               }]"
               :disabled="isTableBlocked(mesa)"
             >
-              {{ $t('common.table') }} {{ mesa.numero }}
-              <span v-if="isTableBlocked(mesa)" class="lock-icon">🔒</span>
+              <div class="table-content">
+                 <span class="table-label">{{ $t('common.table') }}</span>
+                 <span class="table-number">{{ mesa.numero }}</span>
+              </div>
+              <Lock v-if="isTableBlocked(mesa)" :size="16" class="lock-icon" />
             </button>
           </div>
         </div>
 
         <!-- Selector de Items -->
-        <div class="section" v-if="mesaSeleccionada">
-          <h3>{{ $t('waiter.select_dishes') }}</h3>
-          <div class="categorias-tabs">
-            <button
-              v-for="cat in categorias"
-              :key="cat"
-              @click="toggleCategoria(cat)"
-              :class="['tab', { 'tab-active': categoriaSeleccionada === cat }]"
-            >
-              {{ cat }}
-            </button>
-          </div>
+        <div class="section items-section" v-if="mesaSeleccionada">
+          <h3><Utensils :size="20" class="text-muted" /> {{ $t('waiter.select_dishes') }}</h3>
+          
+          <div class="filters-row">
+            <div class="categorias-tabs" :class="{ 'single-category': categoriaSeleccionada }">
+                <button
+                v-for="cat in categorias"
+                :key="cat"
+                v-show="!categoriaSeleccionada || categoriaSeleccionada === cat"
+                @click="toggleCategoria(cat)"
+                :class="['tab', { 'tab-active': categoriaSeleccionada === cat }]"
+                >
+                {{ cat }}
+                </button>
+            </div>
 
-          <!-- ✅ NUEVO: Buscador de platos -->
-          <div class="search-container">
-            <input
-              v-model="busqueda"
-              type="text"
-              :placeholder="$t('waiter.search_dishes')"
-              class="search-input"
-            />
-            <button v-if="busqueda" @click="busqueda = ''" class="btn-clear-search">✕</button>
+            <div class="search-container">
+                <Search :size="16" class="search-icon" />
+                <input
+                v-model="busqueda"
+                type="text"
+                :placeholder="$t('waiter.search_dishes')"
+                class="search-input"
+                />
+                <button v-if="busqueda" @click="busqueda = ''" class="btn-clear-search"><X :size="14" /></button>
+            </div>
           </div>
 
           <div class="items-grid">
@@ -81,142 +104,169 @@
               }]"
               @click="agregarItemAlPedido(item)"
             >
-              <!-- ✅ NUEVO: Imagen del item -->
-              <div v-if="item.image_url" class="item-image">
-                <img :src="item.image_url" :alt="item.nombre" />
-              </div>
-              <div v-else class="item-image-placeholder">
-                🍽️
+              <div class="item-image-wrapper">
+                 <img v-if="item.image_url" :src="item.image_url" :alt="item.nombre" class="item-img" />
+                 <div v-else class="item-placeholder">
+                    <UtensilsCrossed :size="24" />
+                 </div>
+                 
+                 <div v-if="item.estado_inventario === 'no_disponible'" class="stock-badge out">
+                    {{ $t('editor.stock.out') }}
+                 </div>
+                 <div v-else-if="item.estado_inventario === 'poco_stock'" class="stock-badge low">
+                    {{ $t('editor.stock.low') }}
+                 </div>
+                 <div v-else-if="item.usa_inventario && item.stock_actual !== null" class="stock-badge count">
+                    {{ item.stock_actual }}
+                 </div>
               </div>
               
-              <div class="item-nombre">{{ item.nombre }}</div>
-              <div class="item-precio">${{ item.precio }}</div>
-              <div class="item-tiempo">⏱️ {{ item.tiempo_preparacion_min }}{{ $t('common.min') }}</div>
-              
-              <!-- Inventory Status -->
-              <div v-if="item.usa_inventario && item.stock_actual !== null" class="item-stock">
-                📦 Quedan: {{ item.stock_actual }} unidades
-              </div>
-              
-              <div v-if="item.estado_inventario === 'no_disponible'" class="item-agotado">
-                ❌ {{ $t('editor.stock.out').toUpperCase() }}
-              </div>
-              <div v-else-if="item.estado_inventario === 'poco_stock'" class="item-warning">
-                ⚠️ {{ $t('editor.stock.low').toUpperCase() }} STOCK
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Resumen del Pedido -->
-        <div class="section" v-if="pedidoEnProgreso.length > 0">
-          <h3>{{ $t('waiter.order_summary') }}</h3>
-          <div class="pedido-summary">
-            <div class="summary-item" v-for="(item, idx) in pedidoEnProgreso" :key="idx">
               <div class="item-info">
-                <span class="cantidad">{{ item.cantidad }}x</span>
-                <span class="nombre">{{ item.nombre }}</span>
-              </div>
-              <div class="item-acciones">
-                <span class="precio">${{ (item.cantidad * item.precio).toFixed(2) }}</span>
-                <!-- ✅ NUEVO: Botón Desagrupar -->
-                <button 
-                  v-if="item.cantidad > 1" 
-                  @click="desagruparItem(idx)" 
-                  class="btn-split"
-                  title="Separar item para nota individual"
-                >
-                  ✂️
-                </button>
-                <button @click="removerItem(idx)" class="btn-remove">✕</button>
-              </div>
-              
-              <!-- ✅ NUEVO: Notas por item (solo para items cocinables) -->
-              <div v-if="!item.es_directo" class="item-notas-container">
-                <textarea
-                  v-model="item.notas"
-                  :placeholder="$t('waiter.item_notes_placeholder') || 'Notas para cocina...'"
-                  class="item-notas-input"
-                  rows="2"
-                ></textarea>
+                  <div class="item-nombre">{{ item.nombre }}</div>
+                  <div class="item-meta">
+                      <span class="item-precio">${{ item.precio }}</span>
+                      <span class="item-tiempo"><Clock :size="12" /> {{ item.tiempo_preparacion_min }}{{ $t('common.min') }}</span>
+                  </div>
               </div>
             </div>
           </div>
-
-          <div class="pedido-total">
-            <span>{{ $t('waiter.total') }}</span>
-            <span class="total-amount">${{ calcularTotal().toFixed(2) }}</span>
-          </div>
-
-          <textarea
-            v-model="notasPedido"
-            :placeholder="$t('waiter.notes_placeholder')"
-            class="notas-input"
-          ></textarea>
-
-          <button
-            ref="btnConfirmar"
-            @click="enviarPedido"
-            class="btn btn-primary btn-submit"
-            :disabled="!mesaSeleccionada || pedidoEnProgreso.length === 0 || enviandoPedido"
-          >
-            {{ enviandoPedido ? $t('common.saving') : $t('waiter.send_to_kitchen') }}
-          </button>
         </div>
 
-        <!-- ✅ NUEVO: Floating Action Button (FAB) para ir a confirmar -->
+        <!-- Resumen del Pedido (Sticky Footer/Sidebar style implied by CSS later) -->
+        <div class="section order-summary-section" v-if="pedidoEnProgreso.length > 0">
+           <div class="summary-header">
+              <h3><ShoppingCart :size="20" class="text-primary" /> {{ $t('waiter.order_summary') }}</h3>
+              <span class="badge-table">{{ $t('common.table') }} {{ mesaSeleccionada }}</span>
+           </div>
+          
+          <div class="pedido-summary-list">
+            <div class="summary-item" v-for="(item, idx) in pedidoEnProgreso" :key="idx">
+              <div class="item-row-main">
+                 <div class="item-qty-name">
+                    <span class="cantidad">{{ item.cantidad }}x</span>
+                    <span class="nombre">{{ item.nombre }}</span>
+                 </div>
+                 <span class="precio">${{ (item.cantidad * item.precio).toFixed(2) }}</span>
+              </div>
+              
+              <div class="item-actions-row">
+                 <div class="item-inputs">
+                     <textarea
+                        v-if="!item.es_directo"
+                        v-model="item.notas"
+                        :placeholder="$t('waiter.item_notes_placeholder') || 'Notas...'"
+                        class="input-notes"
+                        rows="1"
+                    ></textarea>
+                 </div>
+                 <div class="action-buttons">
+                    <button 
+                        v-if="item.cantidad > 1" 
+                        @click="desagruparItem(idx)" 
+                        class="btn-icon-action split"
+                        title="Separar"
+                    >
+                        <Scissors :size="14" />
+                    </button>
+                    <button @click="removerItem(idx)" class="btn-icon-action delete">
+                        <Trash2 :size="14" />
+                    </button>
+                 </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="summary-footer">
+            <div class="pedido-total">
+                <span>{{ $t('waiter.total') }}</span>
+                <span class="total-amount">${{ calcularTotal().toFixed(2) }}</span>
+            </div>
+
+            <textarea
+                v-model="notasPedido"
+                :placeholder="$t('waiter.notes_placeholder')"
+                class="main-notes-input"
+                rows="2"
+            ></textarea>
+
+            <button
+                ref="btnConfirmar"
+                @click="enviarPedido"
+                class="btn-submit-order"
+                :disabled="!mesaSeleccionada || pedidoEnProgreso.length === 0 || enviandoPedido"
+            >
+                <span v-if="enviandoPedido" class="spinning"><Loader2 :size="18" /></span>
+                <span v-else>{{ $t('waiter.send_to_kitchen') }} <Send :size="18" /></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- FAB Buttons -->
+        <!-- Scroll to Confirm (bottom-right) -->
         <button 
           v-if="pedidoEnProgreso.length > 0" 
           @click="scrollToConfirm" 
           class="fab-confirm"
           title="Ir a confirmar pedido"
         >
-          ✅
+          <Check :size="24" />
+        </button>
+        
+        <!-- Scroll to Categories (bottom-left) -->
+        <button 
+          v-if="mesaSeleccionada && itemsPorCategoria.length > 0" 
+          @click="scrollToCategories" 
+          :class="['fab-scroll-up', { hidden: !showScrollUpButton }]"
+          title="Ir a categorías"
+        >
+          <ArrowUp :size="24" />
         </button>
 
-        <!-- Items Listos para Servir (Individual) -->
-        <div class="section" v-if="misItemsListos.length > 0">
-          <h3>{{ $t('waiter.items_ready') }} <span class="badge-count">{{ misItemsListos.length }}</span></h3>
-          <div class="items-listos-list">
-            <div v-for="itemListo in misItemsListos" :key="itemListo.item_id" class="item-listo-card">
-              <div class="item-listo-header">
-                <span class="mesa-badge-listo">{{ $t('common.table') }} {{ itemListo.mesa_numero }}</span>
-                <span class="tiempo-listo">
-                  {{ $t('waiter.ready_since') }} {{ calcularTiempoDesde(itemListo.tiempoDesdeReady) }}
+        <!-- Items Listos -->
+        <div class="section ready-section" v-if="misItemsListos.length > 0">
+          <h3>
+             <BellRing :size="20" class="text-success" /> 
+             {{ $t('waiter.items_ready') }} 
+             <span class="badge-count">{{ misItemsListos.length }}</span>
+          </h3>
+          <div class="ready-grid">
+            <div v-for="itemListo in misItemsListos" :key="itemListo.item_id" class="ready-card">
+              <div class="ready-header">
+                <span class="table-badge">{{ $t('common.table') }} {{ itemListo.mesa_numero }}</span>
+                <span class="time-badge">
+                   <Clock :size="12" /> {{ calcularTiempoDesde(itemListo.tiempoDesdeReady) }}
                 </span>
               </div>
-              <div class="item-listo-body">
-                <div class="item-info">
-                  <span class="item-nombre">{{ itemListo.nombre }}</span>
-                  <span class="item-cantidad">x{{ itemListo.cantidad_lista }}</span>
+              <div class="ready-body">
+                <div class="ready-info">
+                   <span class="ready-name">{{ itemListo.nombre }}</span>
+                   <span class="ready-qty">x{{ itemListo.cantidad_lista }}</span>
                 </div>
-                <button @click="marcarItemComoServido(itemListo.item_id)" class="btn btn-servir-item">
-                  {{ $t('waiter.mark_served') }}
+                <button @click="marcarItemComoServido(itemListo.item_id)" class="btn-serve">
+                  {{ $t('waiter.mark_served') }} <CheckCircle2 :size="16" />
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Pedidos Servidos - Listos para Cobrar -->
-        <div class="section" v-if="misPedidosServidos.length > 0">
-          <h3>{{ $t('waiter.orders_served') }}</h3>
-          <div class="pedidos-servidos-list">
-            <div v-for="pedido in misPedidosServidos" :key="pedido.id" class="pedido-servido-item">
-              <div class="pedido-servido-header">
-                <span class="mesa-badge-servido">{{ $t('common.table') }} {{ pedido.mesa_numero }}</span>
-                <span class="total-badge">${{ pedido.total }}</span>
+        <!-- Pedidos Servidos -->
+        <div class="section served-section" v-if="misPedidosServidos.length > 0">
+          <h3><CheckCheck :size="20" class="text-info" /> {{ $t('waiter.orders_served') }}</h3>
+          <div class="served-grid">
+            <div v-for="pedido in misPedidosServidos" :key="pedido.id" class="served-card">
+              <div class="served-header">
+                <span class="table-badge">{{ $t('common.table') }} {{ pedido.mesa_numero }}</span>
+                <span class="price-badge">${{ pedido.total }}</span>
               </div>
-              <div class="pedido-servido-detalles">
-                <div class="info">
-                  <span>{{ pedido.items_count }} items</span>
-                </div>
-                <div class="btn-group">
-                  <button @click="verCuenta(pedido.id)" class="btn btn-secondary btn-small">
-                    👁️ {{ $t('waiter.view_bill') }}
+              <div class="served-body">
+                <span class="items-count"><Layers :size="14" /> {{ pedido.items_count }} items</span>
+                <div class="served-actions">
+                  <button @click="verCuenta(pedido.id)" class="btn-icon-subtle" title="Ver Cuenta">
+                    <Eye :size="18" />
                   </button>
-                  <button @click="marcarListoPagar(pedido.id)" class="btn btn-pagar">
-                    {{ $t('waiter.ready_to_pay') }}
+                  <button @click="marcarListoPagar(pedido.id)" class="btn-pay">
+                    {{ $t('waiter.ready_to_pay') }} <DollarSign :size="16" />
                   </button>
                 </div>
               </div>
@@ -225,248 +275,270 @@
         </div>
 
         <!-- Pedidos Activos -->
-        <div class="section">
-          <h3>{{ $t('waiter.orders_in_progress') }}</h3>
-          <div v-if="misPedidos.length === 0" class="empty-state">
-            {{ $t('waiter.no_active_orders') }}
+        <div class="section active-orders-section">
+          <h3><Activity :size="20" class="text-secondary" /> {{ $t('waiter.orders_in_progress') }}</h3>
+          <div v-if="misPedidos.length === 0" class="empty-active-state">
+            <Coffee :size="32" class="text-muted" />
+            <p>{{ $t('waiter.no_active_orders') }}</p>
           </div>
-          <div v-else class="pedidos-list">
-            <div v-for="pedido in misPedidos" :key="pedido.id" class="pedido-item">
-              <div class="pedido-header">
-                <span class="mesa-badge">{{ $t('common.table') }} {{ pedido.mesa_numero }}</span>
-                <span :class="['estado-badge', `estado-${pedido.estado}`]">
-                  {{ $t('status.' + pedido.estado) }}
+          <div v-else class="active-grid">
+            <div v-for="pedido in misPedidos" :key="pedido.id" class="active-card">
+              <div class="active-header">
+                <span class="table-badge">{{ $t('common.table') }} {{ pedido.mesa_numero }}</span>
+                <span :class="['status-pill', `status-${pedido.estado}`]">
+                   <span class="dot"></span> {{ $t('status.' + pedido.estado) }}
                 </span>
               </div>
-              <div class="pedido-detalles">
-                <span>{{ pedido.items_count }} items</span>
-                <span>${{ pedido.total }}</span>
-              </div>
-              <div class="pedido-acciones">
-                <button 
-                  v-if="pedido.estado !== 'listo_pagar'"
-                  @click="abrirEditorPedido(pedido)" 
-                  class="btn btn-primary btn-small"
-                >
-                  {{ $t('waiter.edit') }}
-                </button>
-                <button 
-                  v-if="['nuevo', 'en_cocina'].includes(pedido.estado)"
-                  @click="cancelarPedido(pedido.id)"
-                  class="btn btn-secondary btn-small"
-                >
-                  {{ $t('waiter.cancel') }}
-                </button>
-                <button @click="mostrarQRCliente(pedido.id)" class="btn btn-secondary btn-small">
-                  {{ $t('waiter.qr') }}
-                </button>
+              <div class="active-body">
+                <div class="active-meta">
+                   <span><Layers :size="14" /> {{ pedido.items_count }} items</span>
+                   <span class="active-price">${{ pedido.total }}</span>
+                </div>
+                <div class="active-actions">
+                  <button 
+                    v-if="pedido.estado !== 'listo_pagar'"
+                    @click="abrirEditorPedido(pedido)" 
+                    class="btn-edit"
+                  >
+                    <Edit3 :size="16" /> {{ $t('waiter.edit') }}
+                  </button>
+                  <button 
+                    v-if="['nuevo', 'en_cocina'].includes(pedido.estado)"
+                    @click="cancelarPedido(pedido.id)"
+                    class="btn-cancel"
+                    title="Cancelar"
+                  >
+                    <Trash2 :size="16" />
+                  </button>
+                  <button @click="mostrarQRCliente(pedido.id)" class="btn-qr" title="QR">
+                    <QrCode :size="16" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-  <div v-if="mostrarQR" class="qr-modal-overlay" @click.self="cerrarQR">
-    <div class="qr-modal">
-        <button class="close-btn" @click="cerrarQR">&times;</button>
+        
+    </template>
+    </div>
+    
+  <!-- QR Modal (simplified) -->
+  <div v-if="mostrarQR" class="modal-overlay" @click.self="cerrarQR">
+    <div class="modal-content qr-content">
+        <button class="btn-close-modal" @click="cerrarQR"><X :size="24" /></button>
         <h3>{{ tipoQR === 'menu' ? $t('waiter.menu_qr') : $t('waiter.scan_status') }}</h3>
         <GeneradorQR ref="qrComponent" :valor="urlParaQR" :size="300" :mostrarDescarga="false" />
         
-        <div class="qr-actions" style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px; width: 100%;">
-            <!-- Botones para QR de Pedido -->
+        <div class="modal-actions-col">
             <template v-if="tipoQR === 'pedido'">
-                <a :href="urlParaQR" target="_blank" class="btn btn-primary">
-                    👁️ {{ $t('qr_view.view_qr') }}
+                <a :href="urlParaQR" target="_blank" class="btn-primary-link">
+                    <Eye :size="18" /> {{ $t('qr_view.view_qr') }}
                 </a>
-                <button @click="imprimirQR" class="btn btn-secondary">
-                    🖨️ {{ $t('qr_view.print') }}
+                <button @click="imprimirQR" class="btn-secondary-action">
+                    <Printer :size="18" /> {{ $t('qr_view.print') }}
                 </button>
             </template>
 
-            <!-- Botones para QR de Menú -->
             <template v-if="tipoQR === 'menu'">
-                <a :href="urlParaQR" target="_blank" class="btn btn-primary">
-                    📄 {{ $t('editor.menu.view_menu') }}
+                <a :href="urlParaQR" target="_blank" class="btn-primary-link">
+                    <FileText :size="18" /> {{ $t('editor.menu.view_menu') }}
                 </a>
-                 <button @click="imprimirQR" class="btn btn-secondary">
-                    🖨️ {{ $t('qr_view.print') }}
+                 <button @click="imprimirQR" class="btn-secondary-action">
+                    <Printer :size="18" /> {{ $t('qr_view.print') }}
                 </button>
             </template>
-
-            <button @click="cerrarQR" class="btn btn-text-danger" style="margin-top: 8px;">
-                {{ $t('common.close') }}
-            </button>
         </div>
     </div>
   </div>
 
-  <!-- Modal de Edición de Pedido -->
-  <div v-if="mostrarEditorPedido" class="qr-modal-overlay" @click.self="cerrarEditorPedido">
-    <div class="editor-pedido-modal">
-      <div class="editor-header">
-        <h3>{{ $t('waiter.edit_order_title') }} {{ pedidoEditando?.mesa_numero }}</h3>
-        <button @click="cerrarEditorPedido" class="btn-cerrar">✕</button>
+  <!-- Modal de Edición -->
+  <div v-if="mostrarEditorPedido" class="modal-overlay" @click.self="cerrarEditorPedido">
+    <div class="modal-content editor-modal">
+      <div class="modal-header">
+        <h3><Edit3 :size="20" /> {{ $t('waiter.edit_order_title') }} {{ pedidoEditando?.mesa_numero }}</h3>
+        <button @click="cerrarEditorPedido" class="btn-close-modal"><X :size="24" /></button>
       </div>
 
-      <!-- Items actuales del pedido -->
-      <div class="editor-seccion">
-        <h4>{{ $t('waiter.order_items') }}</h4>
-        <div v-if="!pedidoEditando?.items?.length" class="empty-state">{{ $t('waiter.no_active_orders') }}</div>
-        <div v-else class="items-edicion-list">
-          <div v-for="item in pedidoEditando.items" :key="item.id" class="item-edicion">
-            <div class="item-edicion-info">
-              <span class="item-nombre">{{ item.nombre }}</span>
-              <span :class="['estado-badge-small', `estado-${item.estado}`]">{{ $t('status.' + item.estado) }}</span>
-            </div>
-            <div class="item-edicion-acciones">
-              <span class="item-precio">${{ item.precio_unitario }}</span>
-              
-              <!-- ✅ NUEVO: Split item existente -->
-              <button 
-                v-if="['pendiente','en_preparacion'].includes(item.estado) && item.cantidad > 1"
-                @click="dividirItemEnEdicion(item)" 
-                class="btn-split-mini"
-                title="Dividir item"
-              >
-                ✂️
-              </button>
-
-              <button 
-                v-if="['pendiente','en_preparacion','listo','servido'].includes(item.estado)"
-                @click="eliminarItemDelPedido(item)" 
-                class="btn-eliminar-item"
-                :title="getHintEliminar(item)"
-              >
-                🗑️
-              </button>
-              <span v-else class="item-no-editable">🔒</span>
-            </div>
-            
-            <!-- ✅ NUEVO: Notas editable para items existentes -->
-            <div class="item-edicion-notas" style="width: 100%; margin-top: 4px;">
-                 <textarea
-                  v-model="item.notas"
-                  @change="guardarNotasItem(item)"
-                  placeholder="Notas..."
-                  class="item-notas-input mini"
-                  rows="1"
-                  :disabled="!['pendiente','en_preparacion'].includes(item.estado)"
-                ></textarea>
-            </div>
-          </div>
-        </div>
-        <div class="editor-total">
-          <strong>{{ $t('waiter.total') }} ${{ pedidoEditando?.total || 0 }}</strong>
-        </div>
-      </div>
-
-      <!-- Agregar nuevos items -->
-      <div class="editor-seccion">
-        <h4>{{ $t('waiter.add_items') }}</h4>
-        <div class="categorias-tabs mini">
-          <button
-            v-for="cat in categorias"
-            :key="cat"
-            @click="toggleCategoriaEdicion(cat)"
-            :class="['tab', { 'tab-active': categoriaEdicion === cat }]"
-          >
-            {{ cat }}
-          </button>
-        </div>
-        
-        <!-- ✅ NUEVO: Buscador en edición -->
-        <div class="search-container">
-          <input
-            v-model="busquedaEdicion"
-            type="text"
-            :placeholder="$t('waiter.search_dishes')"
-            class="search-input"
-          />
-          <button v-if="busquedaEdicion" @click="busquedaEdicion = ''" class="btn-clear-search">✕</button>
-        </div>
-        
-        <div class="items-agregar-grid">
-          <div
-            v-for="menuItem in itemsPorCategoriaEdicion"
-            :key="menuItem.id"
-            :class="['item-agregar', { 
-              'item-disabled': menuItem.estado_inventario === 'no_disponible',
-              'item-low-stock': menuItem.estado_inventario === 'poco_stock'
-            }]"
-            @click="agregarItemAEdicion(menuItem)"
-          >
-            <span class="nombre">{{ menuItem.nombre }}</span>
-            <span class="precio">${{ menuItem.precio }}</span>
-            
-            <!-- ✅ NUEVO: Stock status -->
-            <div v-if="menuItem.usa_inventario && menuItem.stock_actual !== null" class="item-stock-mini">
-              📦 {{ menuItem.stock_actual }}
-            </div>
-            <div v-if="menuItem.estado_inventario === 'no_disponible'" class="item-agotado-mini">
-              ❌ AGOTADO
-            </div>
-            <div v-else-if="menuItem.estado_inventario === 'poco_stock'" class="item-warning-mini">
-              ⚠️ BAJO
-            </div>
-          </div>
-        </div>
-
-        <!-- Items pendientes de agregar -->
-        <div v-if="itemsParaAgregar.length > 0" class="items-pendientes-agregar">
-          <h5>{{ $t('waiter.items_to_add') }}</h5>
-          <div v-for="(item, idx) in itemsParaAgregar" :key="idx" class="item-pendiente-row">
-            <div class="item-pendiente-info">
-               <span>{{ item.cantidad }}x {{ item.nombre }} - ${{ (item.cantidad * item.precio_unitario).toFixed(2) }}</span>
-               <div class="acc-groups">
-                   <!-- ✅ NUEVO: Split agregados -->
-                   <button v-if="item.cantidad > 1" @click="desagruparItemAgregado(idx)" class="btn-split-mini">✂️</button>
-                   <button @click="quitarItemPendiente(idx)" class="btn-quitar">✕</button>
+      <div class="editor-body">
+          <!-- Left Col: Current Items -->
+          <div class="editor-col items-col">
+             <h4>{{ $t('waiter.order_items') }}</h4>
+             <div v-if="!pedidoEditando?.items?.length" class="empty-state-mini">{{ $t('waiter.no_active_orders') }}</div>
+             <div v-else class="editor-items-list">
+               <div v-for="item in pedidoEditando.items" :key="item.id" class="editor-item-row">
+                  <div class="editor-item-header">
+                      <span class="item-name">{{ item.nombre }}</span>
+                      <span class="item-price">${{ item.precio_unitario }}</span>
+                  </div>
+                  <div class="editor-item-meta">
+                     <span :class="['status-pill-mini', `status-${item.estado}`]">{{ $t('status.' + item.estado) }}</span>
+                     <div class="editor-item-actions">
+                        <button 
+                            v-if="['pendiente','en_preparacion'].includes(item.estado) && item.cantidad > 1"
+                            @click="dividirItemEnEdicion(item)" 
+                            class="btn-icon-mini"
+                            title="Dividir"
+                        >
+                            <Scissors :size="12" />
+                        </button>
+                        <button 
+                            v-if="['pendiente','en_preparacion','listo','servido'].includes(item.estado)"
+                            @click="eliminarItemDelPedido(item)" 
+                            class="btn-icon-mini danger"
+                        >
+                            <Trash2 :size="12" />
+                        </button>
+                     </div>
+                  </div>
+                  <div class="editor-item-notes">
+                     <textarea
+                        v-model="item.notas"
+                        @change="guardarNotasItem(item)"
+                        placeholder="Notas..."
+                        class="input-notes mini"
+                        rows="1"
+                        :disabled="!['pendiente','en_preparacion'].includes(item.estado)"
+                     ></textarea>
+                  </div>
                </div>
-            </div>
-            <!-- ✅ NUEVO: Notas para items agregados -->
-            <textarea
-                v-model="item.notas"
-                placeholder="Notas..."
-                class="item-notas-input mini"
-                rows="1"
-            ></textarea>
+             </div>
+             
+             <div class="editor-summary">
+                 <strong>{{ $t('waiter.total') }} ${{ pedidoEditando?.total || 0 }}</strong>
+             </div>
           </div>
-          <button 
-            @click="confirmarAgregarItems" 
-            class="btn btn-primary" 
-            style="width:100%; margin-top:8px;"
-            :disabled="agregandoItems"
-          >
-            {{ agregandoItems ? $t('common.saving') : $t('waiter.confirm_new_items') }}
+          
+          <!-- Right Col: Add Items -->
+          <div class="editor-col add-col">
+             <h4>{{ $t('waiter.add_items') }}</h4>
+             <div class="search-container mini">
+                <Search :size="14" class="search-icon" />
+                 <input
+                    v-model="busquedaEdicion"
+                    type="text"
+                    :placeholder="$t('waiter.search_dishes')"
+                    class="search-input"
+                 />
+                 <button v-if="busquedaEdicion" @click="busquedaEdicion = ''" class="btn-clear-search"><X :size="12" /></button>
+             </div>
+             
+             <!-- Categories mini -->
+             <div class="categorias-tabs mini" :class="{ 'single-category': categoriaEdicion }">
+                <button
+                    v-for="cat in categorias"
+                    :key="cat"
+                    v-show="!categoriaEdicion || categoriaEdicion === cat"
+                    @click="toggleCategoriaEdicion(cat)"
+                    :class="['tab', { 'tab-active': categoriaEdicion === cat }]"
+                >
+                    {{ cat }}
+                </button>
+            </div>
+            
+            <div class="start-items-grid">
+               <div
+                v-for="menuItem in itemsPorCategoriaEdicion"
+                :key="menuItem.id"
+                :class="['item-card-mini', { 
+                  'disabled': menuItem.estado_inventario === 'no_disponible'
+                }]"
+                @click="agregarItemAEdicion(menuItem)"
+              >
+                 <div class="card-mini-content">
+                    <span class="mini-name">{{ menuItem.nombre }}</span>
+                    <span class="mini-price">${{ menuItem.precio }}</span>
+                 </div>
+                 <div v-if="menuItem.usa_inventario && menuItem.stock_actual !== null" class="mini-stock">
+                    {{ menuItem.stock_actual }}
+                 </div>
+              </div>
+            </div>
+            
+            <!-- Pending Adds -->
+            <div id="pending-section-anchor"></div> 
+            <div v-if="itemsParaAgregar.length > 0" class="pending-section">
+               <h5>{{ $t('waiter.items_to_add') }}</h5>
+               <div class="pending-list">
+                  <div v-for="(item, idx) in itemsParaAgregar" :key="idx" class="pending-item">
+                     <div class="pending-header">
+                        <span>{{ item.cantidad }}x {{ item.nombre }}</span>
+                        <div class="pending-actions">
+                            <button v-if="item.cantidad > 1" @click="desagruparItemAgregado(idx)" class="btn-icon-mini"><Scissors :size="12" /></button>
+                            <button @click="quitarItemPendiente(idx)" class="btn-icon-mini"><X :size="12" /></button>
+                        </div>
+                     </div>
+                     <textarea
+                        v-model="item.notas"
+                        placeholder="Notas..."
+                        class="input-notes mini"
+                        rows="1"
+                    ></textarea>
+                  </div>
+               </div>
+               <button 
+                @click="confirmarAgregarItems" 
+                class="btn-submit-mini" 
+                :disabled="agregandoItems"
+               >
+                {{ agregandoItems ? $t('common.saving') : $t('waiter.confirm_new_items') }}
+               </button>
+            </div>
+
+             <!-- Floating Scroll Buttons for Modal -->
+             <div class="modal-fabs">
+                 <button 
+                    v-if="categoriaEdicion" 
+                    class="fab-modal up" 
+                    @click="toggleCategoriaEdicion(categoriaEdicion)"
+                >
+                    <ArrowUp :size="20" />
+                 </button>
+                 <button 
+                    v-if="itemsParaAgregar.length > 0" 
+                    class="fab-modal down" 
+                    @click="scrollToPending"
+                >
+                    <ArrowDown :size="20" />
+                 </button>
+             </div>
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Payment Modal -->
+  <div v-if="mostrarConfirmacionPago" class="modal-overlay" @click.self="mostrarConfirmacionPago = false">
+    <div class="modal-content small-modal payment-modal">
+      <div class="modal-header-clean">
+         <h3><DollarSign :size="24" class="text-success" /> {{ $t('waiter.confirm_payment') }}</h3>
+         <button @click="mostrarConfirmacionPago = false" class="btn-close-clean"><X :size="20" /></button>
+      </div>
+      
+      <div class="modal-body-clean">
+        <p class="confirm-message">{{ $t('waiter.ready_to_pay_confirm') }}</p>
+        
+        <div class="note-field-wrapper">
+          <label class="input-label">📝 Nota para cajero (opcional)</label>
+          <textarea
+            v-model="notaPago"
+            placeholder="Ej: 'Pagaron $50.000 en efectivo', 'Dividir cuenta en 2'"
+            class="input-notes styled-input"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <div class="modal-actions-row">
+          <button @click="mostrarConfirmacionPago = false" class="btn-secondary-action large">
+            {{ $t('common.cancel') }}
+          </button>
+          <button @click="confirmarListoPagar" class="btn-primary-action large success">
+            {{ $t('common.yes') }} <CheckCircle2 :size="18" />
           </button>
         </div>
       </div>
     </div>
   </div>
-  <!-- Modal de confirmación de pago con nota -->
-  <div v-if="mostrarConfirmacionPago" class="qr-modal-overlay" @click.self="mostrarConfirmacionPago = false">
-    <div class="modal-content-pago" style="background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center;">
-      <h3>{{ $t('waiter.confirm_payment') }}</h3>
-      <p style="margin-bottom: 16px;">{{ $t('waiter.ready_to_pay_confirm') }}</p>
-      
-      <textarea
-        v-model="notaPago"
-        placeholder="Nota para cajero (opcional) ej: 'Pagaron 50k efectivo'"
-        class="form-control"
-        rows="3"
-        style="width: 100%; margin-bottom: 16px; padding: 8px; border: 1px solid #ddd; border-radius: 8px;"
-      ></textarea>
 
-      <div class="modal-actions" style="display: flex; gap: 12px; justify-content: center;">
-        <button @click="mostrarConfirmacionPago = false" class="btn btn-secondary">
-          {{ $t('common.cancel') }}
-        </button>
-        <button @click="confirmarListoPagar" class="btn btn-primary">
-          {{ $t('common.yes') }}
-        </button>
-      </div>
-    </div>
-  </div>
-      </template>
-    </div>
   </div>
 </template>
 
@@ -480,9 +552,15 @@ import api from '../api';
 import socket from '../socket';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { 
+    ClipboardList, Printer, QrCode, RefreshCw, Bell, AlertTriangle, CheckCircle, 
+    LayoutGrid, Lock, Utensils, Search, UtensilsCrossed, Clock, ShoppingCart, 
+    Scissors, Trash2, Send, Loader2, Check, BellRing, CheckCircle2, CheckCheck, 
+    Layers, Eye, DollarSign, Activity, Coffee, Edit3, X, FileText, ArrowUp 
+} from 'lucide-vue-next';
 
 const { t } = useI18n();
-const { notificaciones, cerrarNotificacion } = useNotificaciones('mesero');
+const { notificaciones, cerrarNotificacion, mostrarNotificacion } = useNotificaciones('mesero');
 
 const pedidoStore = usePedidoStore();
 const usuarioStore = useUsuarioStore();
@@ -492,32 +570,30 @@ const categoriaSeleccionada = ref('');
 const pedidoEnProgreso = ref([]);
 const notasPedido = ref('');
 const loading = ref(false);
-const busqueda = ref(''); // ✅ NUEVO: Search query
-const enviandoPedido = ref(false); // ✅ NUEVO: Loading state for sending order
-const agregandoItems = ref(false); // ✅ NUEVO: Loading state for adding items
+const busqueda = ref(''); 
+const enviandoPedido = ref(false); 
+const agregandoItems = ref(false); 
 const qrComponent = ref(null);
 const mostrarQR = ref(false);
 const urlParaQR = ref('');
 const now = ref(Date.now()); 
  
 const router = useRouter(); 
-const btnConfirmar = ref(null); // ✅ NUEVO: Ref for confirm button 
+const btnConfirmar = ref(null); 
 
-// ✅ NUEVO: Variables para confirmación de pago
 const mostrarConfirmacionPago = ref(false);
 const notaPago = ref('');
 const pedidoParaPagar = ref(null); 
 
-// Variables para edición de pedidos
 const mostrarEditorPedido = ref(false);
 const pedidoEditando = ref(null);
 const itemsParaAgregar = ref([]);
 const categoriaEdicion = ref('');
-const busquedaEdicion = ref(''); // ✅ NUEVO: Search en edición
+const busquedaEdicion = ref(''); 
+const showScrollUpButton = ref(true);
 
 // Computed para items del menú en el editor
 const itemsPorCategoriaEdicion = computed(() => {
-  // ✅ NUEVO: Don't show items if no category and no search
   if (!categoriaEdicion.value && !busquedaEdicion.value) {
     return [];
   }
@@ -529,7 +605,7 @@ const itemsPorCategoriaEdicion = computed(() => {
     items = items.filter(item => item.categoria === categoriaEdicion.value);
   }
   
-  // ✅ NUEVO: Filter by search
+  // Filter by search
   if (busquedaEdicion.value) {
     const query = busquedaEdicion.value.toLowerCase();
     items = items.filter(item =>
@@ -544,8 +620,6 @@ const itemsPorCategoriaEdicion = computed(() => {
 const isTableBlocked = (mesa) => {
   if (!mesa.is_blockable) return false;
   
-  // ✅ GLOBAL LOCK: Check ALL active orders, not just current waiter's
-  // "The blocked tables issue... make it be for all waiters"
   const activeOrder = pedidoStore.pedidos.find(p => String(p.mesa_numero) === String(mesa.numero));
   
   if (activeOrder && ['nuevo', 'en_cocina', 'listo', 'servido', 'listo_pagar', 'en_caja'].includes(activeOrder.estado)) {
@@ -556,7 +630,6 @@ const isTableBlocked = (mesa) => {
 };
 
 const getHintEliminar = (item) => {
-  // Simple hint logic, can be improved with i18n if needed
   return t('waiter.edit');
 };
 
@@ -564,11 +637,11 @@ const toggleMesa = (numero) => {
   if (mesaSeleccionada.value === numero) {
     mesaSeleccionada.value = null;
     categoriaSeleccionada.value = '';
-    busqueda.value = ''; // ✅ NUEVO: Clear search
+    busqueda.value = ''; 
   } else {
     mesaSeleccionada.value = numero;
     categoriaSeleccionada.value = '';
-    busqueda.value = ''; // ✅ NUEVO: Clear search
+    busqueda.value = ''; 
   }
 };
 
@@ -580,7 +653,6 @@ const toggleCategoria = (cat) => {
   }
 };
 
-// ✅ NUEVO: Toggle category in editor
 const toggleCategoriaEdicion = (cat) => {
   if (categoriaEdicion.value === cat) {
     categoriaEdicion.value = '';
@@ -589,8 +661,6 @@ const toggleCategoriaEdicion = (cat) => {
   }
 };
 
-
-  
 const abrirQRMesas = () => {
   const routeData = router.resolve({ name: 'mesas-qr' });
   window.open(routeData.href, '_blank');
@@ -636,61 +706,7 @@ const imprimirQR = () => {
                     }
                     img { max-width: 400px; height: auto; margin: 20px 0; }
                     h2 { margin: 0; padding: 20px; text-align: center; }
-                    .qr-modal h3 {
-  margin-top: 0;
-  color: #1f2937;
-  font-size: 1.25rem;
-  margin-bottom: 1.5rem;
-  font-weight: 600;
-}
-
-.btn-text-danger {
-  background: none;
-  border: none;
-  color: #ef4444;
-  font-size: 0.875rem;
-  cursor: pointer;
-  padding: 8px;
-  text-decoration: underline;
-  transition: color 0.2s;
-}
-
-.btn-text-danger:hover {
-  color: #dc2626;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid transparent;
-  gap: 0.5rem;
-}
-
-.btn-primary {
-  background-color: #4f46e5;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #4338ca;
-}
-
-.btn-secondary {
-  background-color: white;
-  border-color: #d1d5db;
-  color: #374151;
-}
-
-.btn-secondary:hover {
-  background-color: #f3f4f6;
-  border-color: #9ca3af;
-}                 @media print { 
+                    @media print { 
                         button { display: none; } 
                         body { -webkit-print-color-adjust: exact; }
                     }
@@ -751,8 +767,13 @@ const itemsPorCategoria = computed(() => {
 
 const misPedidos = computed(() => {
   if (!usuarioStore.usuario?.id) return [];
-  return pedidoStore.pedidos.filter(p => String(p.usuario_mesero_id) === String(usuarioStore.usuario.id)  &&
-    p.estado !== 'cancelado');
+  // ✅ Include orders assigned to me OR unassigned (null)
+  return pedidoStore.pedidos.filter(p => 
+    (String(p.usuario_mesero_id) === String(usuarioStore.usuario.id) || p.usuario_mesero_id === null) &&
+    p.estado !== 'cancelado' &&
+    p.estado !== 'servido' &&  // ✅ Exclude served/ready-to-pay from "Active" list to avoid dupes
+    p.estado !== 'listo_pagar'
+  );
 });
 
 const misItemsListos = computed(() => {
@@ -763,7 +784,9 @@ const misItemsListos = computed(() => {
   const itemsListos = [];
   
   pedidoStore.pedidos.forEach(pedido => {
-    if (String(pedido.usuario_mesero_id) !== String(usuarioStore.usuario.id)) return;
+    // ✅ Include unassigned orders
+    if (String(pedido.usuario_mesero_id) !== String(usuarioStore.usuario.id) && pedido.usuario_mesero_id !== null) return;
+    
     if (!['nuevo', 'en_cocina', 'listo'].includes(pedido.estado)) return;
     if (!pedido.items) return;
     
@@ -793,594 +816,334 @@ const misItemsListos = computed(() => {
             tiempoDesdeReady: minutosDinámicos 
           };
         }
-        itemsAgrupados[key].cantidad_lista += (item.cantidad || 1);
+        itemsAgrupados[key].cantidad_lista++;
+        // To show max time waiting
+        if (minutosDinámicos > itemsAgrupados[key].tiempoDesdeReady) {
+            itemsAgrupados[key].tiempoDesdeReady = minutosDinámicos;
+        }
       }
     });
     
     Object.values(itemsAgrupados).forEach(item => itemsListos.push(item));
   });
   
-  return itemsListos.sort((a, b) => new Date(a.completed_at) - new Date(b.completed_at));
+  return itemsListos;
 });
-
-
-
 
 const misPedidosServidos = computed(() => {
   if (!usuarioStore.usuario?.id) return [];
-  return pedidoStore.pedidos.filter(
-    p => String(p.usuario_mesero_id) === String(usuarioStore.usuario.id) && p.estado === 'servido'
+  
+  // Only show 'servido' status - once marked as 'listo_pagar', it goes to cashier panel
+  return pedidoStore.pedidos.filter(p => 
+    (String(p.usuario_mesero_id) === String(usuarioStore.usuario.id) || p.usuario_mesero_id === null) &&
+    p.estado === 'servido'  // Removed 'listo_pagar' - those orders should only appear in cashier panel
   );
 });
 
-const cargarDatos = async () => {
-  loading.value = true;
-  try {
-    console.log('🔄 Cargando datos MeseroPanel...');
-    
-    await pedidoStore.cargarMenu();
-    await pedidoStore.cargarMesas();
-    await pedidoStore.cargarPedidosActivos();
-    
-    if (categorias.value.length > 0) {
-      categoriaSeleccionada.value = categorias.value;
-    }
-  } catch (err) {
-    console.error('Error cargando datos:', err);
-  } finally {
-    loading.value = false;
-  }
-};
-
+// WATCHERS & METHODS
 const agregarItemAlPedido = (item) => {
-  // No permitir agregar items agotados
-  if (item.estado_inventario === 'no_disponible') {
-    alert(t('waiter.alert_item_unavailable'));
-    return;
-  }
+  if (item.estado_inventario === 'no_disponible') return;
   
-  const existe = pedidoEnProgreso.value.find(i => i.id === item.id);
-  
+  const existe = pedidoEnProgreso.value.find(p => p.id === item.id && !p.notas); // Group only if no notes
   if (existe) {
-    // Si usa inventario, verificar que no exceda el stock
-    if (item.usa_inventario && item.stock_actual !== null) {
-      if (existe.cantidad >= item.stock_actual) {
-        alert(t('waiter.alert_stock_low', { count: item.stock_actual }));
-        return;
-      }
-    }
     existe.cantidad++;
   } else {
     pedidoEnProgreso.value.push({
       ...item,
       cantidad: 1,
-      menu_item_id: item.id,
-      precio_unitario: item.precio
+      notas: '' 
     });
   }
 };
 
-// ✅ NUEVO: Scroll hacia el botón confirmar
-const scrollToConfirm = () => {
-  if (btnConfirmar.value) {
-    btnConfirmar.value.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-};
-
 const removerItem = (idx) => {
-  const item = pedidoEnProgreso.value[idx];
-  if (item.cantidad > 1) {
-    item.cantidad--;
-  } else {
-    pedidoEnProgreso.value.splice(idx, 1);
-  }
+  pedidoEnProgreso.value.splice(idx, 1);
 };
 
-// ✅ NUEVO: Desagrupar item para notas individuales
 const desagruparItem = (idx) => {
   const item = pedidoEnProgreso.value[idx];
   if (item.cantidad > 1) {
     item.cantidad--;
-    
-    // Crear copia del item con cantidad 1 y sin notas previas
-    const individualItem = { ...item, cantidad: 1, notas: '' };
-    
-    // Insertar justo después del item actual para mejor UX
-    pedidoEnProgreso.value.splice(idx + 1, 0, individualItem);
+    const newItem = { ...item, cantidad: 1, notas: '' }; // Clean copy
+    // Insert after current
+    pedidoEnProgreso.value.splice(idx + 1, 0, newItem);
   }
 };
 
 const calcularTotal = () => {
-  return pedidoEnProgreso.value.reduce((sum, item) => sum + (item.cantidad * item.precio_unitario), 0);
+  return pedidoEnProgreso.value.reduce((acc, item) => acc + (item.cantidad * item.precio), 0);
+};
+
+const cargarDatos = async () => {
+  loading.value = true;
+  await Promise.all([
+    pedidoStore.cargarMesas(),
+    pedidoStore.cargarMenu(),
+    pedidoStore.cargarPedidosActivos()
+  ]);
+  loading.value = false;
 };
 
 const enviarPedido = async () => {
-  // ✅ NUEVO: Confirmation dialog
-  const confirmado = confirm(t('waiter.confirm_send_order'));
-  if (!confirmado) return;
-  
+  if (!mesaSeleccionada.value || pedidoEnProgreso.value.length === 0) return;
   enviandoPedido.value = true;
+  
   try {
-    await pedidoStore.crearPedido(
-      mesaSeleccionada.value,
-      usuarioStore.usuario.id,
-      pedidoEnProgreso.value,
-      notasPedido.value
-    );
+    const items = pedidoEnProgreso.value.map(item => ({
+      menu_item_id: item.id,
+      cantidad: item.cantidad,
+      precio_unitario: item.precio, // Backend needs this
+      notas: item.notas || ''
+    }));
+
+    // Sanitize table number (handle case where it might be an object)
+    let mesaNum = mesaSeleccionada.value;
+    if (typeof mesaNum === 'object' && mesaNum !== null) {
+      mesaNum = mesaNum.numero || mesaNum.mesa_numero; 
+    }
+
+    const payload = {
+      mesa_numero: mesaNum,
+      items: JSON.parse(JSON.stringify(items)),
+      notas: notasPedido.value
+    };
     
-    // Limpiar estado local y localStorage
+    console.log('Enviando pedido:', payload);
+
+    await api.crearPedido(payload);
+
     pedidoEnProgreso.value = [];
-    mesaSeleccionada.value = null;
     notasPedido.value = '';
-    busqueda.value = ''; // ✅ NUEVO: Clear search
-    localStorage.removeItem('mesero_pedidoEnProgreso');
-    localStorage.removeItem('mesero_mesaSeleccionada');
-    localStorage.removeItem('mesero_notasPedido');
-    
-    alert(t('waiter.alert_order_sent'));
-  } catch (err) {
-    alert(t('waiter.alert_error_sending'));
+    mesaSeleccionada.value = null; // Reset selection
+    mostrarNotificacion(`pedido-enviado-${Date.now()}`, t('waiter.order_sent'), 'success');
+  } catch (error) {
+    console.error(error);
+    mostrarNotificacion(`error-envio-${Date.now()}`, t('waiter.error_sending'), 'error');
   } finally {
     enviandoPedido.value = false;
   }
 };
 
-const marcarComoServido = async (pedidoId) => {
-  try {
-    await pedidoStore.actualizarEstadoPedido(pedidoId, 'servido');
-    alert(t('waiter.alert_marked_served'));
-  } catch (err) {
-    alert(t('common.error'));
-  }
-};
-const cancelarPedido = async (pedidoId) => {
-  const confirmado = confirm(t('waiter.confirm_cancel'));
-  if (!confirmado) return;
-
-  try {
-    await pedidoStore.actualizarEstadoPedido(pedidoId, 'cancelado');
-    // await pedidoStore.cargarPedidosActivos(); // ⚡ Optimizado: El store actualiza localmente
-    alert(t('waiter.alert_cancelled'));
-  } catch (err) {
-    console.error(err);
-    alert(t('common.error'));
-  }
-};
-
-// Marcar item individual como servido
-// DESPUÉS (correcta)
 const marcarItemComoServido = async (itemId) => {
   try {
     await api.servirItem(itemId);
-    // ✅ Solo recarga pedidos, no todo
-    await pedidoStore.cargarPedidosActivos();
-  } catch (err) {
-    console.error('Error marcando item como servido:', err);
-    alert(t('common.error'));
+  } catch (e) {
+    console.error('Error serving item:', e);
+    mostrarNotificacion('error', t('common.error'));
   }
 };
 
-
-// ✅ MODIFICADO: Usar el tiempo calculado por el backend
-const calcularTiempoDesde = (minutos) => {
-  // Si es null o undefined, no mostrar nada
-  if (minutos === null || minutos === undefined) return '';
-  
-  if (minutos < 1) return t('common.now') || 'Ahora';
-  if (minutos === 1) return `1 ${t('common.min') || 'min'}`;
-  if (minutos < 60) return `${minutos} ${t('common.min') || 'min'}`;
-  
-  const hours = Math.floor(minutos / 60);
-  const mins = minutos % 60;
-  return `${hours}h ${mins}min`;
-};
-
-
-
-// ✅ NUEVO: Función para abrir modal de confirmación de pago
-const marcarListoPagar = (pedidoId) => {
+const marcarListoPagar = async (pedidoId) => {
   pedidoParaPagar.value = pedidoId;
-  notaPago.value = ''; // Reset nota
+  notaPago.value = '';
   mostrarConfirmacionPago.value = true;
 };
 
-// ✅ NUEVO: Confirmar listo para pagar con nota
 const confirmarListoPagar = async () => {
-    if (!pedidoParaPagar.value) return;
-
-    try {
-        loading.value = true;
-        // Ahora enviamos 3 argumentos: id, estado, notas
-        await api.actualizarEstadoPedido(pedidoParaPagar.value, 'listo_pagar', notaPago.value);
-        
-        // CERRAR MODAL INMEDIATAMENTE
-        mostrarConfirmacionPago.value = false;
-        
-        notificaciones.agregar('success', t('waiter.alert_marked_pay_ready'));
-        
-        pedidoParaPagar.value = null;
-        notaPago.value = '';
-        
-        // Cargar datos en segundo plano
-        cargarDatos();
-    } catch (error) {
-        console.error('Error al marcar listo para pagar:', error);
-        notificaciones.agregar('error', t('common.error'));
-    } finally {
-        loading.value = false;
-    }
-};
-
-// ✅ NUEVO: Ver cuenta online
-const verCuenta = (pedidoId) => {
-  const baseUrl = window.location.origin;
-  window.open(`${baseUrl}/cuenta/${pedidoId}`, '_blank');
-};
-
-// ============= FUNCIONES DE EDICIÓN DE PEDIDOS =============
-
-const abrirEditorPedido = async (pedido) => {
+  if (!pedidoParaPagar.value) return;
   try {
-    // Cargar detalles completos del pedido
-    const response = await api.getPedido(pedido.id);
-    pedidoEditando.value = response.data;
-    itemsParaAgregar.value = [];
-    
-    // ✅ NUEVO: No seleccionar categoría automáticamente (empezar con todas cerradas)
-    categoriaEdicion.value = '';
-    busquedaEdicion.value = '';
-    
-    mostrarEditorPedido.value = true;
-  } catch (err) {
-    console.error('Error cargando pedido:', err);
+    await pedidoStore.actualizarEstadoPedido(pedidoParaPagar.value, 'listo_pagar');
+    mostrarNotificacion(`listo-pagar-${pedidoParaPagar.value}`, t('waiter.ready_to_pay'), 'success');
+    mostrarConfirmacionPago.value = false;
+  } catch (e) {
     alert(t('common.error'));
   }
+};
+
+const verCuenta = (pedidoId) => {
+  router.push({ name: 'cuenta', params: { id: pedidoId } });
+};
+
+const cancelarPedido = async (pedidoId) => {
+  if (!confirm(t('waiter.confirm_cancel'))) return;
+  try {
+    await pedidoStore.actualizarEstadoPedido(pedidoId, 'cancelado');
+  } catch (e) {
+    alert(t('common.error'));
+  }
+};
+
+// EDITOR METHODS
+const abrirEditorPedido = async (pedido) => {
+  pedidoEditando.value = JSON.parse(JSON.stringify(pedido)); // Deep copy
+  itemsParaAgregar.value = [];
+  mostrarEditorPedido.value = true;
 };
 
 const cerrarEditorPedido = () => {
   mostrarEditorPedido.value = false;
   pedidoEditando.value = null;
   itemsParaAgregar.value = [];
-  busquedaEdicion.value = ''; // ✅ NUEVO: Clear search
 };
 
 const agregarItemAEdicion = (menuItem) => {
-  if (menuItem.estado_inventario === 'no_disponible') {
-    alert(t('waiter.alert_item_unavailable'));
-    return;
-  }
+  if (menuItem.estado_inventario === 'no_disponible') return;
   
-  const existe = itemsParaAgregar.value.find(i => i.menu_item_id === menuItem.id);
-  
+  const existe = itemsParaAgregar.value.find(i => i.id === menuItem.id && !i.notas);
   if (existe) {
     existe.cantidad++;
   } else {
     itemsParaAgregar.value.push({
-      menu_item_id: menuItem.id,
-      nombre: menuItem.nombre,
-      precio_unitario: menuItem.precio,
-      cantidad: 1
+      ...menuItem,
+      cantidad: 1,
+      notas: ''
     });
   }
 };
 
 const quitarItemPendiente = (idx) => {
+  itemsParaAgregar.value.splice(idx, 1);
+};
+
+const desagruparItemAgregado = (idx) => {
   const item = itemsParaAgregar.value[idx];
   if (item.cantidad > 1) {
     item.cantidad--;
-  } else {
-    itemsParaAgregar.value.splice(idx, 1);
+    itemsParaAgregar.value.splice(idx + 1, 0, { ...item, cantidad: 1, notas: '' });
   }
 };
 
 const confirmarAgregarItems = async () => {
   if (itemsParaAgregar.value.length === 0) return;
-  
-  // ✅ NUEVO: Confirmation dialog
-  const confirmado = confirm(t('waiter.confirm_add_items'));
-  if (!confirmado) return;
-  
-  // ✅ FIX: Capturar ID antes de operaciones async para evitar error si se cierra el modal
-  const pedidoId = pedidoEditando.value ? pedidoEditando.value.id : null;
-  if (!pedidoId) return;
-
-
-
   agregandoItems.value = true;
+  
   try {
-    await api.agregarItemsAPedido(pedidoId, itemsParaAgregar.value);
+    const promises = itemsParaAgregar.value.map(item => {
+        return api.agregarItemsAPedido(pedidoEditando.value.id, {
+            menu_item_id: item.id,
+            cantidad: item.cantidad,
+            notas: item.notas
+        });
+    });
     
-    // Recargar SOLO pedido actual para ver cambios
-    const response = await api.getPedido(pedidoId);
-    if (pedidoEditando.value && pedidoEditando.value.id === pedidoId) {
-        pedidoEditando.value = response.data;
-    }
+    await Promise.all(promises);
     
-    // Limpiar items pendientes y search
-    itemsParaAgregar.value = [];
-    busquedaEdicion.value = '';
-    
-    // ⚠️ OPTIMIZACIÓN: No recargar TODOS los pedidos activos aquí.
-    // El socket 'pedido_actualizado' lo hará si es necesario.
-    // await pedidoStore.cargarPedidosActivos();
-    
-    alert(t('waiter.alert_items_added'));
-  } catch (err) {
-    console.error('Error agregando items:', err);
+    mostrarNotificacion(`items-agregados-${Date.now()}`, t('waiter.items_added'), 'success');
+    cerrarEditorPedido();
+    cargarDatos(); // Refresh main list
+  } catch (e) {
+    console.error(e);
     alert(t('common.error'));
   } finally {
     agregandoItems.value = false;
   }
 };
 
-// ✅ NUEVO: Guardar notas de item existente
-const guardarNotasItem = async (item) => {
-    try {
-        await pedidoStore.actualizarNotasItem(item.id, item.notas);
-    } catch (err) {
-        alert(t('common.error'));
-    }
-};
-
-// ✅ NUEVO: Dividir item existente
 const dividirItemEnEdicion = async (item) => {
-    if (!confirm(t('common.are_you_sure'))) return;
-    
     try {
-        await pedidoStore.dividirItem(item.id);
-        
-        // Refrescar pedido para ver el nuevo item
-        const response = await api.getPedido(pedidoEditando.value.id);
-        pedidoEditando.value = response.data;
-    } catch (err) {
-        console.error(err);
+        await api.splitItem(item.id);
+        mostrarNotificacion(`item-dividido-${Date.now()}`, 'Item dividido', 'success');
+        cerrarEditorPedido(); // Force refresh by closing
+        cargarDatos();
+    } catch (e) {
         alert(t('common.error'));
     }
-};
-
-// ✅ NUEVO: Desagrupar item nuevo (antes de agregar)
-const desagruparItemAgregado = (idx) => {
-  const item = itemsParaAgregar.value[idx];
-  if (item.cantidad > 1) {
-    item.cantidad--;
-    
-    // Crear copia con 1 y sin notas
-    const individual = { ...item, cantidad: 1, notas: '' };
-    itemsParaAgregar.value.splice(idx + 1, 0, individual);
-  }
 };
 
 const eliminarItemDelPedido = async (item) => {
-  const intentoEliminar = async (forzar = false) => {
-    // ✅ FIX: Capturar ID
-    const pedidoId = pedidoEditando.value ? pedidoEditando.value.id : null;
-    if (!pedidoId) return;
-
-    await api.eliminarItemDePedido(
-      pedidoId,
-      item.id,
-      forzar 
-    );
-
-    // ⚠️ OPTIMIZACIÓN: No recargar todos
-    // await pedidoStore.cargarPedidosActivos();
-    
-    const response = await api.getPedido(pedidoId);
-    if (pedidoEditando.value && pedidoEditando.value.id === pedidoId) {
-        pedidoEditando.value = response.data;
-    }
-
-    alert(`✅ ${item.nombre} eliminado`);
-  };
-
-  try {
-    await intentoEliminar(false);
-  } catch (err) {
-    const data = err.response?.data;
-
-    // Caso: backend pide confirmación (en_preparacion, listo, servido)
-    if (data?.requiereConfirmacion) {
-      const ok = confirm(data.mensaje || data.error || t('common.are_you_sure'));
-      if (!ok) return;
-
-      try {
-        await intentoEliminar(true);
-      } catch (err2) {
-        const msg2 = err2.response?.data?.error || t('common.error');
-        alert('❌ ' + msg2);
-      }
-    } else {
-      const msg = data?.error || t('common.error');
-      alert('❌ ' + msg);
-    }
-  }
-};
-
-
-const calcularTiempoEspera = (createdAt) => {
-  const creado = new Date(createdAt);
-  const diffMs = now.value - creado;
-  const diffMins = Math.floor(diffMs / 60000);
-  
-  if (diffMins < 1) return 'Recién listo';
-  if (diffMins === 1) return '1 min';
-  return `${diffMins} mins`;
-};
-
-// Persistencia de datos local
-watch(pedidoEnProgreso, (newVal) => {
-  localStorage.setItem('mesero_pedidoEnProgreso', JSON.stringify(newVal));
-}, { deep: true });
-
-watch(mesaSeleccionada, (newVal) => {
-  if (newVal) localStorage.setItem('mesero_mesaSeleccionada', JSON.stringify(newVal));
-  else localStorage.removeItem('mesero_mesaSeleccionada');
-});
-
-watch(notasPedido, (newVal) => {
-  localStorage.setItem('mesero_notasPedido', newVal);
-});
-
-const cargarEstadoLocal = () => {
-  const pedidoGuardado = localStorage.getItem('mesero_pedidoEnProgreso');
-  if (pedidoGuardado) {
+    if (!confirm(t('waiter.confirm_cancel'))) return;
     try {
-      pedidoEnProgreso.value = JSON.parse(pedidoGuardado);
+        await api.actualizarEstadoItem(item.id, 'cancelado');
+        const idx = pedidoEditando.value.items.findIndex(i => i.id === item.id);
+        if (idx !== -1) pedidoEditando.value.items.splice(idx, 1);
+         mostrarNotificacion('success', 'Item eliminado');
     } catch (e) {
-      console.error('Error restaurando pedido:', e);
+        alert(t('common.error'));
     }
-  }
+};
 
-  const mesaGuardada = localStorage.getItem('mesero_mesaSeleccionada');
-  if (mesaGuardada) {
+const guardarNotasItem = async (item) => {
     try {
-      mesaSeleccionada.value = JSON.parse(mesaGuardada);
+        await api.actualizarNotasItem(item.id, item.notas);
     } catch (e) {
-      console.error('Error restaurando mesa:', e);
+        console.error(e);
     }
-  }
+};
 
-  const notasGuardadas = localStorage.getItem('mesero_notasPedido');
-  if (notasGuardadas) {
-    notasPedido.value = notasGuardadas;
+const calcularTiempoDesde = (minutos) => {
+  if (minutos < 1) return t('common.now');
+  return `${minutos} ${t('common.min')}`;
+};
+
+const scrollToConfirm = () => {
+  if (btnConfirmar.value) {
+    btnConfirmar.value.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 };
 
-let timerInterval = null;
+const scrollToCategories = () => {
+  // Target tabs specifically to center them
+  const categoriesTabs = document.querySelector('.categorias-tabs');
+  if (categoriesTabs) {
+    categoriesTabs.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } else {
+    // Fallback to section if tabs not found
+    const categoriesSection = document.querySelector('.items-section');
+    if (categoriesSection) {
+      categoriesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+};
+
+const scrollToPending = () => {
+    const pendingSection = document.getElementById('pending-section-anchor');
+    if (pendingSection) {
+        pendingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+};
 
 onMounted(() => {
   cargarDatos();
-  cargarEstadoLocal();
   
-  // ✅ FIX: Iniciar listeners del store para actualizaciones GLOBALES (bloqueo de mesas)
-  pedidoStore.iniciarRealTime();
+  // Scroll listener for FAB visibility
+  const handleScroll = () => {
+    // Hide scroll-up button when near top (within 50px)
+    showScrollUpButton.value = window.scrollY > 50;
+  };
+  
+  window.addEventListener('scroll', handleScroll);
+  
+  // Store the handler for cleanup
+  window._meseroScrollHandler = handleScroll;
+  
+  // Socket listeners...
+  if (!socket.connected) socket.connect();
 
-  // Listeners para actualizaciones en tiempo real
-  socket.on('item_ready', (data) => {
-      // Si el item es para este mesero, solo recargar pedidos (no menú ni mesas)
-      if (String(data.mesero_id) === String(usuarioStore.usuario?.id)) {
-          console.log('🔔 Item listo para mi mesa:', data.mesa_numero);
-          pedidoStore.cargarPedidosActivos(); // Solo recargar pedidos, no todo
-      }
+  socket.on('item_ready', () => {
+    cargarDatos();
   });
 
-  socket.on('pedido_actualizado', ({ id, estado }) => {
-      // Solo recargar si el pedido es de este mesero
-      const esMiPedido = pedidoStore.pedidos.some(p => 
-          p.id === id && String(p.usuario_mesero_id) === String(usuarioStore.usuario?.id)
-      );
-      
-      if (esMiPedido) {
-          console.log('📝 Mi pedido actualizado:', id, estado);
-          pedidoStore.cargarPedidosActivos(); // Solo recargar pedidos
-      }
+  socket.on('pedido_actualizado', () => {
+    cargarDatos();
   });
 
-  socket.on('nuevo_pedido', (pedido) => {
-      // Si es un pedido de este mesero, recargar
-      if (String(pedido.usuario_mesero_id) === String(usuarioStore.usuario?.id)) {
-          console.log('🆕 Mi nuevo pedido creado');
-          pedidoStore.cargarPedidosActivos();
-      }
+  socket.on('item_served', () => {
+    cargarDatos();
   });
 
-  socket.on('solicitar_cuenta', (pedido) => {
-      // Si es un pedido de este mesero, recargar
-      if (String(pedido.usuario_mesero_id) === String(usuarioStore.usuario?.id)) {
-          console.log('💰 Mi pedido solicitado');
-          pedidoStore.cargarPedidosActivos();
-      }
+  socket.on('nuevo_pedido', () => {
+    cargarDatos();
   });
 
-  // Actualizar 'now' cada segundo para timers en tiempo real
-  timerInterval = setInterval(() => {
+  // Update time every minute for "5 min ago" to update
+  const interval = setInterval(() => {
     now.value = Date.now();
-  }, 1000); // Cada segundo para actualización fluida
-});
+  }, 60000); // 1 min check is enough for "minutes ago"
 
-onUnmounted(() => {
-    socket.off('item_ready');
-    socket.off('item_completed');
-    socket.off('pedido_actualizado');
+  onUnmounted(() => {
+  socket.off('item_ready');
+  socket.off('pedido_actualizado');
+  
+  // Clean up scroll listener
+  if (window._meseroScrollHandler) {
+    window.removeEventListener('scroll', window._meseroScrollHandler);
+    delete window._meseroScrollHandler;
+  }
+    socket.off('item_served');
     socket.off('nuevo_pedido');
-    socket.off('solicitar_cuenta');
-    if (timerInterval) clearInterval(timerInterval);
+    clearInterval(interval);
+  });
 });
 </script>
 
 <style src="../assets/styles/MeseroPanel.css" scoped></style>
-<style src="../assets/styles/MeseroEdicion.css" scoped></style>
-
-<style scoped>
-/* Estilos para el botón flotante */
-.fab-confirm {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background-color: #22c55e;
-  color: white;
-  border: none;
-  font-size: 32px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  cursor: pointer;
-  z-index: 999; /* Por encima de todo */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.2s, background-color 0.2s;
-  animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.fab-confirm:hover {
-  background-color: #16a34a;
-  transform: scale(1.1);
-}
-
-.fab-confirm:active {
-  transform: scale(0.9);
-}
-
-@keyframes bounce-in {
-  0% { transform: scale(0); opacity: 0; }
-  60% { transform: scale(1.1); opacity: 1; }
-  100% { transform: scale(1); }
-}
-
-/* Resto de estilos */
-/* Fix for QR Modal Close Button */
-.qr-modal {
-  position: relative !important; /* Ensure absolute positioning works for children */
-}
-
-.close-btn {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #6b7280;
-  padding: 0;
-  line-height: 1;
-  z-index: 10;
-}
-
-.close-btn:hover {
-  color: #ef4444;
-}
-
-.mesa-blocked {
-  background-color: #d1d5db !important;
-  color: #6b7280 !important;
-  cursor: not-allowed !important;
-  opacity: 0.7;
-}
-
-.lock-icon {
-  margin-left: 5px;
-}
-</style>

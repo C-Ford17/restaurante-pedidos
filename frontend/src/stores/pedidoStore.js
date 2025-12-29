@@ -8,6 +8,7 @@ export const usePedidoStore = defineStore('pedido', () => {
     const pedidos = ref([]);
     const menu = ref([]);
     const mesas = ref([]);
+    const cart = ref([]); // ✅ NUEVO: Local cart for customers
     const loading = ref(false);
     const error = ref(null);
 
@@ -201,7 +202,6 @@ export const usePedidoStore = defineStore('pedido', () => {
         }
     };
 
-    // ✅ NUEVO: Dividir item
     const dividirItem = async (itemId) => {
         try {
             await api.dividirItem(itemId);
@@ -212,12 +212,95 @@ export const usePedidoStore = defineStore('pedido', () => {
         }
     };
 
+    // ================= CLIENT CART (Customer) =================
+    const addToCart = (item) => {
+        // Try to find existing item with same ID and SAME NOTES (empty initially)
+        const existing = cart.value.find(i => i.id === item.id && (!i.notas || i.notas === ''));
+
+        if (existing) {
+            existing.quantity++;
+        } else {
+            // Create unique internal ID for cart management
+            const cartItemId = Date.now() + Math.random().toString(36).substr(2, 9);
+            cart.value.push({
+                ...item,
+                cartItemId, // Unique ID for frontend 
+                quantity: 1,
+                notas: ''
+            });
+        }
+    };
+
+    const removeFromCart = (cartItemId) => {
+        const index = cart.value.findIndex(i => i.cartItemId === cartItemId);
+        if (index !== -1) {
+            cart.value.splice(index, 1);
+        }
+    };
+
+    const updateCartQuantity = (cartItemId, change) => {
+        const item = cart.value.find(i => i.cartItemId === cartItemId);
+        if (item) {
+            item.quantity += change;
+            if (item.quantity <= 0) {
+                removeFromCart(cartItemId);
+            }
+        }
+    };
+
+    // ✅ NUEVO: Support for notes
+    const updateCartNotes = (cartItemId, notas) => {
+        const item = cart.value.find(i => i.cartItemId === cartItemId);
+        if (item) {
+            item.notas = notas;
+        }
+    };
+
+    // ✅ NUEVO: Split item (Ungroup)
+    const splitCartItem = (cartItemId) => {
+        const item = cart.value.find(i => i.cartItemId === cartItemId);
+        if (item && item.quantity > 1) {
+            item.quantity--;
+
+            // Add new separate item
+            const newCartItemId = Date.now() + Math.random().toString(36).substr(2, 9);
+            cart.value.push({
+                ...item,
+                cartItemId: newCartItemId,
+                quantity: 1
+                // Keeps same notes
+            });
+        }
+    };
+
+    const clearCart = () => {
+        cart.value = [];
+    };
+
+    const cartTotal = computed(() => {
+        return cart.value.reduce((total, item) => total + (item.precio * item.quantity), 0);
+    });
+
+    const cartItemCount = computed(() => {
+        return cart.value.reduce((total, item) => total + item.quantity, 0);
+    });
+
+    // ✅ NUEVO: Computed categories for the menu
+    const categorias = computed(() => {
+        if (!menu.value || menu.value.length === 0) return [];
+        const cats = new Set(menu.value.map(item => item.categoria).filter(Boolean));
+        // Sort explicitly if needed, but set order is insertion order usually.
+        // Let's rely on backend or default order for now.
+        return Array.from(cats);
+    });
+
     return {
         pedidos,
         menu,
         mesas,
         loading,
         error,
+        categorias, // ✅ Export this
         cargarMenu,
         cargarMesas,
         cargarPedidosActivos,
@@ -227,6 +310,16 @@ export const usePedidoStore = defineStore('pedido', () => {
         actualizarNotasItem,
         dividirItem,
         pedidosPorEstado,
-        iniciarRealTime // Exportar acción
+        iniciarRealTime,
+        // Cart exports
+        cart,
+        addToCart,
+        removeFromCart,
+        updateCartQuantity,
+        updateCartNotes, // ✅ Export
+        splitCartItem,   // ✅ Export
+        clearCart,
+        cartTotal,
+        cartItemCount
     };
 });

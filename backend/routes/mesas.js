@@ -88,11 +88,11 @@ router.get('/:numero/pedido-actual', async (req, res) => {
             SELECT p.*, u.nombre as mesero
             FROM pedidos p
             LEFT JOIN usuarios u ON p.usuario_mesero_id = u.id
-            WHERE p.mesa_numero = $1::integer 
-            AND p.estado NOT IN ('pagado', 'cancelado')
+            WHERE p.mesa_numero = $1:: integer 
+            AND p.estado NOT IN('cancelado')
             ORDER BY p.created_at DESC
             LIMIT 1
-        `, [mesaNumero]);
+            `, [mesaNumero]);
 
         if (!pedido) {
             return res.status(404).json({ error: 'No hay pedido activo en esta mesa' });
@@ -100,20 +100,20 @@ router.get('/:numero/pedido-actual', async (req, res) => {
 
         // Obtener items con sus estados y tiempos
         const items = await allAsync(`
-            SELECT
-                pi.id,
-                pi.cantidad,
-                pi.estado,
-                pi.started_at,
-                pi.completed_at,
-                pi.tiempo_real,
-                mi.nombre,
-                mi.tiempo_estimado
+        SELECT
+        pi.id,
+            pi.cantidad,
+            pi.estado,
+            pi.started_at,
+            pi.completed_at,
+            pi.tiempo_real,
+            mi.nombre,
+            mi.tiempo_estimado
             FROM pedido_items pi
             JOIN menu_items mi ON pi.menu_item_id = mi.id
             WHERE pi.pedido_id = $1
             ORDER BY pi.id
-        `, [pedido.id]);
+            `, [pedido.id]);
 
         // Calcular estadísticas
         const totalItems = items.length;

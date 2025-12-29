@@ -95,11 +95,16 @@ export default {
   },
 
   // ============= PEDIDOS =============
-  crearPedido(mesa_numero, usuario_mesero_id, items, notas) {
-    return api.post('/pedidos', { mesa_numero, usuario_mesero_id, items, notas });
+  crearPedido(data) {
+    return api.post('/pedidos', data);
   },
 
   getPedidosActivos() {
+    return api.get('/pedidos/activos');
+  },
+
+  // Alias compatible con CajaPanel
+  getPedidosPorCobrar() {
     return api.get('/pedidos/activos');
   },
 
