@@ -123,7 +123,6 @@ const handleLogin = async () => {
 
   try {
     const success = await usuarioStore.login(username.value, password.value);
-    const success = await usuarioStore.login(username.value, password.value);
     // Login success logic handled in store (redirection, etc.) or parent
     if (success) {
        // Optional: additional success logic
