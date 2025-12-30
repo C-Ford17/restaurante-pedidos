@@ -331,6 +331,20 @@ async function initDatabase() {
             )
         `);
 
+        // 🔄 MIGRACIÓN: Asegurar que existe el constraint UNIQUE si la tabla ya existía
+        try {
+            await pool.query(`
+                ALTER TABLE push_subscriptions 
+                ADD CONSTRAINT push_subscriptions_user_id_endpoint_key 
+                UNIQUE(user_id, endpoint)
+            `);
+        } catch (e) {
+            // Ignorar error si ya existe el constraint
+            if (e.code !== '42710') { // 42710 is duplicate_object in Postgres
+                console.log('Nota: Constraint push_subscriptions ya existe o error:', e.message);
+            }
+        }
+
         // Crear tabla de configuración
         await pool.query(`
             CREATE TABLE IF NOT EXISTS configuracion (
