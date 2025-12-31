@@ -221,7 +221,28 @@ const checkForUpdates = (serverVersion) => {
   }
 };
 
-const reloadApp = () => {
+const reloadApp = async () => {
+  console.log('🔄 Forzando actualización de la aplicación...');
+  
+  if ('serviceWorker' in navigator) {
+    // 1. Desregistrar todos los Service Workers
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    for (const registration of registrations) {
+      await registration.unregister();
+      console.log('🧹 SW Desregistrado');
+    }
+  }
+
+  // 2. Limpiar cache de almacenamiento (opcional, pero recomendado para actualizaciones críticas)
+  if ('caches' in window) {
+    const keys = await caches.keys();
+    for (const key of keys) {
+      await caches.delete(key);
+      console.log('🧹 Cache eliminado:', key);
+    }
+  }
+
+  // 3. Recargar forzosamente
   window.location.reload(true);
 };
 

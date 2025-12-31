@@ -34,7 +34,10 @@
         "uploading": "Uploading...",
         "upload": "Upload",
         "sending": "Sending...",
-        "unassigned": "Unassigned"
+        "unassigned": "Unassigned",
+        "update_available": "New update available",
+        "update_desc": "Version {version} ready to install",
+        "refresh": "Update"
     },
     "bill": {
         "title": "Bill for Table",

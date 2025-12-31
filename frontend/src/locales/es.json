@@ -34,7 +34,10 @@
         "download_qr": "Descargar QR",
         "unassigned": "Sin asignar",
         "logout": "Cerrar sesión",
-        "currently": "Actualmente"
+        "currently": "Actualmente",
+        "update_available": "Nueva actualización disponible",
+        "update_desc": "Versión {version} lista para instalar",
+        "refresh": "Actualizar"
     },
     "bill": {
         "title": "Cuenta de Mesa",
