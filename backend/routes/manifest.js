@@ -13,15 +13,16 @@ router.get('/', async (req, res) => {
         });
 
         const manifest = {
-            name: config.nombre || 'Restaurante',
-            short_name: config.nombre_corto || config.nombre?.substring(0, 12) || 'Rest',
-            description: config.subtitulo || 'Sistema de gestión de pedidos',
             start_url: '/',
             display: 'standalone',
             background_color: '#ffffff',
             theme_color: config.color_primario || '#667eea',
             icons: []
         };
+
+        if (config.nombre) manifest.name = config.nombre;
+        if (config.nombre_corto) manifest.short_name = config.nombre_corto;
+        if (config.subtitulo) manifest.description = config.subtitulo;
 
         // Agregar iconos solo si existen en la configuración
         if (config.icon_192_url) {
@@ -40,24 +41,6 @@ router.get('/', async (req, res) => {
                 type: 'image/png',
                 purpose: 'any maskable'
             });
-        }
-
-        // Si no hay iconos configurados, usar los por defecto
-        if (manifest.icons.length === 0) {
-            manifest.icons = [
-                {
-                    src: '/android/android-launchericon-192-192.png',
-                    sizes: '192x192',
-                    type: 'image/png',
-                    purpose: 'any maskable'
-                },
-                {
-                    src: '/android/android-launchericon-512-512.png',
-                    sizes: '512x512',
-                    type: 'image/png',
-                    purpose: 'any maskable'
-                }
-            ];
         }
 
         res.setHeader('Content-Type', 'application/json');

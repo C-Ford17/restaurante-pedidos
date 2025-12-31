@@ -252,7 +252,7 @@ const urlMenuDinamica = computed(() => {
 const guardarConfig = async () => {
   guardando.value = true;
   try {
-    await api.updateConfig({
+    await api.saveConfig({
       ...localConfig.value,
       tip_percentage: porcentajePropina.value
     });

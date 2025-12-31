@@ -5,18 +5,18 @@
       <div class="header-title">
         <h2>
           <Wallet class="w-8 h-8 text-primary" />
-          {{ $t('cashier.title') }}
+          {{ $t('cashier.title')}}
         </h2>
       </div>
       
       <div class="header-info">
         <div class="info-item">
           <User class="w-4 h-4" />
-          <span>{{ usuarioStore.usuario.nombre }}</span>
+          <span class="user-name">{{ usuarioStore.usuario.nombre }}</span>
         </div>
         <div class="info-item">
           <Clock class="w-4 h-4" />
-          <span>{{ currentTime }}</span>
+          <span class="time">{{ currentTime }}</span>
         </div>
         <button @click="cargarDatos" class="btn-refresh" :title="$t('cashier.update')">
           <RefreshCw class="w-5 h-5" :class="{ 'animate-spin': loading }" />

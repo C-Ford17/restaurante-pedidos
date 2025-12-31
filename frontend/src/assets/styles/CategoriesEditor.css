@@ -8,7 +8,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #1e293b;
+    color: var(--text-primary);
 }
 
 .section-title h3 {
@@ -41,7 +41,7 @@
 .form-group label {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #64748b;
+    color: var(--text-secondary);
     margin-bottom: 6px;
 }
 
@@ -62,11 +62,13 @@
 .input-with-icon input {
     width: 100%;
     padding: 10px 12px 10px 38px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     font-size: 14px;
     transition: all 0.2s;
     font-family: inherit;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
 }
 
 .input-with-icon input:focus {
@@ -102,9 +104,9 @@
 
 /* List Styles */
 .categories-list {
-    background: white;
+    background: var(--card-bg);
     border-radius: 16px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     overflow: hidden;
     margin-top: 24px;
@@ -112,20 +114,21 @@
 
 .list-header {
     display: flex;
-    background: #f8fafc;
+    background: var(--bg-secondary);
     padding: 16px 24px;
     font-weight: 600;
-    color: #64748b;
+    color: var(--text-secondary);
     font-size: 0.875rem;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .list-item {
     display: flex;
     align-items: center;
     padding: 12px 24px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--border-color);
     transition: background 0.1s;
+    color: var(--text-primary);
 }
 
 .list-item:last-child {
@@ -133,7 +136,7 @@
 }
 
 .list-item:hover {
-    background: #fdfdfd;
+    background: var(--bg-secondary);
 }
 
 .col-name {
@@ -163,6 +166,7 @@
     font-size: 14px;
     font-family: inherit;
     transition: all 0.2s;
+    color: var(--text-primary);
 }
 
 .editable-input.center {
@@ -170,12 +174,12 @@
 }
 
 .editable-input:hover {
-    background: #f8fafc;
-    border-color: #e2e8f0;
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
 }
 
 .editable-input:focus {
-    background: white;
+    background: var(--card-bg);
     border-color: var(--theme-color, #f97316);
     outline: none;
     box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.1);
@@ -185,7 +189,7 @@
 .btn-icon.delete {
     background: transparent;
     border: none;
-    color: #cbd5e1;
+    color: var(--text-secondary);
     cursor: pointer;
     width: 32px;
     height: 32px;
@@ -247,4 +251,9 @@
         display: flex;
         justify-content: flex-end;
     }
+}
+
+/* Ensure form cards use dark background */
+.form-card {
+    background: var(--card-bg);
 }

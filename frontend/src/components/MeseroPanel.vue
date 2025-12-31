@@ -262,8 +262,8 @@
               <div class="served-body">
                 <span class="items-count"><Layers :size="14" /> {{ pedido.items_count }} items</span>
                 <div class="served-actions">
-                  <button @click="verCuenta(pedido.id)" class="btn-icon-subtle" title="Ver Cuenta">
-                    <Eye :size="18" />
+                  <button @click="verCuenta(pedido.id)" class="btn-view-bill">
+                    {{ $t('waiter.view_bill') }} <Eye :size="16" />
                   </button>
                   <button @click="marcarListoPagar(pedido.id)" class="btn-pay">
                     {{ $t('waiter.ready_to_pay') }} <DollarSign :size="16" />
@@ -531,7 +531,7 @@
         </div>
 
         <div class="modal-actions-row">
-          <button @click="mostrarConfirmacionPago = false" class="btn-secondary-action large">
+          <button @click="mostrarConfirmacionPago = false" class="btn-secondary-action large danger">
             {{ $t('common.cancel') }}
           </button>
           <button @click="confirmarListoPagar" class="btn-primary-action large success">

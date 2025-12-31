@@ -10,11 +10,11 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 24px;
-    background: white;
+    background: var(--card-bg);
     padding: 16px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     gap: 16px;
     flex-wrap: wrap;
 }
@@ -36,15 +36,16 @@
 .search-input {
     width: 100%;
     padding: 10px 10px 10px 40px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     font-size: 0.95rem;
-    background: #f8fafc;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
     transition: all 0.2s;
 }
 
 .search-input:focus {
-    background: white;
+    background: var(--card-bg);
     border-color: var(--theme-color, #f97316);
     box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
     outline: none;
@@ -60,9 +61,9 @@
     align-items: center;
     gap: 8px;
     padding: 10px 20px;
-    border: 1px solid #e2e8f0;
-    background: white;
-    color: #334155;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-secondary);
     border-radius: 8px;
     font-weight: 600;
     text-decoration: none;
@@ -70,9 +71,9 @@
 }
 
 .btn-outline-primary:hover {
-    border-color: #cbd5e1;
-    background: #f1f5f9;
-    color: #0f172a;
+    border-color: var(--text-secondary);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
 }
 
 /* Botón Nuevo Plato Premium */
@@ -108,6 +109,7 @@
 
 .form-card {
     position: relative;
+    background: var(--card-bg);
     /* Para posicionar la X absoluta */
 }
 
@@ -116,9 +118,9 @@
     position: absolute;
     top: 16px;
     right: 16px;
-    background: #f1f5f9;
+    background: var(--bg-secondary);
     border: none;
-    color: #64748b;
+    color: var(--text-secondary);
     cursor: pointer;
     width: 32px;
     height: 32px;
@@ -154,9 +156,10 @@
 .textarea-premium {
     width: 100%;
     padding: 12px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    background: #f8fafc;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
     font-family: inherit;
     resize: vertical;
 }
@@ -173,12 +176,12 @@
     align-items: center;
     gap: 6px;
     padding: 8px 12px;
-    background: white;
-    border: 1px dashed #cbd5e1;
+    background: var(--card-bg);
+    border: 1px dashed var(--border-color);
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.85rem;
-    color: #64748b;
+    color: var(--text-secondary);
     transition: all 0.2s;
 }
 
@@ -238,8 +241,8 @@
     gap: 8px;
     padding: 8px 16px;
     border-radius: 20px;
-    background: #f1f5f9;
-    color: #64748b;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
@@ -254,7 +257,7 @@
 
 .checkbox-pill:hover,
 .badge-pill:hover {
-    background: #e2e8f0;
+    background: var(--border-color);
 }
 
 .checkbox-pill:has(input:checked),
@@ -266,11 +269,11 @@
 
 /* Inventory Subform */
 .inventory-fields.bg-light {
-    background: #f8fafc;
+    background: var(--bg-secondary);
     padding: 16px;
     border-radius: 8px;
     margin-bottom: 20px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
 }
 
 .form-actions-right {
@@ -319,9 +322,9 @@
     align-items: center;
     font-size: 1.25rem;
     font-weight: 700;
-    color: #334155;
+    color: var(--text-primary);
     padding: 12px 16px;
-    background: white;
+    background: var(--card-bg);
     border-radius: 12px;
     margin-bottom: 16px;
     cursor: pointer;
@@ -332,8 +335,8 @@
 }
 
 .category-title.accordion-header:hover {
-    background: #f8fafc;
-    border-color: #e2e8f0;
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
 }
 
 .flex-center {
@@ -347,8 +350,8 @@
 
 .count {
     font-size: 0.8rem;
-    background: #eff6ff;
-    color: #3b82f6;
+    background: var(--bg-secondary);
+    color: var(--theme-color);
     padding: 2px 8px;
     border-radius: 12px;
     margin-left: 8px;
@@ -371,8 +374,8 @@
 }
 
 .item-card {
-    background: white;
-    border: 1px solid #e2e8f0;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: 20px;
     display: flex;
@@ -406,7 +409,7 @@
     border: none;
     font-size: 1.1rem;
     font-weight: 700;
-    color: #1e293b;
+    color: var(--text-primary);
     background: transparent;
     padding: 4px;
     border-radius: 4px;
@@ -415,7 +418,7 @@
 
 .title-input:hover,
 .title-input:focus {
-    background: #f8fafc;
+    background: var(--bg-secondary);
 }
 
 .title-input:focus {
@@ -451,8 +454,8 @@
 }
 
 .btn-icon.delete {
-    background: #f1f5f9;
-    color: #94a3b8;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
 }
 
 .btn-icon.delete:hover {
@@ -468,19 +471,19 @@
 .desc-input {
     width: 100%;
     border: 1px solid transparent;
-    background: #f8fafc;
+    background: var(--bg-secondary);
     border-radius: 8px;
     padding: 8px 12px;
     font-size: 0.9rem;
-    color: #64748b;
+    color: var(--text-secondary);
     resize: none;
     transition: all 0.2s;
 }
 
 .desc-input:hover,
 .desc-input:focus {
-    background: white;
-    border-color: #e2e8f0;
+    background: var(--card-bg);
+    border-color: var(--border-color);
 }
 
 .desc-input:focus {
@@ -495,9 +498,9 @@
     gap: 12px;
     margin: 8px 0;
     padding: 8px;
-    background: #f8fafc;
+    background: var(--bg-secondary);
     border-radius: 8px;
-    border: 1px dashed #e2e8f0;
+    border: 1px dashed var(--border-color);
 }
 
 .image-label {
@@ -539,7 +542,7 @@
     right: -6px;
     width: 18px;
     height: 18px;
-    background: white;
+    background: var(--card-bg);
     border: 1px solid #ef4444;
     color: #ef4444;
     border-radius: 50%;
@@ -556,12 +559,12 @@
 
 .edit-input.price {
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-primary);
     font-size: 1.1rem;
 }
 
 .edit-input.time {
-    color: #64748b;
+    color: var(--text-secondary);
     font-size: 0.9rem;
 }
 
@@ -576,15 +579,16 @@
 .badge-pill {
     padding: 6px 12px;
     font-size: 0.8rem;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
 }
 
 /* Stock Control Panel */
 .stock-control-panel {
     margin-top: 16px;
     padding-top: 16px;
-    border-top: 1px dashed #e2e8f0;
+    padding-top: 16px;
+    border-top: 1px dashed var(--border-color);
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -605,19 +609,20 @@
 .stock-group label {
     font-size: 0.7rem;
     text-transform: uppercase;
-    color: #94a3b8;
+    color: var(--text-secondary);
     font-weight: 700;
 }
 
 .stock-input {
     width: 100%;
     padding: 6px 8px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     text-align: center;
     font-size: 0.9rem;
     font-weight: 600;
-    color: #334155;
+    color: var(--text-primary);
+    background: var(--bg-secondary);
 }
 
 /* Stock Select Enhancements */
@@ -630,14 +635,15 @@
     width: 100%;
     padding: 8px 12px 8px 28px;
     /* Extra padding for left indicator if needed */
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     font-size: 0.9rem;
-    background: white;
+    background: var(--card-bg);
     appearance: none;
     cursor: pointer;
     font-weight: 500;
     transition: all 0.2s;
+    color: var(--text-primary);
 }
 
 .stock-select:focus {
@@ -680,9 +686,9 @@
     justify-content: center;
     gap: 8px;
     padding: 10px;
-    background: #eff6ff;
+    background: var(--bg-secondary);
     color: #2563eb;
-    border: 1px solid #bfdbfe;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     font-weight: 600;
     font-size: 0.9rem;
@@ -733,13 +739,13 @@
 }
 
 .modal {
-    background: white;
+    background: var(--card-bg);
     padding: 32px;
     border-radius: 20px;
     width: 90%;
     max-width: 680px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    border: 1px solid #f1f5f9;
+    border: 1px solid var(--border-color);
     animation: slideUp 0.3s ease-out backwards;
 }
 
@@ -791,7 +797,7 @@
 .modal h3 {
     font-size: 1.5rem;
     font-weight: 800;
-    color: #1e293b;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -803,10 +809,10 @@
 
 .modal-subtitle {
     font-size: 0.95rem;
-    color: #64748b;
+    color: var(--text-secondary);
     margin-bottom: 24px;
     padding-bottom: 16px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .recipe-form {
@@ -821,10 +827,10 @@
     gap: 12px;
     margin-bottom: 12px;
     align-items: center;
-    background: #f8fafc;
+    background: var(--bg-secondary);
     padding: 10px;
     border-radius: 12px;
-    border: 1px solid #f1f5f9;
+    border: 1px solid var(--border-color);
 }
 
 .input-with-icon {
@@ -844,11 +850,11 @@
 .recipe-select {
     width: 100%;
     padding: 10px 10px 10px 36px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    background: white;
+    background: var(--card-bg);
     font-size: 0.95rem;
-    color: #334155;
+    color: var(--text-primary);
     transition: border 0.2s;
 }
 
@@ -862,9 +868,9 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    background: white;
+    background: var(--card-bg);
     padding: 6px 10px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     min-width: 120px;
 }
@@ -875,8 +881,9 @@
     font-weight: 700;
     font-size: 1.1rem;
     text-align: right;
-    color: #0f172a;
+    color: var(--text-primary);
     flex: 1;
+    background: transparent;
 }
 
 .qty-input:focus {
@@ -885,18 +892,18 @@
 
 .unit-label {
     font-size: 0.8rem;
-    color: #64748b;
+    color: var(--text-secondary);
     font-weight: 600;
-    background: #eff6ff;
+    background: var(--bg-secondary);
     padding: 4px 8px;
     border-radius: 6px;
     white-space: nowrap;
 }
 
 .delete-row {
-    background: white;
-    border: 1px solid #e2e8f0;
-    color: #94a3b8;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
     width: 36px;
     height: 36px;
     border-radius: 8px;
@@ -916,9 +923,9 @@
 .btn-add-row {
     width: 100%;
     padding: 12px;
-    border: 2px dashed #cbd5e1;
-    background: #f8fafc;
-    color: #64748b;
+    border: 2px dashed var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
@@ -931,9 +938,9 @@
 }
 
 .btn-add-row:hover {
-    border-color: #94a3b8;
-    background: #f1f5f9;
-    color: #334155;
+    border-color: var(--text-secondary);
+    background: var(--border-color);
+    color: var(--text-primary);
 }
 
 .modal-actions {
@@ -942,23 +949,23 @@
     gap: 12px;
     margin-top: 32px;
     padding-top: 16px;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid var(--border-color);
 }
 
 .btn-cancel {
-    background: white;
-    border: 1px solid #e2e8f0;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     padding: 10px 24px;
     border-radius: 8px;
-    color: #64748b;
+    color: var(--text-secondary);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .btn-cancel:hover {
-    background: #f8fafc;
-    color: #1e293b;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
 }
 
 .btn-save {

@@ -44,17 +44,73 @@
               <span class="rol-badge" :class="`rol-${usuarioStore.usuario.rol}`">
                 {{ obtenerNombreRol(usuarioStore.usuario.rol) }}
               </span>
-              <div class="divider"></div>
-              <LanguageSwitcher />
-              <div class="user-profile">
-                <div class="avatar-circle">
-                  {{ usuarioStore.usuario.nombre.charAt(0).toUpperCase() }}
-                </div>
-                <span class="usuario-nombre">{{ usuarioStore.usuario.nombre }}</span>
+              
+              <div class="user-menu-container" ref="userMenuRef">
+                <button @click="toggleUserMenu" class="user-btn" :class="{ active: isUserMenuOpen }">
+                   <div class="avatar-circle">
+                    {{ usuarioStore.usuario.nombre.charAt(0).toUpperCase() }}
+                  </div>
+                  <span class="usuario-nombre">{{ usuarioStore.usuario.nombre }}</span>
+                  <ChevronDown :size="16" class="chevron-icon" :class="{ rotated: isUserMenuOpen }" />
+                </button>
+
+                <!-- Dropdown Menu -->
+                <transition name="fade-slide">
+                  <div v-if="isUserMenuOpen" class="user-dropdown">
+                    <!-- Header Profile -->
+                    <div class="dropdown-header">
+                       <div class="avatar-large">
+                         {{ usuarioStore.usuario.nombre.charAt(0).toUpperCase() }}
+                       </div>
+                       <div class="user-info">
+                         <span class="name">{{ usuarioStore.usuario.nombre }}</span>
+                         <span class="role">{{ obtenerNombreRol(usuarioStore.usuario.rol) }}</span>
+                       </div>
+                    </div>
+
+                    <div class="dropdown-divider"></div>
+
+                    <!-- Theme Toggles -->
+                    <div class="dropdown-section">
+                       <span class="section-label">Tema</span>
+                       <div class="theme-toggles">
+                          <button @click="setTheme('light')" class="theme-btn" :class="{ active: !isDarkMode }" title="Claro">
+                             <Sun :size="18" />
+                          </button>
+                          <button @click="setTheme('dark')" class="theme-btn" :class="{ active: isDarkMode }" title="Oscuro">
+                             <Moon :size="18" />
+                          </button>
+                       </div>
+                    </div>
+
+                     <!-- Language Options -->
+                    <div class="dropdown-section">
+                       <span class="section-label">Idioma</span>
+                       <div class="lang-options">
+                          <button 
+                            v-for="lang in supportedLanguages" 
+                            :key="lang.code"
+                            @click="setLanguage(lang.code)"
+                            class="lang-item"
+                            :class="{ active: locale === lang.code }"
+                          >
+                            <span class="flag">{{ lang.flag }}</span>
+                            <span class="lang-name">{{ lang.name }}</span>
+                            <Check v-if="locale === lang.code" :size="14" class="check-icon" />
+                          </button>
+                       </div>
+                    </div>
+
+                    <div class="dropdown-divider"></div>
+
+                    <!-- Logout -->
+                    <button @click="logout" class="dropdown-item danger">
+                      <LogOut :size="16" />
+                      <span>Cerrar Sesión</span>
+                    </button>
+                  </div>
+                </transition>
               </div>
-              <button @click="logout" class="btn-logout-icon" title="Cerrar Sesión">
-                <LogOut :size="18" />
-              </button>
             </div>
           </div>
         </nav>
@@ -72,7 +128,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { usePedidoStore } from './stores/pedidoStore';
 import { useUsuarioStore } from './stores/usuarioStore';
 import LoginForm from './components/LoginForm.vue';
@@ -84,21 +140,55 @@ import MesasQR from './components/MesasQR.vue';
 import MenuView from './components/MenuView.vue';
 import PedidoStatus from './components/PedidoStatus.vue';
 import CuentaView from './views/CuentaView.vue';
-import { UtensilsCrossed, LogOut, Wifi, WifiOff } from 'lucide-vue-next';
+import { 
+  UtensilsCrossed, LogOut, Wifi, WifiOff, ChevronDown, 
+  Sun, Moon, Check, Globe 
+} from 'lucide-vue-next';
 
 import socket from './socket';
 import api from './api'; 
-import LanguageSwitcher from './components/LanguageSwitcher.vue';
 import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const title = import.meta.env.VITE_APP_TITLE;
 
 // ✅ NUEVO: Nombre dinámico del restaurante
-// ✅ NUEVO: Nombre dinámico del restaurante
 const nombreRestaurante = ref(import.meta.env.VITE_APP_TITLE || 'Restaurante Demo');
-const logoUrl = ref('/android/android-launchericon-192-192.png'); // Default logo
+const logoUrl = ref('/vite.svg'); // Default logo
+
+// Dropdown State
+const isUserMenuOpen = ref(false);
+const userMenuRef = ref(null);
+const isDarkMode = ref(false);
+
+const supportedLanguages = [
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'en', name: 'English', flag: '🇺🇸' }
+];
+
+const toggleUserMenu = () => {
+  isUserMenuOpen.value = !isUserMenuOpen.value;
+};
+
+// Close dropdown on click outside
+const handleClickOutside = (event) => {
+  if (userMenuRef.value && !userMenuRef.value.contains(event.target)) {
+    isUserMenuOpen.value = false;
+  }
+};
+
+// Theme Logic
+const setTheme = (theme) => {
+  isDarkMode.value = theme === 'dark';
+  document.documentElement.classList.toggle('dark', isDarkMode.value);
+  localStorage.setItem('theme', theme);
+};
+
+const setLanguage = (code) => {
+  locale.value = code;
+  localStorage.setItem('locale', code);
+};
 
 const cargarConfiguracion = async () => {
   try {
@@ -148,6 +238,16 @@ onMounted(() => {
   pedidoStore.iniciarRealTime(); // Iniciar listeners de Socket.io
   cargarConfiguracion(); // ✅ NUEVO: Cargar config completa (nombre + colores)
   
+  // Theme init
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme) {
+    setTheme(savedTheme);
+  } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    setTheme('dark');
+  }
+
+  document.addEventListener('click', handleClickOutside);
+  
   // Monitorear conexión
   if (socket.connected) isConnected.value = true;
   
@@ -176,6 +276,10 @@ onMounted(() => {
   }
 });
 
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
+
 const logout = () => {
   usuarioStore.logout();
 };
@@ -194,19 +298,58 @@ const obtenerNombreRol = (rol) => {
   --nav-border: #e2e8f0;
   --nav-text: #1e293b;
   --primary-color: #f97316;
+  --bg-color: #f8fafc;
+  --card-bg: #ffffff;
+  --border-color: #e2e8f0;
+  
+  /* Semantic Colors */
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --bg-secondary: #f1f5f9;
+  /* Semantic Colors */
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --bg-secondary: #f1f5f9;
+  
+  /* Custom Component Variables */
+  --pf-border-color: #cbd5e1; /* Higher contrast border for light mode */
+}
+
+/* Dark Mode Variables */
+.dark {
+  --nav-bg: #1e293b;
+  --nav-border: #334155;
+  --nav-text: #f8fafc;
+  --bg-color: #0f172a;
+  --card-bg: #1e293b;
+  --border-color: #334155;
+  
+  /* Semantic Colors */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --bg-secondary: #334155;
+  
+  --pf-border-color: #475569; /* Lighter border for visual usage in Dark Mode (Slate 600) */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --bg-secondary: #334155;
+  
+  color-scheme: dark;
 }
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   margin: 0;
-  background-color: #f8fafc;
+  background-color: var(--bg-color);
   color: var(--nav-text);
+  transition: background-color 0.3s, color 0.3s;
 }
 
 .app-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background-color: var(--bg-color);
 }
 
 .navbar {
@@ -219,6 +362,7 @@ body {
   display: flex;
   align-items: center;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: background-color 0.3s, border-color 0.3s;
 }
 
 .navbar-content {
@@ -228,19 +372,19 @@ body {
   max-width: 1600px;
   margin: 0 auto;
   width: 100%;
-  padding: 0 16px; /* Reduced from 24px */
+  padding: 0 16px;
 }
 
 .navbar-left {
   display: flex;
   align-items: center;
-  gap: 12px; /* Reduced from 24px */
+  gap: 12px;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px; /* Reduced from 12px */
+  gap: 8px;
 }
 
 .brand-icon {
@@ -250,9 +394,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white; /* Changed to white */
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Softer shadow */
-  overflow: hidden; /* Ensure image stays inside */
+  background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  overflow: hidden;
 }
 
 .brand-icon img {
@@ -262,7 +406,7 @@ body {
 }
 
 .logo {
-  font-size: 1.1rem; /* Slightly smaller */
+  font-size: 1.1rem;
   font-weight: 700;
   margin: 0;
   color: var(--nav-text);
@@ -282,10 +426,22 @@ body {
   border: 1px solid #e2e8f0;
 }
 
+.dark .status-pill {
+    background: #334155;
+    color: #94a3b8;
+    border-color: #475569;
+}
+
 .status-pill.connected {
   background: #dcfce7;
   color: #166534;
   border-color: #bbf7d0;
+}
+
+.dark .status-pill.connected {
+    background: #064e3b;
+    color: #4ade80;
+    border-color: #065f46;
 }
 
 .status-pill.disconnected {
@@ -297,13 +453,7 @@ body {
 .navbar-right {
   display: flex;
   align-items: center;
-  gap: 8px; /* Reduced from 16px */
-}
-
-.divider {
-  width: 1px;
-  height: 20px;
-  background: var(--nav-border);
+  gap: 12px;
 }
 
 .rol-badge {
@@ -320,10 +470,30 @@ body {
 .rol-facturero, .rol-cajero { background: #ecfdf5; color: #047857; }
 .rol-admin { background: #f5f3ff; color: #6d28d9; }
 
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* User Menu & Dropdown Styles */
+.user-menu-container {
+    position: relative;
+    cursor: pointer;
+}
+
+.user-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 6px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.user-btn:hover, .user-btn.active {
+    background-color: rgba(0,0,0,0.03);
+}
+
+.dark .user-btn:hover, .dark .user-btn.active {
+    background-color: rgba(255,255,255,0.05);
 }
 
 .avatar-circle {
@@ -345,24 +515,189 @@ body {
   color: var(--nav-text);
 }
 
-.btn-logout-icon {
-  background: white;
-  color: #64748b;
-  border: 1px solid var(--nav-border);
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
+.chevron-icon {
+    color: #94a3b8;
+    transition: transform 0.2s;
 }
 
-.btn-logout-icon:hover {
-  background: #f1f5f9;
-  color: #ef4444;
-  border-color: #fecaca;
+.chevron-icon.rotated {
+    transform: rotate(180deg);
+}
+
+/* Users Dropdown */
+.user-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 260px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    padding: 8px;
+    z-index: 1000;
+    overflow: hidden;
+    animation: fadeSlideIn 0.2s ease-out;
+}
+
+.dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+}
+
+.avatar-large {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-info .name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--nav-text);
+}
+
+.user-info .role {
+    font-size: 0.8rem;
+    color: #64748b;
+    text-transform: capitalize;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 4px 0;
+}
+
+.dropdown-section {
+    padding: 10px 12px;
+}
+
+.section-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Theme Toggles */
+.theme-toggles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    background: var(--bg-color);
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.theme-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #94a3b8;
+    transition: all 0.2s;
+}
+
+.theme-btn.active {
+    background: var(--card-bg);
+    color: var(--primary-color);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* Language Options */
+.lang-options {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.lang-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--nav-text);
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.lang-item:hover {
+    background: var(--bg-color);
+}
+
+.lang-item.active {
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 500;
+}
+
+.dark .lang-item.active {
+    background: #1e3a8a;
+    color: #60a5fa;
+}
+
+/* Dropdown Item (Logout) */
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    width: 100%;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    color: var(--nav-text);
+}
+
+.dropdown-item:hover {
+    background: var(--bg-color);
+}
+
+.dropdown-item.danger {
+    color: #ef4444;
+}
+
+.dropdown-item.danger:hover {
+    background: #fef2f2;
+}
+
+.dark .dropdown-item.danger:hover {
+    background: #451a1a;
+}
+
+@keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .main-content {
@@ -371,6 +706,7 @@ body {
   margin: 0 auto;
   width: 100%;
   padding: 24px;
+  background-color: var(--bg-color);
 }
 
 /* Responsivo */
@@ -380,10 +716,9 @@ body {
   }
   .status-text { display: none; }
   .usuario-nombre { display: none; }
-  .divider { display: none; } /* Hide divider on mobile */
   
   .navbar-content {
-    padding: 0 10px; /* Very tight padding on mobile */
+    padding: 0 10px;
   }
   
   .navbar-left { gap: 8px; }
@@ -396,6 +731,12 @@ body {
   .brand-icon {
       width: 28px;
       height: 28px;
+  }
+
+  /* Adjust dropdown for mobile */
+  .user-dropdown {
+      width: 280px;
+      right: -10px; 
   }
 }
 </style>

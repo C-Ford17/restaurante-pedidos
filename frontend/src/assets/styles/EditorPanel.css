@@ -217,17 +217,17 @@
    TARJETAS & FORMULARIOS
    ========================================= */
 .card {
-    background: white;
+    background: var(--card-bg);
     border-radius: 16px;
     padding: 24px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     margin-bottom: 24px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border-color);
 }
 
 .card-header h3 {
     margin: 0 0 20px 0;
-    color: #1f2937;
+    color: var(--text-primary);
     font-size: 18px;
 }
 
@@ -631,63 +631,64 @@ select:focus {
         width: 100%;
     }
 }
+
 /* RECIPE MODAL STYLES */
 .btn-recipe {
-  background: #8b5cf6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+    background: #8b5cf6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
 }
 
 .modal {
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 600px;
-  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
 .modal-subtitle {
-  color: #6b7280;
-  font-size: 0.9rem;
-  margin-bottom: 20px;
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
 }
 
 .recipe-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr auto;
-  gap: 12px;
-  margin-bottom: 12px;
-  align-items: center;
+    display: grid;
+    grid-template-columns: 2fr 1fr auto;
+    gap: 12px;
+    margin-bottom: 12px;
+    align-items: center;
 }
 
 .recipe-select,
 .recipe-qty-group input {
-  padding: 8px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  width: 100%;
+    padding: 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    width: 100%;
 }
 
 .recipe-qty-group {
@@ -703,39 +704,39 @@ select:focus {
 }
 
 .btn-add-row {
-  background: #e0e7ff;
-  color: #4338ca;
-  border: 1px dashed #4338ca;
-  width: 100%;
-  padding: 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-top: 12px;
+    background: #e0e7ff;
+    color: #4338ca;
+    border: 1px dashed #4338ca;
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 12px;
 }
 
 .modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
 }
 
 .btn-cancel {
-  background: transparent;
-  border: 1px solid #d1d5db;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
+    background: transparent;
+    border: 1px solid #d1d5db;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
 }
 
 .btn-save {
-  background: #10b981;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
 }

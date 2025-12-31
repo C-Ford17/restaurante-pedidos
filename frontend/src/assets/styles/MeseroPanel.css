@@ -1,12 +1,12 @@
 .mesero-panel {
-  --w-primary: #f97316;
-  /* Orange 500 */
+  --w-primary: var(--theme-color, #f97316);
   --w-primary-dark: #ea580c;
-  --w-secondary: #64748b;
-  --w-bg: #f8fafc;
-  --w-card-bg: #ffffff;
-  --w-text: #1e293b;
-  --w-border: #e2e8f0;
+  /* Ideally this should also be dynamic or darker shade of theme-color */
+  --w-secondary: var(--text-secondary);
+  --w-bg: var(--bg-color);
+  --w-card-bg: var(--card-bg);
+  --w-text: var(--text-primary);
+  --w-border: var(--border-color);
   --w-success: #22c55e;
   --w-danger: #ef4444;
   --w-warning: #f59e0b;
@@ -59,7 +59,7 @@
   padding: 0.5rem 1rem;
   border-radius: 8px;
   border: 1px solid var(--w-border);
-  background: white;
+  background: var(--w-card-bg);
   color: var(--w-secondary);
   font-weight: 600;
   cursor: pointer;
@@ -68,7 +68,7 @@
 
 .btn-icon-label:hover {
   background: #f1f5f9;
-  color: var(--w-text);
+  color: var(--theme-color, #f97316);
 }
 
 .btn-refresh {
@@ -76,7 +76,7 @@
   height: 40px;
   border-radius: 50%;
   border: 1px solid var(--w-border);
-  background: white;
+  background: var(--w-card-bg);
   color: var(--w-secondary);
   display: flex;
   align-items: center;
@@ -150,7 +150,7 @@
 }
 
 .mesa-blocked {
-  background: #f1f5f9;
+  background: var(--bg-secondary);
   cursor: not-allowed;
   opacity: 0.7;
 }
@@ -221,7 +221,7 @@
 .search-container {
   display: flex;
   align-items: center;
-  background: #fff;
+  background: var(--w-card-bg);
   border: 1px solid var(--w-border);
   border-radius: 20px;
   padding: 0 1rem;
@@ -361,7 +361,7 @@
 
 /* Order Summary */
 .order-summary-section {
-  background: white;
+  background: var(--w-card-bg);
   border-radius: 16px;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
   padding: 1.5rem;
@@ -384,7 +384,7 @@
 }
 
 .badge-table {
-  background: #f1f5f9;
+  background: var(--bg-secondary);
   padding: 4px 12px;
   border-radius: 20px;
   font-weight: 700;
@@ -393,7 +393,7 @@
 
 .summary-item {
   padding: 1rem;
-  background: #f8fafc;
+  background: var(--bg-secondary);
   border-radius: 10px;
   margin-bottom: 1rem;
   border: 1px solid var(--w-border);
@@ -434,7 +434,8 @@
   padding: 8px;
   font-size: 0.85rem;
   resize: none;
-  background: white;
+  background: var(--w-card-bg);
+  color: var(--w-text);
 }
 
 .action-buttons {
@@ -449,7 +450,7 @@
   align-items: center;
   justify-content: center;
   border: none;
-  background: white;
+  background: var(--w-card-bg);
   border: 1px solid var(--w-border);
   border-radius: 6px;
   cursor: pointer;
@@ -559,7 +560,7 @@
 .active-card,
 .served-card,
 .ready-card {
-  background: white;
+  background: var(--w-card-bg);
   border-radius: 16px;
   border: 1px solid var(--w-border);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -570,7 +571,7 @@
 .served-header,
 .ready-header {
   padding: 1rem;
-  background: #f8fafc;
+  background: var(--bg-secondary);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -637,6 +638,7 @@
 
 .btn-edit,
 .btn-pay,
+.btn-view-bill,
 .btn-serve {
   flex: 1;
   padding: 0.6rem;
@@ -678,6 +680,18 @@
   border-radius: 8px;
   color: var(--w-secondary);
   cursor: pointer;
+}
+
+.btn-view-bill {
+  background: var(--w-card-bg);
+  border: 1px solid var(--w-border);
+  color: var(--w-text);
+}
+
+.btn-view-bill:hover {
+  border-color: var(--w-primary);
+  color: var(--w-primary);
+  background: var(--bg-secondary);
 }
 
 .btn-cancel:hover {
@@ -722,7 +736,7 @@
 }
 
 .modal-content {
-  background: white;
+  background: var(--w-card-bg);
   border-radius: 16px;
   width: 95%;
   max-width: 900px;
@@ -731,6 +745,89 @@
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.qr-content {
+  background: var(--w-card-bg) !important;
+  color: var(--w-text) !important;
+  align-items: center;
+  padding: 3rem 2rem 2rem;
+  /* Top padding for close button */
+  max-width: 450px;
+  position: relative;
+  /* For absolute close button */
+  border-radius: 20px;
+  /* More rounded as per modern look */
+  text-align: center;
+}
+
+.qr-content h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: var(--w-text);
+  font-size: 1.5rem;
+}
+
+.btn-close-modal {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--w-secondary);
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-close-modal:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--w-text);
+  transform: rotate(90deg);
+}
+
+.dark .btn-close-modal:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-actions-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.btn-primary-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--w-primary);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.btn-primary-link:hover {
+  background: var(--w-primary-dark);
+  transform: translateY(-1px);
+}
+
+.modal-actions-col .btn-secondary-action {
+  width: 100%;
+  justify-content: center;
 }
 
 /* --- Editor Modal Styles --- */
@@ -750,7 +847,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: white;
+  background: var(--w-card-bg);
 }
 
 .modal-header h3 {
@@ -778,7 +875,7 @@
 
 .items-col {
   border-right: 1px solid var(--w-border);
-  background: #f8fafc;
+  background: var(--bg-secondary);
 }
 
 .editor-col h4 {
@@ -1110,7 +1207,7 @@
   align-items: center;
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid #f1f5f9;
-  background: #f8fafc;
+  background: var(--w-card-bg);
 }
 
 .modal-header-clean h3 {
@@ -1145,6 +1242,7 @@
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
+  background: var(--w-card-bg);
   gap: 1.5rem;
 }
 
@@ -1206,7 +1304,7 @@
 }
 
 .btn-secondary-action {
-  background: #f1f5f9;
+  background: var(--w-card-bg);
   color: var(--w-secondary);
   flex: 1;
 }
@@ -1259,7 +1357,7 @@
 /* Adjust item card for grid layout */
 .items-grid .item-card {
   cursor: pointer;
-  background: white;
+  background: var(--w-card-bg);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -1441,7 +1539,7 @@
 
   /* Order Summary Mobile Improvements */
   .item-en-lista {
-    background: white;
+    background: var(--w-card-bg);
     border-radius: 12px;
     padding: 12px;
     margin-bottom: 12px;
@@ -1696,7 +1794,7 @@
   top: 0;
   z-index: 50;
   /* Higher z-index */
-  background: white;
+  background: var(--w-card-bg);
   /* Solid background to cover scrolling items */
   padding: 10px 0;
   margin-bottom: 1rem;
@@ -1744,7 +1842,7 @@
   border-bottom: 2px solid var(--w-primary);
   /* Highlight selected context */
   overflow-x: auto;
-  background: white;
+  background: var(--w-card-bg);
 }
 
 .editor-body .categorias-tabs.mini.single-category .tab {

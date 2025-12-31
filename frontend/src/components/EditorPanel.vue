@@ -1,6 +1,10 @@
 <template>
   <div class="editor-panel">
     <div class="editor-header no-print">
+      <button @click="$emit('volver')" class="btn-secondary-outline btn-volver-full">
+        <ArrowLeft :size="18" /> {{ $t('admin.back_to_panel') }}
+      </button>
+      
       <div class="header-title">
         <Settings :size="24" class="header-icon" />
         <h2>{{ $t('editor.title') }}</h2>
@@ -60,7 +64,7 @@
 </template>
 <script setup>
 import { ref, onMounted } from 'vue';
-import { Settings, UtensilsCrossed, Tags, CreditCard, Grid3x3 } from 'lucide-vue-next';
+import { Settings, UtensilsCrossed, Tags, CreditCard, Grid3x3, ArrowLeft } from 'lucide-vue-next';
 import api from '../api';
 import MenuEditor from './MenuEditor.vue';
 import CategoriesEditor from './CategoriesEditor.vue';

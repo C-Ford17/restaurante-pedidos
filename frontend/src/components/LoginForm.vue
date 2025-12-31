@@ -143,7 +143,8 @@ const handleLogin = async () => {
   justify-content: center;
   width: 100%;
   /* Light Premium Gradient */
-  background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+  /* Global Background */
+  background: var(--bg-color);
   /* Add subtle brand color tint if available via var */
   background-image: 
     radial-gradient(at 0% 0%, rgba(var(--theme-color-rgb, 249, 115, 22), 0.08) 0px, transparent 50%),
@@ -154,10 +155,8 @@ const handleLogin = async () => {
 .glass-card {
   width: 100%;
   max-width: 420px;
-  background: rgba(255, 255, 255, 0.85); /* Frosty white */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5); /* Subtle white border */
+  background: var(--card-bg); /* Adaptive Card Background */
+  border: 1px solid var(--border-color);
   border-radius: 24px;
   padding: 48px 40px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1); /* Softer shadow for light mode */
@@ -177,7 +176,7 @@ const handleLogin = async () => {
 .logo-circle {
   width: 90px;
   height: 90px;
-  background: white;
+  background: var(--card-bg);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -199,7 +198,7 @@ const handleLogin = async () => {
 }
 
 h1 {
-  color: #1e293b; /* Dark Slate - High Contrast */
+  color: var(--text-primary); /* Dark Slate - High Contrast */
   font-size: 2rem;
   font-weight: 800;
   margin: 0;
@@ -207,7 +206,7 @@ h1 {
 }
 
 .subtitle {
-  color: #64748b; /* Slate 500 */
+  color: var(--text-secondary); /* Slate 500 */
   font-size: 1rem;
   margin: 0;
 }
@@ -225,7 +224,7 @@ h1 {
 }
 
 .input-group label {
-  color: #334155; /* Slate 700 - Readable label */
+  color: var(--text-primary); /* Slate 700 - Readable label */
   font-size: 0.9rem;
   font-weight: 600;
   margin-left: 4px;
@@ -240,7 +239,7 @@ h1 {
 .input-icon {
   position: absolute;
   left: 16px;
-  color: #94a3b8; /* Lighter slate for placeholder icon */
+  color: var(--text-secondary); /* Lighter slate for placeholder icon */
   pointer-events: none;
   transition: color 0.3s;
 }
@@ -248,22 +247,22 @@ h1 {
 .input-wrapper input {
   width: 100%;
   padding: 14px 16px 14px 44px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0; /* Light gray border */
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color); /* Light gray border */
   border-radius: 12px;
-  color: #0f172a; /* Very dark text */
+  color: var(--text-primary); /* Very dark text */
   font-size: 1rem;
   transition: all 0.3s;
 }
 
 .input-wrapper input::placeholder {
-  color: #cbd5e1;
+  color: var(--text-secondary);
 }
 
 .input-wrapper input:focus {
   outline: none;
   border-color: var(--theme-color, #f97316);
-  background: #ffffff;
+  background: var(--card-bg);
   box-shadow: 0 0 0 4px rgba(var(--theme-color-rgb, 249, 115, 22), 0.1);
 }
 
@@ -321,7 +320,7 @@ h1 {
 
 .footer-note {
   text-align: center;
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 0.85rem;
 }
 

@@ -8,7 +8,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #1e293b;
+    color: var(--text-primary);
 }
 
 .section-title h3 {
@@ -41,7 +41,7 @@
 .form-group label {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #64748b;
+    color: var(--text-secondary);
     margin-bottom: 6px;
 }
 
@@ -68,11 +68,13 @@
 .input-with-icon input {
     width: 100%;
     padding: 10px 12px 10px 38px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     font-size: 14px;
     transition: all 0.2s;
     font-family: inherit;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
 }
 
 .input-with-icon.small input {
@@ -113,9 +115,9 @@
 
 /* List Styles */
 .payments-list {
-    background: white;
+    background: var(--card-bg);
     border-radius: 16px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     overflow: hidden;
     margin-top: 24px;
@@ -123,24 +125,25 @@
 
 .list-header {
     display: flex;
-    background: #f8fafc;
+    background: var(--bg-secondary);
     padding: 16px 24px;
     font-weight: 600;
-    color: #64748b;
+    color: var(--text-secondary);
     font-size: 0.875rem;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .list-item {
     display: flex;
     align-items: center;
     padding: 12px 24px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--border-color);
     transition: background 0.1s;
+    color: var(--text-primary);
 }
 
 .list-item:hover {
-    background: #fdfdfd;
+    background: var(--bg-secondary);
 }
 
 .col-name {
@@ -152,7 +155,7 @@
     flex: 1;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 0.875rem;
-    color: #64748b;
+    color: var(--text-secondary);
     padding-right: 16px;
 }
 
@@ -189,7 +192,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #cbd5e1;
+    background-color: var(--border-color);
     transition: 0.3s;
 }
 
@@ -229,6 +232,7 @@ input:checked+.slider:before {
     font-size: 14px;
     font-family: inherit;
     padding: 0;
+    color: var(--text-primary);
 }
 
 .editable-input:focus {
@@ -239,7 +243,7 @@ input:checked+.slider:before {
 .btn-icon.delete {
     background: transparent;
     border: none;
-    color: #cbd5e1;
+    color: var(--text-secondary);
     cursor: pointer;
     width: 32px;
     height: 32px;
@@ -264,8 +268,9 @@ input:checked+.slider:before {
     display: flex;
     align-items: center;
     gap: 8px;
+    gap: 8px;
     font-size: 0.8rem;
-    color: #64748b;
+    color: var(--text-secondary);
     margin-top: 12px;
     padding: 0 8px;
 }
@@ -318,4 +323,9 @@ input:checked+.slider:before {
         display: flex;
         justify-content: flex-end;
     }
+}
+
+/* Ensure form cards use dark background */
+.form-card {
+    background: var(--card-bg);
 }

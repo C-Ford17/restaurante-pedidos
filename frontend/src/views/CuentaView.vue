@@ -288,9 +288,9 @@ onUnmounted(() => {
 <style scoped>
 .cuenta-container {
   min-height: 100vh;
-  background: #f8fafc;
+  background: var(--bg-color);
   font-family: 'Inter', sans-serif;
-  color: #1e293b;
+  color: var(--text-primary);
   padding-bottom: 40px;
 }
 
@@ -301,13 +301,13 @@ onUnmounted(() => {
   justify-content: center;
   height: 80vh;
   gap: 1rem;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #e2e8f0;
+  border: 4px solid var(--border-color);
   border-top-color: var(--primary-color, #ff6b6b);
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -342,8 +342,8 @@ onUnmounted(() => {
 .placeholder { width: 40px; } 
 
 .btn-icon-back {
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   width: 40px;
   height: 40px;
   border-radius: 12px;
@@ -351,7 +351,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #334155;
+  color: var(--text-secondary);
   transition: all 0.2s;
 }
 
@@ -375,7 +375,7 @@ onUnmounted(() => {
 
 /* Cards */
 .status-card {
-  background: white;
+  background: var(--card-bg);
   border-radius: 20px;
   padding: 1.5rem;
   box-shadow: 0 4px 15px rgba(0,0,0,0.03);
@@ -383,6 +383,7 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
 }
 
 .status-row {
@@ -392,7 +393,7 @@ onUnmounted(() => {
 }
 
 .status-icon-wrapper {
-  background: #f1f5f9;
+  background: var(--bg-secondary);
   padding: 10px;
   border-radius: 12px;
   color: var(--primary-color, #ff6b6b);
@@ -410,15 +411,16 @@ onUnmounted(() => {
 .divider-vertical {
   width: 1px;
   height: 40px;
-  background: #f1f5f9;
+  background: var(--border-color);
 }
 
 .bill-card {
-  background: white;
+  background: var(--card-bg);
   border-radius: 20px;
   padding: 1.5rem;
   box-shadow: 0 4px 15px rgba(0,0,0,0.03);
   margin-bottom: 2rem;
+  border: 1px solid var(--border-color);
 }
 
 .bill-card h3 {
@@ -440,7 +442,7 @@ onUnmounted(() => {
 }
 
 .qty-badge {
-  background: #f1f5f9;
+  background: var(--bg-secondary);
   padding: 2px 8px;
   border-radius: 6px;
   font-weight: 700;
@@ -449,11 +451,11 @@ onUnmounted(() => {
   text-align: center;
 }
 
-.item-name { font-weight: 600; color: #1e293b; }
-.item-price { font-weight: 600; color: #475569; }
+.item-name { font-weight: 600; color: var(--text-primary); }
+.item-price { font-weight: 600; color: var(--text-secondary); }
 
 .divider-dashed {
-  border-top: 2px dashed #e2e8f0;
+  border-top: 2px dashed var(--border-color);
   margin: 1.5rem 0;
 }
 
@@ -466,7 +468,7 @@ onUnmounted(() => {
 }
 
 .divider-solid {
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--border-color);
   margin: 1rem 0;
 }
 
@@ -476,7 +478,7 @@ onUnmounted(() => {
   align-items: center;
   font-size: 1.25rem;
   font-weight: 800;
-  color: #1e293b;
+  color: var(--text-primary);
 }
 
 .total-amount { color: var(--primary-color, #ff6b6b); }
@@ -509,8 +511,8 @@ onUnmounted(() => {
 
 .btn-secondary {
   padding: 0.8rem 1.5rem;
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
   border: none;
   border-radius: 12px;
   font-weight: 600;

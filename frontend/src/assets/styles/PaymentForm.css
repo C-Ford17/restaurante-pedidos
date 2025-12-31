@@ -8,14 +8,16 @@
 
 /* Summary Card */
 .summary-card {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border: 2px solid #e2e8f0;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    padding: 1rem;
+    border: 2px solid var(--pf-border-color);
 }
 
 .summary-header {
     margin-bottom: 1rem;
     padding-bottom: 0.75rem;
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid var(--pf-border-color);
 }
 
 .table-info {
@@ -28,14 +30,14 @@
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--text-primary);
     letter-spacing: 0.05em;
 }
 
 .table-number {
     font-size: 1.75rem;
     font-weight: 800;
-    color: var(--c-primary);
+    color: var(--theme-color, var(--c-primary));
     line-height: 1;
 }
 
@@ -65,14 +67,14 @@
 
 .amount-label {
     font-size: 0.9rem;
-    color: #64748b;
+    color: var(--text-primary);
     font-weight: 500;
 }
 
 .amount-value {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #334155;
+    color: var(--text-primary);
 }
 
 .paid-value {
@@ -81,13 +83,14 @@
 
 .total-value {
     font-size: 1.5rem;
-    color: var(--c-primary);
+    color: var(--theme-color, var(--c-primary));
 }
 
 /* Tip Card */
 .tip-card {
-    border-color: #fbbf24;
-    background: #fffbeb;
+    border-radius: 10px;
+    border: 2px solid var(--pf-border-color);
+    padding: 1rem;
 }
 
 .tip-options-grid {
@@ -114,36 +117,43 @@
     align-items: center;
     justify-content: center;
     padding: 1rem 0.75rem;
-    background: white;
-    border: 2px solid #e2e8f0;
+    background: var(--card-bg);
+    border: 2px solid var(--pf-border-color);
     border-radius: 10px;
     transition: all 0.2s;
     min-height: 70px;
 }
 
 .tip-option:hover .tip-option-content {
-    border-color: #cbd5e1;
-    background: #fafafa;
+    border-color: var(--pf-border-color);
+    background: var(--theme-color);
 }
 
 .tip-option.active .tip-option-content {
-    border-color: #fbbf24;
-    background: #fef3c7;
-    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
+    border-color: var(--theme-color);
+    background: rgba(var(--theme-color-rgb, 16, 185, 129), 0.1);
+    /* Dynamic active background */
+    box-shadow: 0 0 0 3px rgba(var(--theme-color-rgb, 16, 185, 129), 0.1);
 }
 
 .tip-label {
     font-size: 0.85rem;
     font-weight: 600;
-    color: #334155;
+    color: var(--text-primary);
     text-align: center;
 }
 
 .tip-amount {
     font-size: 0.95rem;
     font-weight: 700;
-    color: #fbbf24;
+    color: var(--theme-color);
     margin-top: 0.25rem;
+}
+
+.tip-icon {
+    width: 24px;
+    height: 24px;
+    color: var(--theme-color);
 }
 
 .custom-tip-input {
@@ -154,15 +164,17 @@
     width: 100%;
     padding: 0.75rem 1rem;
     font-size: 1rem;
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--pf-border-color);
     border-radius: 8px;
     outline: none;
     transition: border-color 0.2s;
+    background: var(--card-bg);
+    color: var(--text-primary);
 }
 
 .form-input:focus {
-    border-color: #fbbf24;
-    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
+    border-color: var(--theme-color);
+    box-shadow: 0 0 0 3px rgba(var(--theme-color-rgb, 16, 185, 129), 0.1);
 }
 
 .tip-total {
@@ -170,43 +182,43 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 1rem;
-    background: white;
-    border: 1px solid #fbbf24;
+    background: var(--card-bg);
+    border: 1px solid var(--theme-color);
     border-radius: 8px;
     margin-top: 0.75rem;
     font-size: 0.9rem;
     font-weight: 600;
-    color: #92400e;
+    color: var(--text-primary);
 }
 
 .tip-total-value {
     font-size: 1.1rem;
-    color: #fbbf24;
+    color: var(--theme-color);
 }
 
 /* Warning Card */
 .warning-card {
-    background: #fef3c7;
-    border-color: #fbbf24;
+    background: rgba(var(--theme-color-rgb, 16, 185, 129), 0.15);
+    /* Dynamic background for warning */
+    border-color: var(--theme-color);
 }
 
 .warning-content {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    color: #92400e;
+    color: var(--theme-color);
     font-size: 0.9rem;
 }
 
 .warning-content svg {
     flex-shrink: 0;
-    color: #fbbf24;
+    color: var(--theme-color);
 }
 
 /* Mode Card */
 .mode-card {
-    background: white;
-    border-color: #cbd5e1;
+    border-color: var(--pf-border-color);
 }
 
 .mode-selector {
@@ -222,30 +234,36 @@
     justify-content: center;
     gap: 0.5rem;
     padding: 1rem;
-    background: white;
-    border: 2px solid #e2e8f0;
+    background: var(--card-bg);
+    border: 2px solid var(--pf-border-color);
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s;
     font-size: 0.9rem;
     font-weight: 600;
-    color: #64748b;
+    color: var(--text-secondary);
 }
 
 .mode-btn:hover {
-    border-color: #cbd5e1;
-    background: #f8fafc;
+    border-color: var(--pf-border-color);
+    background: var(--bg-secondary);
 }
 
 .mode-btn.active {
-    border-color: var(--c-primary);
-    background: #ecfdf5;
-    color: var(--c-primary);
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    border-color: var(--theme-color, var(--c-primary));
+    background: rgba(var(--theme-color-rgb, 16, 185, 129), 0.1);
+    color: var(--theme-color, var(--c-primary));
+    box-shadow: 0 0 0 3px rgba(var(--theme-color-rgb, 16, 185, 129), 0.1);
 }
 
 .mode-btn svg {
-    color: currentColor;
+    color: var(--theme-color, var(--c-primary));
+    /* Theme color for icons */
+}
+
+.mode-btn span {
+    color: var(--text-primary);
+    /* Dynamic text color */
 }
 
 /* Responsive */
@@ -294,16 +312,18 @@
 
 /* ===== PAYMENT METHOD & AMOUNT CARDS ===== */
 
-.payment-method-card,
-.amount-card {
-    background: white;
-    border-color: #cbd5e1;
+.payment-method-card {
+    border-radius: 10px;
+    border: 2px solid var(--pf-border-color);
+    padding: 0.2rem;
 }
 
 .payment-methods-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 0.75rem;
+    border-radius: 10px;
+    padding: 1rem;
 }
 
 .payment-method-btn {
@@ -313,32 +333,38 @@
     justify-content: center;
     gap: 0.5rem;
     padding: 1rem 0.75rem;
-    background: white;
-    border: 2px solid #e2e8f0;
+    background: var(--card-bg);
+    border: 2px solid var(--pf-border-color);
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s;
     font-size: 0.85rem;
     font-weight: 600;
-    color: #64748b;
+    color: var(--text-secondary);
 }
 
 .payment-method-btn:hover {
-    border-color: #cbd5e1;
-    background: #f8fafc;
+    border-color: var(--pf-border-color);
+    background: var(--bg-secondary);
     transform: translateY(-2px);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .payment-method-btn.active {
-    border-color: var(--c-primary);
-    background: #ecfdf5;
-    color: var(--c-primary);
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    border-color: var(--theme-color, var(--c-primary));
+    background: rgba(var(--theme-color-rgb, 16, 185, 129), 0.1);
+    color: var(--theme-color, var(--c-primary));
+    box-shadow: 0 0 0 3px rgba(var(--theme-color-rgb, 16, 185, 129), 0.1);
 }
 
 .payment-method-btn svg {
-    color: currentColor;
+    color: var(--theme-color, var(--c-primary));
+    /* Theme color for icons */
+}
+
+.payment-method-btn span {
+    color: var(--text-primary);
+    /* Dynamic text color */
 }
 
 /* Amount Input Group */
@@ -369,16 +395,17 @@
     padding: 0.875rem 1rem 0.875rem 2.5rem;
     font-size: 1.1rem;
     font-weight: 600;
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--pf-border-color);
     border-radius: 8px;
     outline: none;
     transition: all 0.2s;
-    color: #1e293b;
+    color: var(--text-primary);
+    background: var(--card-bg);
 }
 
 .amount-input:focus {
-    border-color: var(--c-primary);
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    border-color: var(--theme-color, var(--c-primary));
+    box-shadow: 0 0 0 3px rgba(var(--theme-color-rgb, 16, 185, 129), 0.1);
 }
 
 .exact-btn {
@@ -402,6 +429,11 @@
     background: #475569;
     transform: translateY(-1px);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+    color: var(--text-primary);
+    border-radius: 10px;
 }
 
 .change-display {
@@ -441,11 +473,6 @@
     color: #fbbf24;
 }
 
-/* Multiple Payment Card */
-.multiple-payment-card {
-    background: white;
-    border-color: #cbd5e1;
-}
 
 .multiple-payment-inputs {
     display: flex;
@@ -458,15 +485,15 @@
     align-items: center;
     gap: 1rem;
     padding: 0.75rem 1rem;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--pf-border-color);
     border-radius: 8px;
     transition: all 0.2s;
+    background: var(--card-bg);
 }
 
 .payment-input-row:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
+    background: var(--bg-color);
+    border-color: var(--pf-border-color);
 }
 
 .payment-input-label {
@@ -476,7 +503,7 @@
     min-width: 140px;
     font-size: 0.9rem;
     font-weight: 600;
-    color: #334155;
+    color: var(--text-primary);
 }
 
 .payment-input-field {
@@ -497,8 +524,8 @@
 
 /* Summary Totals Card */
 .summary-totals-card {
-    background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
-    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.2rem;
 }
 
 .summary-totals-card .total-row {
@@ -514,7 +541,8 @@
 .summary-totals-card .total-label {
     font-size: 0.9rem;
     font-weight: 600;
-    color: #64748b;
+    color: var(--text-secondary);
+    /* Ensure visibility */
 }
 
 .summary-totals-card .total-value {
@@ -523,7 +551,7 @@
 }
 
 .summary-totals-card .total-value.ingresado {
-    color: var(--c-primary);
+    color: var(--theme-color, var(--c-primary));
 }
 
 .summary-totals-card .total-value.restante-pending {
@@ -548,7 +576,7 @@
     justify-content: center;
     gap: 0.5rem;
     padding: 1rem 1.5rem;
-    background: rgb(16, 185, 129);
+    background: var(--theme-color, var(--c-primary));
     color: rgb(255, 255, 255);
     border: none;
     border-radius: 10px;
@@ -556,13 +584,13 @@
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+    box-shadow: 0 4px 6px rgba(var(--theme-color-rgb, 16, 185, 129), 0.2);
 }
 
 .confirm-btn:hover:not(:disabled) {
-    background: var(--c-primary-dark);
+    opacity: 0.9;
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 6px 12px rgba(var(--theme-color-rgb, 16, 185, 129), 0.3);
 }
 
 .confirm-btn:disabled {

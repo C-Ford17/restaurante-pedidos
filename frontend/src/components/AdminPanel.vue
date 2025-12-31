@@ -58,9 +58,9 @@
     <!-- Main Content Area -->
     <main class="admin-main">
       <AdminDashboard v-if="activeView === 'dashboard'" />
-      <EditorPanel v-else-if="activeView === 'editor'" />
-      <AdminUsers v-else-if="activeView === 'users'" />
-      <AdminInventory v-else-if="activeView === 'inventory'" />
+      <EditorPanel v-else-if="activeView === 'editor'" @volver="activeView = 'dashboard'" />
+      <AdminUsers v-else-if="activeView === 'users'" @volver="activeView = 'dashboard'" />
+      <AdminInventory v-else-if="activeView === 'inventory'" @volver="activeView = 'dashboard'" />
       <div v-else>Vista: {{ activeView }}</div>
     </main>
   </div>
@@ -90,8 +90,9 @@ const navigateTo = (view) => {
 .admin-panel-shell {
   display: flex;
   min-height: 100vh;
-  background: #f8fafc;
+  background: var(--bg-color);
   position: relative;
+  transition: background-color 0.3s;
 }
 
 /* Hamburger Button */
@@ -100,8 +101,8 @@ const navigateTo = (view) => {
   left: 16px;
   top: calc(var(--nav-height, 64px) + 16px);
   z-index: 100;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   width: 48px;
   height: 48px;
@@ -111,7 +112,7 @@ const navigateTo = (view) => {
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transition: all 0.3s;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .hamburger-btn:hover {
@@ -141,8 +142,8 @@ const navigateTo = (view) => {
 /* Sidebar Styles */
 .admin-sidebar {
   width: 240px;
-  background: white;
-  border-right: 1px solid #e2e8f0;
+  background: var(--card-bg);
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -151,7 +152,7 @@ const navigateTo = (view) => {
   bottom: 0;
   z-index: 70;
   box-shadow: 2px 0 8px rgba(0,0,0,0.03);
-  transition: left 0.3s ease;
+  transition: left 0.3s ease, background-color 0.3s, border-color 0.3s;
 }
 
 .admin-sidebar.open {
@@ -160,7 +161,7 @@ const navigateTo = (view) => {
 
 .sidebar-header {
   padding: 24px 20px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -169,7 +170,7 @@ const navigateTo = (view) => {
 .close-sidebar {
   background: none;
   border: none;
-  color: #64748b;
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 4px;
   border-radius: 6px;
@@ -178,8 +179,8 @@ const navigateTo = (view) => {
 }
 
 .close-sidebar:hover {
-  background: #f1f5f9;
-  color: #1e293b;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .sidebar-logo {
@@ -188,7 +189,7 @@ const navigateTo = (view) => {
   gap: 12px;
   font-weight: 700;
   font-size: 1.1rem;
-  color: #1e293b;
+  color: var(--text-primary);
 }
 
 .logo-icon {
@@ -213,7 +214,7 @@ const navigateTo = (view) => {
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 0.95rem;
   font-weight: 500;
   text-align: left;
@@ -221,8 +222,8 @@ const navigateTo = (view) => {
 }
 
 .nav-item:hover {
-  background: #f1f5f9;
-  color: #1e293b;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .nav-item.active {
@@ -252,6 +253,7 @@ const navigateTo = (view) => {
   overflow-y: auto;
   max-width: 1600px;
   width: 100%;
+  color: var(--text-primary);
 }
 
 /* Transitions */

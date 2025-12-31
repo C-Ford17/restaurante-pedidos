@@ -38,13 +38,13 @@
     margin: 0;
     font-size: 1.75rem;
     font-weight: 800;
-    color: #1e293b;
+    color: var(--text-primary);
     letter-spacing: -0.025em;
 }
 
 .subtitle {
     margin: 4px 0 0 0;
-    color: #64748b;
+    color: var(--text-secondary);
     font-size: 0.95rem;
 }
 
@@ -53,9 +53,9 @@
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
-    border: 1px solid #cbd5e1;
-    background: white;
-    color: #475569;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-secondary);
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
@@ -63,26 +63,26 @@
 }
 
 .btn-secondary-outline:hover {
-    background: #f8fafc;
-    color: #1e293b;
-    border-color: #94a3b8;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
 }
 
 /* Stats / Summary Cards (Optional Future Enhancement) */
 
 /* Main Card */
 .premium-card {
-    background: white;
+    background: var(--card-bg);
     border-radius: 16px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     overflow: hidden;
     margin-bottom: 24px;
 }
 
 .card-header-actions {
     padding: 20px 24px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -107,16 +107,16 @@
 .search-input {
     width: 100%;
     padding: 10px 10px 10px 36px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     font-size: 0.9rem;
-    color: #334155;
-    background: #f8fafc;
+    color: var(--text-primary);
+    background: var(--bg-secondary);
     transition: all 0.2s;
 }
 
 .search-input:focus {
-    background: white;
+    background: var(--card-bg);
     outline: none;
     border-color: #10b981;
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
@@ -154,32 +154,32 @@
 }
 
 .inventory-table th {
-    background: #f8fafc;
-    color: #64748b;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.75rem;
     padding: 12px 24px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--border-color);
     text-align: left;
     white-space: nowrap;
 }
 
 .inventory-table td {
     padding: 16px 24px;
-    border-bottom: 1px solid #f1f5f9;
-    color: #334155;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
     font-size: 0.9rem;
     vertical-align: middle;
 }
 
 .inventory-table tr:hover td {
-    background: #f8fafc;
+    background: var(--bg-secondary);
 }
 
 .item-name-cell {
     font-weight: 600;
-    color: #1e293b;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -192,8 +192,8 @@
 
 .unit-badge {
     font-size: 0.75rem;
-    color: #64748b;
-    background: #f1f5f9;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
     padding: 2px 6px;
     border-radius: 4px;
     margin-left: 4px;
@@ -270,19 +270,19 @@
 }
 
 .btn-icon.edit {
-    background: white;
-    border-color: #e2e8f0;
-    color: #64748b;
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-secondary);
 }
 
 .btn-icon.edit:hover {
-    background: #f1f5f9;
-    color: #334155;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
 }
 
 .btn-icon.delete {
-    background: white;
-    border-color: #e2e8f0;
+    background: var(--card-bg);
+    border-color: var(--border-color);
     color: #ef4444;
 }
 
@@ -295,7 +295,7 @@
 .empty-state {
     padding: 60px 20px;
     text-align: center;
-    color: #94a3b8;
+    color: var(--text-secondary);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -319,13 +319,13 @@
 }
 
 .modal {
-    background: white;
+    background: var(--card-bg);
     padding: 32px;
     border-radius: 20px;
     width: 90%;
     max-width: 500px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    border: 1px solid #f1f5f9;
+    border: 1px solid var(--border-color);
     animation: slideUp 0.3s ease-out backwards;
 }
 
@@ -366,7 +366,7 @@
     margin: 0;
     font-size: 1.25rem;
     font-weight: 700;
-    color: #1e293b;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -383,7 +383,7 @@
 }
 
 .btn-close-modal:hover {
-    background: #f1f5f9;
+    background: var(--bg-secondary);
     color: #ef4444;
 }
 
@@ -406,24 +406,24 @@
     margin-bottom: 6px;
     font-size: 0.85rem;
     font-weight: 600;
-    color: #475569;
+    color: var(--text-secondary);
 }
 
 .inventory-form input,
 .inventory-form select {
     width: 100%;
     padding: 10px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     font-size: 0.95rem;
-    color: #1e293b;
-    background: #f8fafc;
+    color: var(--text-primary);
+    background: var(--bg-secondary);
     transition: all 0.2s;
 }
 
 .inventory-form input:focus,
 .inventory-form select:focus {
-    background: white;
+    background: var(--card-bg);
     border-color: #10b981;
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
     outline: none;
@@ -435,22 +435,24 @@
     gap: 12px;
     margin-top: 24px;
     padding-top: 20px;
-    border-top: 1px solid #f1f5f9;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
 }
 
 .btn-cancel {
-    background: white;
-    border: 1px solid #e2e8f0;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     padding: 10px 20px;
     border-radius: 8px;
-    color: #64748b;
+    color: var(--text-secondary);
     font-weight: 600;
     cursor: pointer;
 }
 
 .btn-cancel:hover {
-    background: #f8fafc;
-    color: #1e293b;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
 }
 
 .btn-save {

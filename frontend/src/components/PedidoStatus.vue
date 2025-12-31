@@ -337,8 +337,9 @@ onUnmounted(() => {
   margin: 0 auto;
   padding: 20px;
   min-height: 100vh;
-  background: #f9fafb;
+  background: var(--bg-color);
   font-family: 'Inter', sans-serif;
+  color: var(--text-primary);
 }
 
 .loading, .error-state {
@@ -372,7 +373,7 @@ onUnmounted(() => {
 .header h1 {
   font-size: 24px;
   margin-bottom: 8px;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .mesa-badge {
@@ -386,12 +387,13 @@ onUnmounted(() => {
 }
 
 .status-card {
-  background: white;
+  background: var(--card-bg);
   border-radius: 16px;
   padding: 24px;
   text-align: center;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   margin-bottom: 24px;
+  border: 1px solid var(--border-color);
 }
 
 .status-icon {
@@ -402,11 +404,11 @@ onUnmounted(() => {
 .status-text h2 {
   font-size: 20px;
   margin-bottom: 8px;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .status-text p {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 14px;
   margin-bottom: 12px;
 }
@@ -428,7 +430,7 @@ onUnmounted(() => {
 
 .progress-bar {
   height: 8px;
-  background: #e5e7eb;
+  background: var(--bg-secondary);
   border-radius: 4px;
   overflow: hidden;
   margin-bottom: 8px;
@@ -449,23 +451,25 @@ onUnmounted(() => {
 }
 
 .items-section {
-  background: white;
+  background: var(--card-bg);
   border-radius: 16px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
 }
 
 .items-section h3 {
   font-size: 16px;
   margin-bottom: 16px;
-  color: #374151;
-  border-bottom: 1px solid #f3f4f6;
+  margin-bottom: 16px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
   padding-bottom: 12px;
 }
 
 .item-row-dynamic {
   padding: 12px 0;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .item-row-dynamic:last-child {
@@ -487,13 +491,13 @@ onUnmounted(() => {
 
 .qty {
   font-weight: 700;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
 .name {
   font-weight: 500;
-  color: #111827;
+  color: var(--text-primary);
   font-size: 14px;
 }
 
@@ -512,7 +516,7 @@ onUnmounted(() => {
 
 .item-progress-track {
   height: 6px;
-  background: #f3f4f6;
+  background: var(--bg-secondary);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -532,7 +536,9 @@ onUnmounted(() => {
   justify-content: space-around;
   margin-top: 20px;
   padding-top: 16px;
-  border-top: 1px solid #e5e7eb;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
 }
 
 .stat-item {
@@ -552,7 +558,7 @@ onUnmounted(() => {
 .stat-value {
   font-size: 18px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .footer-note {
@@ -573,12 +579,13 @@ onUnmounted(() => {
 }
 
 .pedir-cuenta-section {
-  background: white;
+  background: var(--card-bg);
   border-radius: 16px;
   padding: 20px;
   margin-top: 24px;
   text-align: center;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
 }
 
 .btn-pedir-cuenta {

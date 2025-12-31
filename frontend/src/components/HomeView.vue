@@ -14,7 +14,7 @@ import LoginForm from './LoginForm.vue';
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  background: var(--bg-color);
   background-image: 
     radial-gradient(at 0% 0%, rgba(255, 107, 107, 0.15) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(100, 116, 139, 0.15) 0px, transparent 50%);

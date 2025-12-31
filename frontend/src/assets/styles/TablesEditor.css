@@ -8,7 +8,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #1e293b;
+    color: var(--text-primary);
 }
 
 .section-title h3 {
@@ -41,16 +41,18 @@
 .form-group label {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #64748b;
+    color: var(--text-secondary);
     margin-bottom: 6px;
 }
 
 .form-group input {
     padding: 10px 12px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     font-size: 14px;
     transition: all 0.2s;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
 }
 
 .form-group input:focus {
@@ -86,11 +88,11 @@
 }
 
 .mesa-card {
-    background: white;
+    background: var(--card-bg);
     padding: 24px;
     border-radius: 16px;
     text-align: center;
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--border-color);
     position: relative;
     transition: all 0.3s;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -113,7 +115,7 @@
 .mesa-number {
     font-size: 1.5rem;
     font-weight: 800;
-    color: #1e293b;
+    color: var(--text-primary);
     margin-bottom: 8px;
 }
 
@@ -123,7 +125,7 @@
     justify-content: center;
     gap: 6px;
     font-size: 0.875rem;
-    color: #64748b;
+    color: var(--text-secondary);
     margin-bottom: 16px;
 }
 
@@ -134,7 +136,7 @@
     gap: 8px;
     margin-top: 16px;
     padding-top: 16px;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid var(--border-color);
 }
 
 .toggle-label {
@@ -142,7 +144,7 @@
     align-items: center;
     gap: 4px;
     font-size: 0.75rem;
-    color: #64748b;
+    color: var(--text-secondary);
     font-weight: 500;
 }
 
@@ -172,7 +174,9 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #cbd5e1;
+    right: 0;
+    bottom: 0;
+    background-color: var(--border-color);
     transition: 0.3s;
 }
 
@@ -257,4 +261,9 @@ input:checked+.slider:before {
     .mesa-card {
         padding: 16px;
     }
+}
+
+/* Ensure form cards use dark background */
+.form-card {
+    background: var(--card-bg);
 }

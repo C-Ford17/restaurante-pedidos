@@ -183,24 +183,24 @@ onMounted(cargarMesas);
 .icon-circle {
   width: 48px;
   height: 48px;
-  background: white;
+  background: var(--card-bg);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-color, #ff6b6b);
+  color: var(--primary-color);
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .header h1 {
   font-size: 2rem;
   font-weight: 800;
-  color: #1e293b;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .subtitle {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 1.1rem;
   margin-left: 64px;
 }
@@ -212,7 +212,7 @@ onMounted(cargarMesas);
 }
 
 .mesa-card {
-  background: white;
+  background: var(--card-bg);
   border-radius: 20px;
   padding: 24px;
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
@@ -241,7 +241,7 @@ onMounted(cargarMesas);
 .mesa-badge .label {
   font-size: 0.75rem;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: var(--text-secondary);
   letter-spacing: 0.05em;
   font-weight: 600;
 }
@@ -249,16 +249,16 @@ onMounted(cargarMesas);
 .mesa-badge .number {
   font-size: 1.5rem;
   font-weight: 800;
-  color: #1e293b;
+  color: var(--text-primary);
   line-height: 1;
 }
 
 .capacity-tag {
-  background: #f1f5f9;
+  background: var(--bg-secondary);
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -266,7 +266,7 @@ onMounted(cargarMesas);
 }
 
 .qr-preview {
-  background: #f8fafc;
+  background: var(--bg-secondary);
   border-radius: 16px;
   height: 160px;
   display: flex;
@@ -280,21 +280,21 @@ onMounted(cargarMesas);
 }
 
 .qr-preview:hover {
-  background: #e2e8f0;
+  background: var(--border-color);
 }
 
 .qr-icon-large {
-  color: #cbd5e1;
+  color: var(--text-secondary);
   transition: color 0.2s;
 }
 
 .qr-preview:hover .qr-icon-large {
-  color: var(--primary-color, #ff6b6b);
+  color: var(--primary-color);
 }
 
 .scan-hint {
   font-size: 0.9rem;
-  color: #64748b;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -305,7 +305,7 @@ onMounted(cargarMesas);
 
 .btn-full-width {
   width: 100%;
-  background: var(--color-primary, #4f46e5);
+  background: var(--primary-color);
   color: white;
   border: none;
   padding: 12px;
@@ -341,7 +341,7 @@ onMounted(cargarMesas);
 }
 
 .modal-content {
-  background: white;
+  background: var(--card-bg);
   border-radius: 24px;
   padding: 40px;
   width: 100%;
@@ -363,7 +363,7 @@ onMounted(cargarMesas);
   position: absolute;
   top: 20px;
   right: 20px;
-  background: #f1f5f9;
+  background: var(--bg-secondary);
   border: none;
   width: 36px;
   height: 36px;
@@ -372,7 +372,7 @@ onMounted(cargarMesas);
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #64748b;
+  color: var(--text-secondary);
   transition: all 0.2s;
 }
 
@@ -387,8 +387,8 @@ onMounted(cargarMesas);
 }
 
 .modal-badge {
-  background: #f1f5f9;
-  color: #64748b;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
   padding: 6px 16px;
   border-radius: 20px;
   font-size: 0.9rem;
@@ -401,15 +401,15 @@ onMounted(cargarMesas);
 .modal-header h2 {
   font-size: 1.8rem;
   margin: 0;
-  color: #1e293b;
+  color: var(--text-primary);
 }
 
 .qr-display-wrapper {
-  background: white; /* For high contrast */
+  background: white; /* Conserve white for QR contrast */
   padding: 20px;
   border-radius: 20px;
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); /* Outer shadow */
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
   margin-bottom: 24px;
 }
 
@@ -421,10 +421,10 @@ onMounted(cargarMesas);
 
 .url-text {
   font-family: monospace;
-  background: #f8fafc;
+  background: var(--bg-secondary);
   padding: 8px 16px;
   border-radius: 8px;
-  color: #475569;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   margin-bottom: 32px;
   word-break: break-all;
@@ -453,24 +453,24 @@ onMounted(cargarMesas);
 }
 
 .btn-print {
-  background: #1e293b;
-  color: white;
+  background: var(--text-primary);
+  color: var(--card-bg);
   border: none;
 }
 
 .btn-print:hover {
-  background: #334155;
+  background: var(--text-secondary);
 }
 
 .btn-download {
-  background: white;
-  color: #1e293b;
-  border: 1px solid #cbd5e1;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
 }
 
 .btn-download:hover {
-  background: #f8fafc;
-  border-color: #94a3b8;
+  background: var(--bg-secondary);
+  border-color: var(--text-secondary);
 }
 
 .loading-state {
@@ -482,8 +482,8 @@ onMounted(cargarMesas);
 .spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid #e2e8f0;
-  border-top-color: var(--primary-color, #ff6b6b);
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

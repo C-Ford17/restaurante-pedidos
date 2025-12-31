@@ -1,16 +1,16 @@
 .cocinero-panel {
-    --k-primary: #f97316;
-    /* Orange 500 */
+    --k-primary: var(--theme-color, #f97316);
     --k-primary-dark: #ea580c;
-    /* Orange 600 */
-    --k-secondary: #64748b;
-    --k-bg: #f8fafc;
-    --k-card-bg: #ffffff;
-    --k-text: #1e293b;
-    --k-border: #e2e8f0;
+    /* Ideally calculated from theme-color, but leaving as is for now */
+    --k-secondary: var(--text-secondary);
+    --k-bg: var(--bg-color);
+    --k-card-bg: var(--card-bg);
+    --k-text: var(--text-primary);
+    --k-border: var(--border-color);
     --k-success: #22c55e;
     --k-danger: #ef4444;
-    --k-warning: #f59e0b;
+    --k-warning: var(--theme-color, #f59e0b);
+    /* Updated to match theme color for unified branding */
 
     padding: 1.5rem;
     background-color: var(--k-bg);
@@ -42,7 +42,7 @@
 }
 
 .icon-wrapper {
-    background: #fff7ed;
+    background: var(--bg-secondary);
     padding: 0.5rem;
     border-radius: 12px;
 }
@@ -75,7 +75,7 @@
     flex-direction: column;
     align-items: center;
     padding: 0.5rem 1rem;
-    background: #f1f5f9;
+    background: var(--bg-secondary);
     border-radius: 12px;
     min-width: 100px;
     transition: all 0.3s ease;
@@ -111,7 +111,7 @@
     height: 40px;
     border-radius: 10px;
     border: none;
-    background: white;
+    background: var(--k-card-bg);
     color: var(--k-secondary);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     cursor: pointer;
@@ -212,8 +212,8 @@
 
 .card-header {
     padding: 1rem;
-    background: #fffbeb;
-    border-bottom: 1px solid #fef3c7;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--k-border);
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -281,7 +281,7 @@
 }
 
 .qty-badge {
-    background: #f1f5f9;
+    background: var(--bg-secondary);
     color: var(--k-text);
     font-weight: 700;
     padding: 2px 8px;
@@ -307,7 +307,7 @@
     display: flex;
     align-items: flex-start;
     gap: 4px;
-    background: #f8fafc;
+    background: var(--bg-secondary);
     padding: 4px 8px;
     border-radius: 4px;
 }
@@ -347,7 +347,7 @@
 }
 
 .mesa-header:hover {
-    background: #f8fafc;
+    background: var(--bg-secondary);
 }
 
 .mesa-main-info {
@@ -405,7 +405,7 @@
 .mini-progress {
     width: 60px;
     height: 6px;
-    background: #f1f5f9;
+    background: var(--bg-secondary);
     border-radius: 3px;
     overflow: hidden;
 }
@@ -443,7 +443,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--k-border);
     transition: background 0.2s;
 }
 
@@ -452,13 +452,15 @@
 }
 
 .kitchen-item.en_preparacion {
-    background: #fffbeb;
-    /* Light yellow bg for active cooking */
+    background: rgba(var(--theme-color-rgb, 249, 115, 22), 0.1);
+    /* Using theme color with opacity */
+    border-left: 3px solid var(--k-warning);
 }
 
 .kitchen-item.listo {
-    background: #f0fdf4;
-    /* Light green bg for ready */
+    background: rgba(34, 197, 94, 0.1);
+    /* Green with opacity using k-success value */
+    border-left: 3px solid var(--k-success);
 }
 
 .item-content {
@@ -475,6 +477,7 @@
 .item-qty {
     font-weight: 800;
     color: var(--k-text);
+    /* Ensures it uses the correct text color variable */
 }
 
 .item-title {
@@ -495,8 +498,8 @@
 }
 
 .item-status-pill.pendiente {
-    background: #f1f5f9;
-    color: #64748b;
+    background: var(--bg-secondary);
+    color: var(--k-secondary);
 }
 
 .item-status-pill.en_preparacion {
@@ -575,13 +578,13 @@
 .mesa-footer {
     padding: 0.5rem;
     text-align: center;
-    background: #f8fafc;
+    background: var(--bg-secondary);
     border-top: 1px solid var(--k-border);
 }
 
 .btn-secondary.small {
     padding: 0.4rem 1rem;
-    background: white;
+    background: var(--k-card-bg);
     border: 1px solid var(--k-border);
     border-radius: 20px;
     font-size: 0.85rem;
@@ -593,14 +596,14 @@
 }
 
 .btn-secondary.small:hover {
-    background: #f1f5f9;
+    background: var(--bg-secondary);
 }
 
 /* Empty State */
 .empty-state {
     text-align: center;
     padding: 4rem 2rem;
-    background: white;
+    background: var(--k-card-bg);
     border-radius: 16px;
     border: 2px dashed var(--k-border);
     color: var(--k-secondary);
@@ -628,7 +631,7 @@
 .spinner {
     width: 40px;
     height: 40px;
-    border: 4px solid #f1f5f9;
+    border: 4px solid var(--bg-secondary);
     border-top-color: var(--k-primary);
     border-radius: 50%;
     margin-bottom: 1rem;

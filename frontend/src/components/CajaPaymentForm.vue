@@ -30,8 +30,8 @@
     <!-- Tip Selection Card (Only for first payment) -->
     <div class="detail-card tip-card" v-if="esPrimerPago">
       <div class="card-title">
-        <Coins class="w-4 h-4" />
-        <span>{{ $t('cashier.tip') }}</span>
+        <Coins class="tip-icon" />
+        <span class="tip-label">{{ $t('cashier.tip') }}</span>
       </div>
       
       <div class="tip-options-grid">
@@ -250,11 +250,11 @@
 }
 
 .pago-info {
-    background: #f8fafc;
+    background: var(--bg-secondary);
     border-radius: 8px;
     padding: 0.75rem;
     margin-bottom: 1rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
 }
 
 .info-row {
@@ -267,7 +267,7 @@
 .main-total {
     margin-top: 0.5rem;
     padding-top: 0.5rem;
-    border-top: 1px dashed #cbd5e1;
+    border-top: 1px dashed var(--border-color);
     font-size: 1.1rem;
 }
 
@@ -284,38 +284,40 @@
     align-items: center;
     justify-content: center;
     padding: 0.75rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    background: white;
+    background: var(--card-bg);
     cursor: pointer;
     transition: all 0.2s;
     height: 80px;
 }
 
 .metodo-btn:hover {
-    border-color: #10b981;
-    background: #f0fdf4;
+    border-color: var(--theme-color, var(--c-primary));
+    background: var(--bg-secondary);
 }
 
 .metodo-btn.metodo-active {
-    background: #ecfdf5;
-    border-color: #10b981;
-    color: #047857;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+    background: rgba(var(--theme-color-rgb, 16, 185, 129), 0.1);
+    border-color: var(--theme-color, var(--c-primary));
+    color: var(--theme-color, var(--c-primary));
+    box-shadow: 0 0 0 2px rgba(var(--theme-color-rgb, 16, 185, 129), 0.1);
 }
 
 .monto-input {
     width: 100%;
     padding: 0.5rem 0.75rem;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 1.1rem;
     outline: none;
+    background: var(--card-bg);
+    color: var(--text-primary);
 }
 
 .monto-input:focus {
-    border-color: #10b981;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+    border-color: var(--theme-color, var(--c-primary));
+    box-shadow: 0 0 0 2px rgba(var(--theme-color-rgb, 16, 185, 129), 0.1);
 }
 
 .btn {
@@ -328,7 +330,7 @@
 }
 
 .btn-primary {
-    background: #10b981;
+    background: var(--theme-color, var(--c-primary));
     color: white;
 }
 
