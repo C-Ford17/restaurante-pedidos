@@ -193,6 +193,21 @@ const truncate = (text, length) => {
   color: white;
 }
 
+/* Fix visibility for remaining stock */
+.stock-badge.remaining {
+  background: rgba(255, 255, 255, 0.95);
+  color: #1e293b;
+  border: 1px solid rgba(0,0,0,0.1);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.stock-badge.remaining.warn {
+  color: #c2410c; /* Orange text for low stock warning */
+  border-color: #fdba74;
+  background: #fff7ed;
+}
+
 .content {
   padding: 1rem;
   display: flex;

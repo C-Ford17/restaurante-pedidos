@@ -278,7 +278,8 @@ const getItemProgress = (item) => {
   if (item.estado === 'pendiente' || !item.started_at) return 5;
   
   const drift = window.__clockDrift || 0;
-  const nowSync = Date.now() + drift; // Podrías usar 'now.value' si implementas el timer global
+  // Use reactive 'now.value' instead of Date.now() to trigger updates
+  const nowSync = now.value + drift; 
   const startTime = new Date(item.started_at).getTime();
   const elapsed = nowSync - startTime;
   // Fallback to 15 mins if not set
