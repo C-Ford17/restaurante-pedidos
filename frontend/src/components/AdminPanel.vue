@@ -79,9 +79,13 @@ const sidebarOpen = ref(false);
 
 const navigateTo = (view) => {
   activeView.value = view;
-  // Cerrar sidebar en móvil después de navegar
-  if (window.innerWidth <= 768) {
-    sidebarOpen.value = false;
+  // Cerrar sidebar siempre al navegar (comportamiento tipo drawer)
+  sidebarOpen.value = false;
+  
+  // Reset scroll position
+  const mainContent = document.querySelector('.admin-main');
+  if (mainContent) {
+    mainContent.scrollTop = 0;
   }
 };
 </script>

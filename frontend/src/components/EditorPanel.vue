@@ -80,7 +80,7 @@ const tables = ref([]);
 const cargarDatos = async () => {
   try {
     const [menuRes, catRes, pagosRes, configRes, mesasRes] = await Promise.all([
-      api.getMenu(),
+      api.getMenu({ params: { include_hidden: true } }),
       api.getCategories(),
       api.getPaymentMethods(),
       api.getConfig(),

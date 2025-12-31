@@ -248,36 +248,49 @@ const reloadApp = async () => {
 
 const cargarConfiguracion = async () => {
   try {
-    const res = await api.getConfig();
-    if (res.data) {
-      // Check for updates
-      if (res.data.app_version) {
-        checkForUpdates(res.data.app_version);
-      }
+    // Parallel fetch: Backend Config + Static Version File
+    const [configRes, versionRes] = await Promise.allSettled([
+      api.getConfig(),
+      fetch('/version.json').then(r => r.json())
+    ]);
+
+    let serverVersion = null;
+    let staticVersion = null;
+
+    // Process Backend Config
+    if (configRes.status === 'fulfilled' && configRes.value.data) {
+      const data = configRes.value.data;
+      serverVersion = data.app_version;
 
       // 1. Nombre
-      if (res.data.nombre) {
-        nombreRestaurante.value = res.data.nombre;
-        document.title = res.data.nombre;
+      if (data.nombre) {
+        nombreRestaurante.value = data.nombre;
+        document.title = data.nombre;
       }
       
-      // 1.1 Logo (Prioridad: Icono 192 -> 512 -> Apple -> Defecto)
-      if (res.data.icon_192_url) {
-         logoUrl.value = res.data.icon_192_url;
-      } else if (res.data.icon_512_url) {
-         logoUrl.value = res.data.icon_512_url;
-      } else if (res.data.apple_touch_icon_url) {
-         logoUrl.value = res.data.apple_touch_icon_url;
-      }
+      // 1.1 Logo
+      if (data.icon_192_url) logoUrl.value = data.icon_192_url;
+      else if (data.icon_512_url) logoUrl.value = data.icon_512_url;
+      else if (data.apple_touch_icon_url) logoUrl.value = data.apple_touch_icon_url;
       
       // 2. Colores
-      if (res.data.color_primario) {
-        document.documentElement.style.setProperty('--theme-color', res.data.color_primario);
-      }
-      if (res.data.color_secundario) {
-        document.documentElement.style.setProperty('--background-color', res.data.color_secundario);
-      }
+      if (data.color_primario) document.documentElement.style.setProperty('--theme-color', data.color_primario);
+      if (data.color_secundario) document.documentElement.style.setProperty('--background-color', data.color_secundario);
     }
+
+    // Process Static Version
+    if (versionRes.status === 'fulfilled' && versionRes.value) {
+      staticVersion = versionRes.value.version;
+    }
+
+    // Decide trigger update
+    // Priority: Newest version wins
+    if (staticVersion && staticVersion !== currentVersion) {
+      checkForUpdates(staticVersion);
+    } else if (serverVersion && serverVersion !== currentVersion) {
+      checkForUpdates(serverVersion);
+    }
+
   } catch (err) {
     console.error('Error cargando configuración:', err);
   }
@@ -321,6 +334,11 @@ const updatePublicState = () => {
     isPublicCuenta.value = true;
   }
 };
+
+// Watch for user changes to close menu
+watch(() => usuarioStore.usuario, () => {
+  isUserMenuOpen.value = false;
+});
 
 // Watch for route changes
 watch(() => route.path, () => {

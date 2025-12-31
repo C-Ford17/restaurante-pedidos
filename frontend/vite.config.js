@@ -29,6 +29,30 @@ export default defineConfig(({ mode }) => {
   // ✅ Read package version
   const pkg = require('./package.json')
 
+  // ✅ Plugin para generar version.json
+  const generateVersionFile = () => {
+    return {
+      name: 'generate-version-file',
+      writeBundle() {
+        // En build normal
+        const fs = require('fs');
+        const filePath = path.resolve(__dirname, 'dist/version.json');
+        fs.writeFileSync(filePath, JSON.stringify({ version: pkg.version }));
+      },
+      configureServer(server) {
+        // En modo dev (serve)
+        server.middlewares.use((req, res, next) => {
+          if (req.url === '/version.json') {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ version: pkg.version }));
+          } else {
+            next();
+          }
+        });
+      }
+    }
+  }
+
   return {
     define: {
       '__APP_VERSION__': JSON.stringify(pkg.version)
@@ -68,7 +92,8 @@ export default defineConfig(({ mode }) => {
           theme_color: env.VITE_THEME_COLOR,
           icons: []
         }
-      })
+      }),
+      generateVersionFile() // ✅ Registrar plugin custom
     ],
     server: {
       port: 5173,

@@ -70,8 +70,8 @@ export default {
   },
 
   // ============= MENÚ =============
-  getMenu() {
-    return api.get('/menu');
+  getMenu(options = {}) {
+    return api.get('/menu', options);
   },
 
   agregarMenuItem(itemData) {
