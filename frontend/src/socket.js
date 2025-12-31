@@ -9,9 +9,11 @@ const getSocketUrl = () => {
         hostname.startsWith('172.') && parseInt(hostname.split('.')[1]) >= 16 && parseInt(hostname.split('.')[1]) <= 31;
 
     if (isLocal) {
-        return `http://${hostname}:3000`;
+        // ✅ Usar path relativo (o vacío) para conectar al mismo origen (proxy vite)
+        console.log('🔌 Socket Local: Usando Proxy Vite');
+        return '';
     } else {
-        return import.meta.env.VITE_SOCKET_URL || 'https://restaurante-pedidos-backend.onrender.com';
+        return import.meta.env.VITE_SOCKET_URL;
     }
 };
 

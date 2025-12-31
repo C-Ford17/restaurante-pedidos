@@ -50,30 +50,94 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Mesa e items requeridos' });
         }
 
-        // Obtener nombre del mesero
-        const mesero = await getAsync('SELECT nombre FROM usuarios WHERE id = $1', [usuario_mesero_id]);
-        const nombreMesero = mesero ? mesero.nombre : 'Sin asignar';
+        // Obtener nombre del mesero (si existe)
+        let nombreMesero = 'Sin asignar';
+        if (usuario_mesero_id) {
+            const mesero = await getAsync('SELECT nombre FROM usuarios WHERE id = $1', [usuario_mesero_id]);
+            if (mesero) nombreMesero = mesero.nombre;
+        }
 
-        const pedido_id = uuidv4();
+        // ✅ VERIFICAR SI YA EXISTE UN PEDIDO ACTIVO PARA LA MESA
+        // ✅ VERIFICAR SI YA EXISTE UN PEDIDO ACTIVO PARA LA MESA
+        const activeOrder = await getAsync(
+            `SELECT id, subtotal, propina_monto, total, usuario_mesero_id, estado FROM pedidos 
+             WHERE mesa_numero = $1 AND estado NOT IN ('pagado', 'cerrado', 'cancelado') 
+             LIMIT 1`,
+            [mesa_numero]
+        );
 
-        // ✅ NUEVO: Calcular subtotal y propina
-        let subtotal = 0;
+        // Initialize variables outside to access them later
+        let pedido_id;
+        let finalTotal = 0; // New variable to hold the total regardless of create/update
+
+        // Calcular valores de los NUEVOS items
+        let nuevosItemsSubtotal = 0;
         items.forEach(item => {
-            subtotal += item.cantidad * item.precio_unitario;
+            nuevosItemsSubtotal += item.cantidad * item.precio_unitario;
         });
 
-        // Obtener porcentaje de propina de configuración (default 10%)
+        // Obtener configuración de propina
         const configPropina = await getAsync('SELECT valor FROM configuracion WHERE clave = $1', ['porcentaje_propina']);
         const porcentajePropina = parseFloat(configPropina?.valor || 10);
 
-        const propinaSugerida = Math.round(subtotal * (porcentajePropina / 100));
-        const total = subtotal + propinaSugerida;
+        if (activeOrder) {
+            // == MODIFICAR PEDIDO EXISTENTE ==
+            pedido_id = activeOrder.id;
 
-        const pedidoQuery = `
-            INSERT INTO pedidos(id, mesa_numero, usuario_mesero_id, subtotal, propina_monto, total, notas, estado)
-            VALUES($1, $2, $3, $4, $5, $6, $7, 'nuevo')
-        `;
-        await runAsync(pedidoQuery, [pedido_id, mesa_numero, usuario_mesero_id, subtotal, propinaSugerida, total, notas || null]);
+            // Si el pedido ya tiene mesero, conservarlo. Si no tiene y llega uno nuevo, asignarlo.
+            const finalMeseroId = activeOrder.usuario_mesero_id || usuario_mesero_id;
+
+            // Recalcular subtotal y total acumulado
+            const nuevoSubtotalTotal = parseFloat(activeOrder.subtotal) + nuevosItemsSubtotal;
+            const nuevaPropina = Math.round(nuevoSubtotalTotal * (porcentajePropina / 100));
+
+            finalTotal = nuevoSubtotalTotal + nuevaPropina; // Assign to outer variable
+
+            // ✅ LOGIC: If adding items to a ready/served order, revert to 'en_cocina' so kitchen sees it
+            // Only if new items need cooking (we'll assume all add-ons need kitchen attention for now to be safe, 
+            // or we could check 'es_directo' but we iterate items later.
+            // Let's check if ANY item is NOT direct.
+            const hasCookableItems = items.some(i => {
+                // If we don't have the full item data here, we might need to assume yes or query.
+                // But we queried menu_items later in the loop. 
+                // Optimization: We can just set it to 'en_cocina' if status was 'listo'/'servido' 
+                // and let the system handle it.
+                return true; // Simplified: New items always trigger active status if order was done
+            });
+
+            let nuevoEstado = activeOrder.estado;
+            if (['listo', 'servido', 'listo_pagar'].includes(activeOrder.estado)) {
+                nuevoEstado = 'en_cocina';
+            }
+
+            await runAsync(
+                `UPDATE pedidos 
+                 SET subtotal = $1, propina_monto = $2, total = $3, usuario_mesero_id = $4, estado = $5
+                 WHERE id = $6`,
+                [nuevoSubtotalTotal, nuevaPropina, finalTotal, finalMeseroId, nuevoEstado, pedido_id]
+            );
+
+            // Emit update to refresh waiter/kitchen views
+            req.app.get('io').emit('pedido_actualizado', {
+                mesa_numero,
+                id: pedido_id, // ✅ FIX: Use 'id' key to match frontend store
+                estado: nuevoEstado
+            });
+
+        } else {
+            // == CREAR NUEVO PEDIDO ==
+            pedido_id = uuidv4();
+            const propinaSugerida = Math.round(nuevosItemsSubtotal * (porcentajePropina / 100));
+            finalTotal = nuevosItemsSubtotal + propinaSugerida; // Assign to outer variable
+
+            const pedidoQuery = `
+                INSERT INTO pedidos(id, mesa_numero, usuario_mesero_id, subtotal, propina_monto, total, notas, estado)
+                VALUES($1, $2, $3, $4, $5, $6, $7, 'nuevo')
+            `;
+            await runAsync(pedidoQuery, [pedido_id, mesa_numero, usuario_mesero_id, nuevosItemsSubtotal, propinaSugerida, finalTotal, notas || null]);
+        }
+
+        // == INSERTAR ITEMS (Común para ambos casos) ==
 
         for (const item of items) {
             // ✅ OBTENER CONFIGURACIÓN DEL ITEM (incluir stock_reservado)
@@ -167,15 +231,27 @@ router.post('/', async (req, res) => {
             }
         }
 
+        // ✅ FETCH ALL ITEMS TO RETURN COMPLETE ORDER STATE
+        // This prevents "disappearing items" on the frontend which replaces local state
+        const allItems = await allAsync(`
+            SELECT 
+                pi.id, pi.cantidad, pi.precio_unitario, pi.notas, pi.estado, 
+                mi.nombre, mi.id as menu_item_id
+            FROM pedido_items pi
+            JOIN menu_items mi ON pi.menu_item_id = mi.id
+            WHERE pi.pedido_id = $1
+            ORDER BY pi.id ASC
+        `, [pedido_id]);
+
         const nuevoPedido = {
             id: pedido_id,
             mesa_numero,
             usuario_mesero_id,
             mesero: nombreMesero,
-            total,
+            total: finalTotal,
             estado: 'nuevo',
-            items_count: items.length,
-            items: items,
+            items_count: allItems.length,
+            items: allItems, // ✅ Return FULL list
             created_at: new Date()
         };
 
@@ -592,7 +668,10 @@ router.put('/items/:id/serve', async (req, res) => {
             `, [itemId]);
 
         const item = await getAsync(`
-            SELECT pedido_id FROM pedido_items WHERE id = $1
+            SELECT pi.pedido_id, p.mesa_numero, p.usuario_mesero_id 
+            FROM pedido_items pi
+            JOIN pedidos p ON pi.pedido_id = p.id
+            WHERE pi.id = $1
             `, [itemId]);
 
         // Verificar si todos los items están servidos
@@ -610,13 +689,16 @@ router.put('/items/:id/serve', async (req, res) => {
 
             req.app.get('io').emit('pedido_actualizado', {
                 id: item.pedido_id,
+                mesa_numero: item.mesa_numero, // Added for redundancy
                 estado: 'servido'
             });
         }
 
         req.app.get('io').emit('item_served', {
             item_id: itemId,
-            pedido_id: item.pedido_id
+            pedido_id: item.pedido_id,
+            mesa_numero: item.mesa_numero, // ✅ Critical for frontend filtering
+            mesero_id: item.usuario_mesero_id
         });
 
         res.json({ message: '✓ Item servido' });

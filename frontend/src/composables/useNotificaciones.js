@@ -82,13 +82,10 @@ export function useNotificaciones(rol) {
             // Ignorar error de vibración
         }
 
-        try {
-            if (navigator.vibrate) {
-                navigator.vibrate([100, 50, 100]);
-            }
-        } catch (err) {
-            // Ignorar error de vibración
-        }
+        // Auto-cerrar después de 3 segundos
+        setTimeout(() => {
+            cerrarNotificacion(id);
+        }, 3000);
 
         // ✅ MODIFICADO: Ya no mostramos notificación nativa aquí para evitar duplicidad
         // con las Push Notifications del Service Worker.

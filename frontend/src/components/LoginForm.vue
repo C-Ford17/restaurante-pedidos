@@ -1,54 +1,67 @@
 <template>
   <div class="login-container">
-    <div class="login-card">
-      <div class="login-header">
-        <h1>🍽️ {{ nombreRestaurante }}</h1>
-        <p>{{ subtituloRestaurante }}</p>
+    <div class="glass-card">
+      <div class="header-section">
+        <div class="logo-circle">
+          <img v-if="logoUrl" :src="logoUrl" alt="Logo" class="logo-img" />
+          <UtensilsCrossed v-else :size="48" class="logo-icon" />
+        </div>
+        <h1>{{ nombreRestaurante }}</h1>
+        <p class="subtitle">{{ subtituloRestaurante }}</p>
       </div>
 
       <form @submit.prevent="handleLogin" class="login-form">
-        <div class="form-group">
+        <div class="input-group">
           <label for="username">{{ $t('login.username') }}</label>
-          <input
-            id="username"
-            v-model="username"
-            type="text"
-            :placeholder="$t('login.username')"
-            required
-            :disabled="loading"
-          />
+          <div class="input-wrapper">
+            <User :size="18" class="input-icon" />
+            <input
+              id="username"
+              v-model="username"
+              type="text"
+              :placeholder="$t('login.username')"
+              required
+              :disabled="loading"
+            />
+          </div>
         </div>
 
-        <div class="form-group">
+        <div class="input-group">
           <label for="password">{{ $t('login.password') }}</label>
-          <input
-            id="password"
-            v-model="password"
-            type="password"
-            placeholder="••••••••"
-            required
-            :disabled="loading"
-          />
+          <div class="input-wrapper">
+            <Lock :size="18" class="input-icon" />
+            <input
+              id="password"
+              v-model="password"
+              type="password"
+              placeholder="••••••••"
+              required
+              :disabled="loading"
+            />
+          </div>
         </div>
 
         <button
           type="submit"
-          class="btn btn-login"
+          class="btn-login"
           :disabled="loading || !username || !password"
+          :class="{ 'loading': loading }"
         >
-          <span v-if="loading">{{ $t('login.logging_in') }}</span>
+          <span v-if="loading" class="spinner"></span>
           <span v-else>{{ $t('login.login_btn') }}</span>
+          <ArrowRight v-if="!loading" :size="20" />
         </button>
       </form>
 
-      <div v-if="error" class="error-message">
-        <strong>❌ {{ $t('common.error') }}:</strong> {{ error }}
-      </div>
-
-      <div class="demo-info">
-        <p class="demo-note">
-          💡 {{ $t('login.authorized_only') }}
-        </p>
+      <transition name="fade">
+        <div v-if="error" class="error-alert">
+          <AlertCircle :size="18" />
+          <span>{{ error }}</span>
+        </div>
+      </transition>
+      
+      <div class="footer-note">
+        <p>{{ $t('login.authorized_only') }}</p>
       </div>
     </div>
   </div>
@@ -56,11 +69,11 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
 import { useUsuarioStore } from '../stores/usuarioStore';
-import { subscribeToPush } from '../utils/pushSubscription'; // ✅ NUEVO
+import { subscribeToPush } from '../utils/pushSubscription'; 
 import api from '../api'; 
 import { useI18n } from 'vue-i18n';
+import { UtensilsCrossed, User, Lock, ArrowRight, AlertCircle } from 'lucide-vue-next';
 
 const { t } = useI18n();
 const usuarioStore = useUsuarioStore();
@@ -70,23 +83,38 @@ const password = ref('');
 const error = ref('');
 const loading = ref(false);
 
-// ✅ NUEVO: Cargar nombre del restaurante
 const nombreRestaurante = ref(import.meta.env.VITE_APP_TITLE || 'Restaurante');
-const subtituloRestaurante = ref(import.meta.env.VITE_APP_DESCRIPTION || 'Sistema de Gestión de Pedidos');
+const subtituloRestaurante = ref(import.meta.env.VITE_APP_DESCRIPTION || 'Sistema de Gestión');
+const logoUrl = ref(null);
 
 const cargarConfig = async () => {
   try {
     const res = await api.getConfig();
     if (res.data) {
-      nombreRestaurante.value = res.data.nombre || import.meta.env.VITE_APP_TITLE || 'Restaurante';
-      subtituloRestaurante.value = res.data.subtitulo || import.meta.env.VITE_APP_DESCRIPTION || 'Sistema de Gestión de Pedidos';
+      nombreRestaurante.value = res.data.nombre || nombreRestaurante.value;
+      subtituloRestaurante.value = res.data.subtitulo || subtituloRestaurante.value;
+      
+      // Load Dynamic Logo
+      if (res.data.icon_192_url) {
+         logoUrl.value = res.data.icon_192_url;
+      } else if (res.data.icon_512_url) {
+         logoUrl.value = res.data.icon_512_url;
+      } else if (res.data.apple_touch_icon_url) {
+         logoUrl.value = res.data.apple_touch_icon_url;
+      }
+
+      // Apply Colors dynamically if needed for this component, 
+      // though typically App.vue sets global vars.
+      // We rely on var(--theme-color) being set by App.vue or defaulting.
+      if (res.data.color_primario) {
+        document.documentElement.style.setProperty('--theme-color', res.data.color_primario);
+      }
     }  
   } catch (err) {
     console.error('Error cargando config:', err);
   }
 };
 
-// Cargar al montar
 cargarConfig();
 
 const handleLogin = async () => {
@@ -94,7 +122,11 @@ const handleLogin = async () => {
   loading.value = true;
 
   try {
-    await usuarioStore.login(username.value, password.value);
+    const success = await usuarioStore.login(username.value, password.value);
+    // Login success logic handled in store (redirection, etc.) or parent
+    if (success) {
+       // Optional: additional success logic
+    }
   } catch (err) {
     error.value = usuarioStore.error || t('common.error');
   } finally {
@@ -105,49 +137,77 @@ const handleLogin = async () => {
 
 <style scoped>
 .login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  /* Light Premium Gradient */
+  /* Global Background */
+  background: var(--bg-color);
+  /* Add subtle brand color tint if available via var */
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(var(--theme-color-rgb, 249, 115, 22), 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(100, 116, 139, 0.05) 0px, transparent 50%);
   padding: 20px;
 }
 
-.login-card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  padding: 40px;
+.glass-card {
   width: 100%;
-  max-width: 400px;
-  animation: slideUp 0.5s ease-out;
+  max-width: 420px;
+  background: var(--card-bg); /* Adaptive Card Background */
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  padding: 48px 40px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1); /* Softer shadow for light mode */
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.login-header {
+.header-section {
   text-align: center;
-  margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
-.login-header h1 {
-  font-size: 28px;
-  margin: 0 0 8px 0;
-  color: var(--color-primary);
+.logo-circle {
+  width: 90px;
+  height: 90px;
+  background: var(--card-bg);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08); /* Softer shadow */
+  margin-bottom: 8px;
+  overflow: hidden;
+  padding: 12px; /* Slight padding for logo breathing room */
 }
 
-.login-header p {
-  color: var(--color-text);
-  font-size: 14px;
+.logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.logo-icon {
+  color: var(--theme-color, #f97316);
+}
+
+h1 {
+  color: var(--text-primary); /* Dark Slate - High Contrast */
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.subtitle {
+  color: var(--text-secondary); /* Slate 500 */
+  font-size: 1rem;
   margin: 0;
 }
 
@@ -155,143 +215,136 @@ const handleLogin = async () => {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  margin-bottom: 24px;
 }
 
-.form-group {
+.input-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.form-group label {
+.input-group label {
+  color: var(--text-primary); /* Slate 700 - Readable label */
+  font-size: 0.9rem;
   font-weight: 600;
-  color: var(--color-text);
-  font-size: 14px;
+  margin-left: 4px;
 }
 
-.form-group input,
-.form-group select {
-  padding: 12px;
-  border: 2px solid var(--color-border);
-  border-radius: 6px;
-  font-size: 14px;
-  transition: border-color 0.3s;
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
-.form-group input:focus,
-.form-group select:focus {
-  border-color: var(--color-primary);
+.input-icon {
+  position: absolute;
+  left: 16px;
+  color: var(--text-secondary); /* Lighter slate for placeholder icon */
+  pointer-events: none;
+  transition: color 0.3s;
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding: 14px 16px 14px 44px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color); /* Light gray border */
+  border-radius: 12px;
+  color: var(--text-primary); /* Very dark text */
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.input-wrapper input::placeholder {
+  color: var(--text-secondary);
+}
+
+.input-wrapper input:focus {
   outline: none;
+  border-color: var(--theme-color, #f97316);
+  background: var(--card-bg);
+  box-shadow: 0 0 0 4px rgba(var(--theme-color-rgb, 249, 115, 22), 0.1);
 }
 
-.form-group input:disabled,
-.form-group select:disabled {
-  background-color: #f3f4f6;
-  cursor: not-allowed;
+.input-wrapper input:focus + .input-icon,
+.input-wrapper:focus-within .input-icon {
+  color: var(--theme-color, #f97316);
 }
 
 .btn-login {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  margin-top: 12px;
+  background: var(--theme-color, #f97316);
   color: white;
   border: none;
-  padding: 12px 20px;
-  border-radius: 6px;
-  font-size: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
-  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  box-shadow: 0 10px 20px -5px rgba(var(--theme-color-rgb, 249, 115, 22), 0.3);
 }
 
 .btn-login:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  filter: brightness(1.1);
+  box-shadow: 0 15px 25px -5px rgba(var(--theme-color-rgb, 249, 115, 22), 0.4);
+}
+
+.btn-login:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .btn-login:disabled {
-  opacity: 0.6;
+  opacity: 0.7;
   cursor: not-allowed;
+  filter: grayscale(0.5);
 }
 
-.error-message {
-  background-color: #fee2e2;
-  color: #991b1b;
-  padding: 12px;
-  border-radius: 6px;
-  border-left: 4px solid #dc2626;
-  font-size: 14px;
-  animation: slideUp 0.3s ease-out;
-}
-
-.demo-info {
-  background-color: var(--color-bg);
-  border: 2px solid var(--color-border);
-  border-radius: 8px;
-  padding: 16px;
-  margin-top: 24px;
-}
-
-.demo-info h3 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  color: var(--color-primary);
-}
-
-.demo-users {
+.error-alert {
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+  color: #ef4444;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 0.9rem;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.demo-user {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 12px;
+  gap: 12px;
+  font-weight: 500;
 }
 
-.demo-user strong {
-  color: var(--color-text);
+.footer-note {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
 }
 
-.demo-user code {
-  background: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--color-border);
-  font-family: 'Courier New', monospace;
-  color: var(--color-primary);
-  font-weight: 600;
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
 }
 
-.demo-note {
-  font-size: 12px;
-  color: #666;
-  margin: 0;
-  padding-top: 8px;
-  border-top: 1px solid var(--color-border);
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-/* Responsivo */
-@media (max-width: 480px) {
-  .login-card {
-    padding: 24px;
-  }
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
 
-  .login-header h1 {
-    font-size: 22px;
-  }
-
-  .demo-info {
-    padding: 12px;
-  }
-
-  .demo-user {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 </style>

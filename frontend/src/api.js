@@ -11,13 +11,14 @@ const getApiUrl = () => {
     (hostname.startsWith('172.') && parseInt(hostname.split('.')[1]) >= 16 && parseInt(hostname.split('.')[1]) <= 31);
 
   if (isLocal) {
-    // Modo Local: Conectar al backend en el mismo host, puerto 3000
-    console.log('🔌 Modo Local detectado: Conectando a backend local');
-    return `http://${hostname}:3000/api`;
+    // ✅ Modo Local: Usar ruta relativa para que el Proxy de Vite maneje la conexión
+    // Esto funciona tanto en localhost como en acceso LAN (192.168.x.x)
+    console.log('🔌 Modo Local detectado: Usando Proxy Vite (/api)');
+    return '/api';
   } else {
     // Modo Online: Usar URL de producción (Render)
     console.log('☁️ Modo Online detectado: Conectando a backend remoto');
-    return import.meta.env.VITE_API_URL || 'https://restaurante-pedidos-backend.onrender.com/api';
+    return import.meta.env.VITE_API_URL;
   }
 };
 
@@ -30,7 +31,15 @@ const api = axios.create({
   },
 });
 
-// ✅ Interceptor para agregar token automáticamente
+// ✅ Create a separate instance for PUBLIC endpoints (no auth)
+const publicApi = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// ✅ Interceptor para agregar token automáticamente (SOLO para api autenticado)
 api.interceptors.request.use(config => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -61,8 +70,8 @@ export default {
   },
 
   // ============= MENÚ =============
-  getMenu() {
-    return api.get('/menu');
+  getMenu(options = {}) {
+    return api.get('/menu', options);
   },
 
   agregarMenuItem(itemData) {
@@ -95,11 +104,16 @@ export default {
   },
 
   // ============= PEDIDOS =============
-  crearPedido(mesa_numero, usuario_mesero_id, items, notas) {
-    return api.post('/pedidos', { mesa_numero, usuario_mesero_id, items, notas });
+  crearPedido(data) {
+    return api.post('/pedidos', data);
   },
 
   getPedidosActivos() {
+    return api.get('/pedidos/activos');
+  },
+
+  // Alias compatible con CajaPanel
+  getPedidosPorCobrar() {
     return api.get('/pedidos/activos');
   },
 
@@ -144,8 +158,8 @@ export default {
   },
 
   // ============= EDICIÓN DE PEDIDOS =============
-  agregarItemsAPedido(pedidoId, items) {
-    return api.post(`/pedidos/${pedidoId}/items`, { items });
+  agregarItemsAPedido(pedidoId, data) {
+    return api.post(`/pedidos/${pedidoId}/items`, data);
   },
 
   eliminarItemDePedido(pedidoId, itemId, confirmar = false) {
@@ -206,11 +220,12 @@ export default {
 
   // ============= PÚBLICO (Sin autenticación) =============
   getPedidoStatusPublico(id) {
-    return api.get(`/pedidos/${id}/status-publico`);
+    // Use publicApi instance (no auth interceptor)
+    return publicApi.get(`/pedidos/${id}/status-publico`);
   },
 
   getMesaPedidoActual(mesaNumero) {
-    return api.get(`/mesas/${mesaNumero}/pedido-actual`);
+    return publicApi.get(`/mesas/${mesaNumero}/pedido-actual`);
   },
 
   // ============= IMPRESORA =============

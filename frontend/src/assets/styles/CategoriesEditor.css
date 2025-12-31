@@ -1,0 +1,259 @@
+/* CategoriesEditor Premium Styles */
+.categories-editor {
+    padding: 0;
+    margin-top: 70px;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-primary);
+}
+
+.section-title h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.section-title svg {
+    color: var(--theme-color, #f97316);
+}
+
+/* Form Styles */
+.category-form {
+    margin-top: 16px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr auto;
+    gap: 16px;
+    align-items: end;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+/* Inputs with Icons */
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-icon svg {
+    position: absolute;
+    left: 12px;
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+.input-with-icon input {
+    width: 100%;
+    padding: 10px 12px 10px 38px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s;
+    font-family: inherit;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.input-with-icon input:focus {
+    outline: none;
+    border-color: var(--theme-color, #f97316);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+.input-with-icon input:focus+svg {
+    color: var(--theme-color, #f97316);
+}
+
+.btn-submit {
+    background: var(--theme-color, #f97316);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.btn-submit:hover {
+    background: #ea580c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+/* List Styles */
+.categories-list {
+    background: var(--card-bg);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    margin-top: 24px;
+}
+
+.list-header {
+    display: flex;
+    background: var(--bg-secondary);
+    padding: 16px 24px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.list-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.1s;
+    color: var(--text-primary);
+}
+
+.list-item:last-child {
+    border-bottom: none;
+}
+
+.list-item:hover {
+    background: var(--bg-secondary);
+}
+
+.col-name {
+    flex: 2;
+    padding-right: 16px;
+}
+
+.col-order {
+    flex: 1;
+    text-align: center;
+    padding: 0 8px;
+}
+
+.col-actions {
+    width: 60px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Editable Inputs in List */
+.editable-input {
+    width: 100%;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.2s;
+    color: var(--text-primary);
+}
+
+.editable-input.center {
+    text-align: center;
+}
+
+.editable-input:hover {
+    background: var(--bg-secondary);
+    border-color: var(--theme-color, #f97316);
+}
+
+.editable-input:focus {
+    background: var(--bg-secondary);
+    border-color: var(--theme-color, #f97316);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.1);
+}
+
+/* Delete Button */
+.btn-icon.delete {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.list-item:hover .btn-icon.delete {
+    color: #ef4444;
+    background: #fee2e2;
+}
+
+.btn-icon.delete:hover {
+    background: var(--theme-color, #f97316) !important;
+    transform: scale(1.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .btn-submit {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .list-header {
+        display: none;
+        /* Hide header on mobile for simpler view */
+    }
+
+    .list-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .col-name,
+    .col-order,
+    .col-actions {
+        width: 100%;
+        flex: none;
+        text-align: left;
+        padding: 0;
+    }
+
+    .editable-input.center {
+        text-align: left;
+    }
+
+    .col-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+}
+
+/* Ensure form cards use dark background */
+.form-card {
+    background: var(--card-bg);
+}

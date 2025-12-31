@@ -4,6 +4,7 @@ import App from './App.vue'
 import router from './router' // Importa el router
 import i18n from './i18n' // ✅ Importar configuración de i18n
 import './style.css'
+import './assets/styles/CustomerTheme.css' // ✅ Customer dark mode theme
 
 // ✅ Aplicar colores del theme desde variables de entorno
 const themeColor = import.meta.env.VITE_THEME_COLOR || '#667eea';

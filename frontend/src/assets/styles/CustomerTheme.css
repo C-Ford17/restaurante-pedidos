@@ -1,0 +1,39 @@
+/* =========================================
+   CUSTOMER THEME VARIABLES
+   Dark Mode for Customer-Facing Views
+   ========================================= */
+
+:root {
+    /* Light Mode (Default) */
+    --customer-bg-primary: #f5f5f5;
+    --customer-bg-secondary: #ffffff;
+    --customer-bg-tertiary: #fafafa;
+    --customer-surface: #ffffff;
+    --customer-text-primary: #1f2937;
+    --customer-text-secondary: #6b7280;
+    --customer-text-tertiary: #9ca3af;
+    --customer-border: #e5e7eb;
+    --customer-shadow: rgba(0, 0, 0, 0.1);
+    --customer-shadow-lg: rgba(0, 0, 0, 0.15);
+    --customer-overlay: rgba(0, 0, 0, 0.5);
+}
+
+:root.customer-dark {
+    /* Dark Mode */
+    --customer-bg-primary: #0f172a;
+    --customer-bg-secondary: #1e293b;
+    --customer-bg-tertiary: #334155;
+    --customer-surface: #1e293b;
+    --customer-text-primary: #f1f5f9;
+    --customer-text-secondary: #cbd5e1;
+    --customer-text-tertiary: #94a3b8;
+    --customer-border: #334155;
+    --customer-shadow: rgba(0, 0, 0, 0.3);
+    --customer-shadow-lg: rgba(0, 0, 0, 0.5);
+    --customer-overlay: rgba(0, 0, 0, 0.7);
+}
+
+/* Smooth transitions for theme changes */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}

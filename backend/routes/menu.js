@@ -13,16 +13,23 @@ router.get('/', async (req, res) => {
         // if (cached) return res.json(cached);
 
         // 1. Obtener items del menú
-        const items = await allAsync(`
+        let query = `
             SELECT id, nombre, categoria, precio, 
                    COALESCE(tiempo_estimado, tiempo_preparacion_min, 15) as tiempo_estimado, 
                    disponible, descripcion, usa_inventario, stock_actual, stock_minimo,
                    estado_inventario, es_directo, 
                    COALESCE(NULLIF(image_url, ''), imagen_url) as image_url
             FROM menu_items 
-            WHERE disponible = true
-            ORDER BY categoria, nombre
-        `);
+        `;
+
+        // Si NO solicitan incluir ocultos, filtramos solo los disponibles
+        if (!req.query.include_hidden) {
+            query += ' WHERE disponible = true ';
+        }
+
+        query += ' ORDER BY categoria, nombre ';
+
+        const items = await allAsync(query);
 
         // 2. Obtener TODAS las recetas y stock de insumos en una sola consulta
         const allRecipes = await allAsync(`

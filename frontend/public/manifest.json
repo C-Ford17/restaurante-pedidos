@@ -1,6 +1,6 @@
 {
-    "name": "Sazon de la Sierra App",
-    "short_name": "La Sazon App",
+    "name": "Restaurante App",
+    "short_name": "RestoApp",
     "description": "Sistema de gestión de pedidos para restaurante",
     "start_url": "/",
     "scope": "/",

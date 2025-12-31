@@ -9,6 +9,7 @@ import bcrypt from 'bcrypt'; // ✅ NUEVO
 import { v4 as uuidv4 } from 'uuid'; // ✅ NUEVO
 import compression from 'compression'; // ✅ NUEVO: Compression
 import { getFromCache, setCache, clearCache } from './utils/cache.js'; // ✅ NUEVO: Cache
+import fs from 'fs'; // ✅ NUEVO: Para leer package.json
 
 // Importar rutas
 import authRoutes from './routes/auth.js';
@@ -331,6 +332,20 @@ async function initDatabase() {
             )
         `);
 
+        // 🔄 MIGRACIÓN: Asegurar que existe el constraint UNIQUE si la tabla ya existía
+        try {
+            await pool.query(`
+                ALTER TABLE push_subscriptions 
+                ADD CONSTRAINT push_subscriptions_user_id_endpoint_key 
+                UNIQUE(user_id, endpoint)
+            `);
+        } catch (e) {
+            // Ignorar error si ya existe el constraint
+            if (e.code !== '42710') { // 42710 is duplicate_object in Postgres
+                console.log('Nota: Constraint push_subscriptions ya existe o error:', e.message);
+            }
+        }
+
         // Crear tabla de configuración
         await pool.query(`
             CREATE TABLE IF NOT EXISTS configuracion (
@@ -397,6 +412,7 @@ app.use('/api/push', pushRoutes); // ✅ NUEVO
 app.use('/api', configItemsRoutes);
 
 // ============= CONFIGURACIÓN =============
+// ============= CONFIGURACIÓN =============
 app.get('/api/config', async (req, res) => {
     try {
         const rows = await allAsync('SELECT * FROM configuracion');
@@ -406,6 +422,16 @@ app.get('/api/config', async (req, res) => {
             else if (row.valor === 'false') config[row.clave] = false;
             else config[row.clave] = row.valor;
         });
+
+        // ✅ NUEVO: Incluir versión del backend para auto-update
+        try {
+            const packageJson = JSON.parse(fs.readFileSync(new URL('./package.json', import.meta.url)));
+            config.app_version = packageJson.version;
+        } catch (verError) {
+            console.warn('⚠️ Could not read package.json version:', verError.message);
+            config.app_version = '1.0.0'; // Fallback
+        }
+
         res.json(config);
     } catch (error) {
         res.status(500).json({ error: error.message });

@@ -1,308 +1,492 @@
 <template>
   <div class="caja-panel">
-    <div class="panel-header">
-      <h2>{{ $t('cashier.title') }}</h2>
-      <button @click="actualizarPedidos" class="btn btn-secondary" :disabled="loading">
-        {{ $t('cashier.update') }}
-      </button>
-    </div>
+    <!-- Header -->
+    <header class="panel-header">
+      <div class="header-title">
+        <h2>
+          <Wallet class="w-8 h-8 text-primary" />
+          {{ $t('cashier.title')}}
+        </h2>
+      </div>
+      
+      <div class="header-info">
+        <div class="info-item">
+          <User class="w-4 h-4" />
+          <span class="user-name">{{ usuarioStore.usuario.nombre }}</span>
+        </div>
+        <div class="info-item">
+          <Clock class="w-4 h-4" />
+          <span class="time">{{ currentTime }}</span>
+        </div>
+        <button @click="cargarDatos" class="btn-refresh" :title="$t('cashier.update')">
+          <RefreshCw class="w-5 h-5" :class="{ 'animate-spin': loading }" />
+        </button>
+      </div>
+    </header>
 
     <div class="panel-content">
-      <div v-if="loading" class="loading">{{ $t('cashier.loading') }}</div>
-
-      <template v-else>
-        <!-- Notificaciones -->
-        <div v-if="notificaciones.length > 0" class="notificaciones-container">
-          <div v-for="notif in notificaciones" :key="notif.id" :class="['notificacion', `notif-${notif.tipo}`]">
-            {{ notif.titulo }}
-            <button @click="cerrarNotificacion(notif.id)" class="btn-cerrar-notif">✕</button>
-          </div>
+      <!-- Sección Principal: Pedidos por Cobrar -->
+      <div class="main-section">
+        <div class="section-title">
+          <Receipt class="w-5 h-5 text-primary" />
+          {{ $t('cashier.orders_to_pay') }}
+          <span v-if="pedidosListosPagar.length" class="badge">
+            {{ pedidosListosPagar.length }}
+          </span>
         </div>
 
-        <!-- Pedidos Listos para Pagar -->
-        <div class="section">
-          <h3>{{ $t('cashier.orders_ready_pay') }}</h3>
-          <div v-if="pedidosListosPagar.length === 0" class="empty-state">
-            {{ $t('cashier.no_orders_ready') }}
-          </div>
-          <div v-else class="pedidos-grid">
-            <div v-for="pedido in pedidosListosPagar" :key="pedido.id" :class="['pedido-card', `estado-${pedido.estado}`]">
-              <div class="card-header">
-                <span class="mesa">{{ $t('common.table') }} {{ pedido.mesa_numero }}</span>
-                <span class="total">${{ pedido.total }}</span>
-              </div>
-              <div class="items-count">
-                {{ pedido.items_count }} items
-              </div>
-              <div v-if="pedido.notas" style="background-color: #fef9c3; color: #854d0e; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; margin-top: 4px; font-style: italic; border: 1px solid #fde047;">
-                 📝 {{ pedido.notas }}
-              </div>
-              
-              <div class="pedido-botones">
-                <button 
-                  @click="verCuentaOnline(pedido.id)" 
-                  class="btn btn-sm btn-info"
-                  :title="$t('cashier.view_bill_online')"
-                >
-                  👁️ {{ $t('cashier.view_bill_online') }}
-                </button>
-                <button 
-                  @click="revertirPedido(pedido)" 
-                  class="btn btn-sm btn-warning"
-                  :title="$t('cashier.revert_order')"
-                >
-                  ↩️ {{ $t('cashier.revert_order') }}
-                </button>
-                <button 
-                  @click="pedirCuenta(pedido)" 
-                  class="btn btn-sm btn-secondary"
-                >
-                  🖨️ {{ $t('cashier.print_bill') }}
-                </button>
-                <button 
-                  @click="seleccionarPedido(pedido)" 
-                  class="btn btn-sm btn-primary"
-                >
-                  {{ $t('cashier.pay') }}
-                </button>
-              </div>
+        <div v-if="loading" class="loading-state">
+           {{ $t('common.loading') }}...
+        </div>
+
+        <div v-else-if="pedidosListosPagar.length === 0" class="empty-state">
+          <CheckCircle2 class="empty-state-icon text-success" />
+          <h3>{{ $t('cashier.no_orders') }}</h3>
+          <p>{{ $t('cashier.all_caught_up') }}</p>
+        </div>
+
+        <div v-else class="pedidos-grid">
+          <div 
+            v-for="pedido in pedidosListosPagar" 
+            :key="pedido.id" 
+            class="billing-card"
+            @click="abrirCaja(pedido)"
+          >
+            <div class="billing-card-header">
+              <span class="table-badge">
+                {{ $t('common.table') }} {{ pedido.mesa_numero }}
+              </span>
+              <span class="waiter-info">
+                <User class="w-3 h-3" /> {{ pedido.mesero || 'Mesero' }}
+              </span>
             </div>
-          </div>
-        </div>
 
-        <!-- Formulario de Pago (Refactorizado) -->
-        <div v-if="pedidoSeleccionado" class="section">
-          <CajaPaymentForm 
-            :pedido="pedidoSeleccionado"
-            :metodos-pago="metodoPagos"
-            :usuario-id="usuarioStore.usuario.id"
-            :saldo-pendiente="saldoPendiente"
-            @pago-por-procesar="onPagoPorProcesar"
-            @pago-registrado="onPagoRegistrado"
-            @cancelar="cancelarPago"
-          />
-        </div>
-
-        <!-- Historial de Pagos -->
-        <div class="section">
-          <h3>{{ $t('cashier.payments_today') }}</h3>
-          <div v-if="pedidosPagadosHoy.length === 0" class="empty-state">
-            {{ $t('cashier.no_payments') }}
-          </div>
-          <div v-else class="pagos-list">
-            <div v-for="pedido in pedidosPagadosHoy" :key="pedido.id" :class="['pago-item', pedido.pagos_multiples ? 'pago-multiple' : '']">
-              <div class="pago-info-item">
-                <span class="mesa">{{ $t('common.table') }} {{ pedido.mesa_numero }}</span>
-                <span class="monto">${{ pedido.total }}</span>
-              </div>
-              <div class="pago-detalles-extra">
-                <span class="metodo-pago-badge" v-if="pedido.pagos_multiples">
-                   🔄 MÚLTIPLE
-                </span>
-                <span class="metodo-pago-badge" v-else-if="pedido.metodo_pago">
-                  {{ obtenerEmojiMetodo(pedido.metodo_pago) }} {{ pedido.metodo_pago.toUpperCase() }}
-                </span>
-                <span class="timestamp">{{ formatearHora(pedido.created_at) }}</span>
-                <button @click="verDetallesPago(pedido.id)" class="btn btn-sm btn-info">
-                  {{ $t('cashier.view') }}
-                </button>
-              </div>
+            <div class="billing-details">
+               <span>Items: {{ pedido.items_count || (pedido.items ? pedido.items.length : 0) }}</span>
+               <span>{{ formatearHora(pedido.created_at) }}</span>
             </div>
-          </div>
-        </div>
-      </template>
-    </div>
 
-    <!-- Modal de Detalles del Pago -->
-    <div v-if="pagoDetalle" class="modal-overlay" @click.self="cerrarDetallePago">
-      <div class="modal-detalle">
-        <div class="modal-header">
-          <h3>{{ $t('cashier.payment_details') }}</h3>
-          <button @click="cerrarDetallePago" class="btn-cerrar">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="detalle-info">
-            <div class="info-row">
-              <span>{{ $t('common.table') }}:</span>
-              <strong>{{ pagoDetalle.mesa_numero }}</strong>
-            </div>
-            <div class="info-row" v-if="pagoDetalle.pagos && pagoDetalle.pagos.length > 0">
-              <div style="width: 100%;">
-                <span><strong>Pagos:</strong></span>
-                <ul style="list-style: none; padding: 0; margin-top: 5px;">
-                  <li v-for="(pago, pIndex) in pagoDetalle.pagos" :key="pIndex" style="font-size: 0.9em; margin-bottom: 4px; display: flex; justify-content: space-between;">
-                    <span>
-                      {{ new Date(pago.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }} - 
-                      {{ obtenerEmojiMetodo(pago.metodo_pago) }} {{ $te('cashier.methods.' + pago.metodo_pago) ? $t('cashier.methods.' + pago.metodo_pago) : pago.metodo_pago.toUpperCase() }}
-                    </span>
-                    <strong>${{ Number(pago.monto).toLocaleString() }}</strong>
-                  </li>
-                </ul>
-              </div>
+            <div class="billing-total">
+               <span>Total:</span>
+               <span class="total-amount">${{ Math.round(pedido.total || 0).toLocaleString() }}</span>
             </div>
             
-            <div class="info-row" v-else-if="pagoDetalle.metodo_pago">
-              <span>{{ $t('cashier.payment_method') }}:</span>
-              <strong>{{ obtenerEmojiMetodo(pagoDetalle.metodo_pago) }} {{ $te('cashier.methods.' + pagoDetalle.metodo_pago) ? $t('cashier.methods.' + pagoDetalle.metodo_pago) : pagoDetalle.metodo_pago.toUpperCase() }}</strong>
-            </div>
-            <div class="info-row">
-              <span>Hora:</span>
-              <strong>{{ formatearHora(pagoDetalle.created_at) }}</strong>
-            </div>
-            <div class="info-row">
-              <span>Cajero:</span>
-              <strong>{{ usuarioStore.usuario.nombre }}</strong>
+             <!-- Estado de pago parcial -->
+            <div v-if="pedido.total_pagado > 0" class="text-success text-sm text-right">
+                Pagado: ${{ Math.round(pedido.total_pagado).toLocaleString() }}
             </div>
           </div>
+        </div>
+      </div>
 
-          <div class="detalle-items">
-            <h4>Items</h4>
-            <div class="items-tabla">
-              <div class="item-row header-row">
-                <span>Cant.</span>
-                <span>Descripción</span>
-                <span>Precio</span>
-                <span>Total</span>
-              </div>
-              <div v-for="(item, index) in itemsAgrupados" :key="index" class="item-row">
-                <span>{{ item.cantidad }}</span>
-                <span>{{ item.nombre }}</span>
-                <span>${{ Number(item.precio_unitario).toFixed(2) }}</span>
-                <span>${{ Number(item.total).toFixed(2) }}</span>
-              </div>
-            </div>
+      <!-- Sidebar: Historial de Pagos -->
+      <div class="history-sidebar">
+        <div class="sidebar-header">
+           <div class="section-title">
+             <History class="w-5 h-5 text-muted" />
+             {{ $t('cashier.payment_history') }}
+           </div>
+        </div>
+        
+        <div class="history-list">
+          <div v-if="historialPagos.length === 0" class="empty-state small">
+             <span class="text-muted">{{ $t('cashier.no_history_today') }}</span>
           </div>
-
-          <div class="detalle-total">
-             <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9em; font-weight: normal;">
-              <span>{{ $t('ticket.tip') }}:</span>
-              <span>${{ Number(pagoDetalle.propina_monto || 0).toLocaleString() }}</span>
-            </div>
-            <span>TOTAL:</span>
-            <strong>${{ pagoDetalle.total }}</strong>
+          <div v-else v-for="pedido in historialPagos" :key="pedido.id" class="history-item">
+             <div class="history-info">
+                <h4>{{ $t('common.table') }} {{ pedido.mesa_numero }}</h4>
+                <div class="history-meta">
+                   <!-- Mostrar método de pago principal o 'Múltiple' -->
+                   <component 
+                     :is="getPaymentIcon(pedido.pagos_multiples ? 'multiple' : pedido.metodo_pago)" 
+                     class="w-3 h-3" 
+                   />
+                   {{ pedido.pagos_multiples ? 'Múltiple' : formatMetodo(pedido.metodo_pago) }} • {{ formatearHora(pedido.created_at) }}
+                </div>
+             </div>
+             <div class="history-amount">
+                ${{ Math.round(pedido.total).toLocaleString() }}
+             </div>
+             <button @click="verDetallesPago(pedido)" class="btn-icon-mini ml-2" :title="$t('cashier.view')">
+                <Eye class="w-4 h-4 text-muted hover:text-primary" />
+             </button>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Modal de Cobro -->
+    <div v-if="pedidoSeleccionado" class="modal-overlay" @click.self="cerrarModal">
+       <div class="modal-content payment-modal">
+          <div class="modal-header">
+             <h3>
+                <Banknote class="w-6 h-6 text-primary" />
+                {{ $t('cashier.register_payment') }} - Mesa {{ pedidoSeleccionado.mesa_numero }}
+             </h3>
+             <button @click="cerrarModal" class="btn-close">&times;</button>
+          </div>
+          <div class="modal-body">
+             <CajaPaymentForm 
+               :pedido="pedidoSeleccionado"
+               :saldoPendiente="saldoPendiente"
+               :usuarioId="usuarioStore.usuario.id"
+               :metodosPago="metodosPago"
+               @pago-registrado="onPagoRegistrado"
+               @cancelar="cerrarModal"
+             />
+          </div>
+       </div>
+    </div>
+    
+     <!-- Modal Feedback e Impresión (Ticket) -->
+    <div v-if="pagoExitosoData" class="modal-overlay">
+       <div class="modal-content success-modal">
+          <div class="modal-header">
+             <h3 class="text-success">
+                <CheckCircle2 class="w-6 h-6" />
+                {{ $t('cashier.payment_success') }}
+             </h3>
+          </div>
+          <div class="modal-body text-center">
+             <p class="text-lg mb-4">
+                Pago de <strong>${{ Math.round(ultimoPagoMonto).toLocaleString() }}</strong> registrado.
+             </p>
+             <div class="change-display" v-if="ultimoCambio > 0">
+                Cambio: ${{ Math.round(ultimoCambio).toLocaleString() }}
+             </div>
+             
+             <div class="flex flex-col gap-2 mt-6">
+                <button @click="imprimirTicket(pagoExitosoData, ultimoPagoMonto, ultimoCambio, false)" class="btn btn-primary btn-full">
+                   <Printer class="w-5 h-5" /> {{ $t('cashier.print_ticket') }}
+                </button>
+                <button @click="imprimirTicket(pagoExitosoData, ultimoPagoMonto, ultimoCambio, true)" class="btn btn-secondary btn-full">
+                   <Printer class="w-5 h-5" /> {{ $t('cashier.print_ticket_gift') }} (Sin Precio)
+                </button>
+                <button @click="cerrarModalExito" class="btn btn-outline btn-full">
+                   {{ $t('common.close') }}
+                </button>
+             </div>
+          </div>
+       </div>
+    </div>
+    
+    <!-- Ticket Invisible para impresión -->
+    <div id="ticket-print-area" class="print-only">
+        <!-- El contenido se inyecta dinámicamente o se usa un componente invisible -->
+    </div>
+
+    <!-- Modal de Detalles del Pago (Historial) -->
+    <div v-if="pagoDetalle" class="modal-overlay" @click.self="cerrarDetallePago">
+      <div class="modal-content payment-details-modal">
+        <div class="modal-header">
+          <h3>
+             <History class="w-6 h-6 text-primary" />
+             {{ $t('cashier.payment_details') }}
+          </h3>
+          <button @click="cerrarDetallePago" class="btn-close">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+          <!-- Header Card: Mesa & Info -->
+          <div class="detail-card header-card">
+            <div class="card-header">
+              <div class="table-badge-large">
+                <span class="label">{{ $t('common.table') }}</span>
+                <span class="number">{{ pagoDetalle.mesa_numero }}</span>
+              </div>
+              <div class="meta-info">
+                <div class="meta-item">
+                  <Clock class="w-3.5 h-3.5" />
+                  <span>{{ formatearHora(pagoDetalle.created_at) }}</span>
+                </div>
+                <div class="meta-item">
+                  <User class="w-3.5 h-3.5" />
+                  <span>{{ usuarioStore.usuario.nombre }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payments Card -->
+          <div class="detail-card" v-if="pagoDetalle.pagos && pagoDetalle.pagos.length">
+            <div class="card-title">
+              <Receipt class="w-4 h-4" />
+              <span>Métodos de Pago</span>
+            </div>
+            <div class="payment-list">
+              <div v-for="(pago, pIndex) in pagoDetalle.pagos" :key="pIndex" class="payment-item">
+                <div class="payment-method">
+                  <component :is="getPaymentIcon(pago.metodo_pago)" class="w-5 h-5 text-primary" />
+                  <span class="method-name">{{ pago.metodo_pago }}</span>
+                </div>
+                <div class="payment-amount">${{ Number(pago.monto).toLocaleString() }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Single Payment Fallback -->
+          <div class="detail-card" v-else-if="pagoDetalle.metodo_pago">
+            <div class="card-title">
+              <Receipt class="w-4 h-4" />
+              <span>Método de Pago</span>
+            </div>
+            <div class="payment-list">
+              <div class="payment-item">
+                <div class="payment-method">
+                  <component :is="getPaymentIcon(pagoDetalle.metodo_pago)" class="w-5 h-5 text-primary" />
+                  <span class="method-name">{{ pagoDetalle.metodo_pago }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Items Card -->
+          <div class="detail-card items-card">
+            <div class="card-title">
+              <CheckCircle2 class="w-4 h-4" />
+              <span>Items del Pedido</span>
+            </div>
+            <div class="items-table">
+              <div class="items-table-header">
+                <span class="col-qty">Cant.</span>
+                <span class="col-desc">Descripción</span>
+                <span class="col-total">Total</span>
+              </div>
+              <div class="items-table-body">
+                <div v-for="(item, index) in itemsAgrupados" :key="index" class="item-row">
+                  <span class="col-qty">{{ item.cantidad }}</span>
+                  <span class="col-desc">{{ item.nombre }}</span>
+                  <span class="col-total">${{ Number(item.total).toLocaleString() }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Card -->
+          <div class="detail-card total-card">
+            <div class="total-row tip-row" v-if="pagoDetalle.propina_monto">
+              <span class="total-label">{{ $t('cashier.tip') }}</span>
+              <span class="total-value tip-value">+ ${{ Number(pagoDetalle.propina_monto).toLocaleString() }}</span>
+            </div>
+            <div class="total-row final-total">
+              <span class="total-label">TOTAL</span>
+              <span class="total-value">${{ Number(pagoDetalle.total).toLocaleString() }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue';
-import { usePedidoStore } from '../stores/pedidoStore';
+import { ref, onMounted, computed, onUnmounted } from 'vue';
 import { useUsuarioStore } from '../stores/usuarioStore';
-import api from '../api';
-import { useNotificaciones } from '../composables/useNotificaciones';
-import { useI18n } from 'vue-i18n';
+import { usePedidoStore } from '../stores/pedidoStore';
 import CajaPaymentForm from './CajaPaymentForm.vue';
+import api from '../api';
 import socket from '../socket';
+import { useI18n } from 'vue-i18n';
+import { 
+  Wallet, User, Clock, RefreshCw, Receipt, CheckCircle2, History,
+  Banknote, Printer, CreditCard, Smartphone, Banknote as CashIcon, Globe, Eye
+} from 'lucide-vue-next';
 
-const { t } = useI18n();
-const { notificaciones, cerrarNotificacion } = useNotificaciones('facturero');
-
-const pedidoStore = usePedidoStore();
+// --- Estado ---
 const usuarioStore = useUsuarioStore();
-
+const pedidoStore = usePedidoStore(); // Usamos el store para mantener consistencia si se quiere
+const { t } = useI18n(); // Uso de i18n
 const loading = ref(false);
+
+const historialPagos = ref([]);
+const currentTime = ref('');
+const metodosPago = ref([]);
+
+// Modal y Selección
 const pedidoSeleccionado = ref(null);
-const pedidosPagadosHoy = ref([]);
-const ticketData = ref(null);
-const pagoDetalle = ref(null);
+const saldoPendiente = ref(0);
 
-const metodoPagos = ref([]);
+// Estado post-pago
+const pagoExitosoData = ref(null); // Objeto pedido actualizado tras pago
+const ultimoPagoMonto = ref(0);
+const ultimoCambio = ref(0);
 
-// ✅ NUEVO: Almacenar temporalmente info del último pago para el ticket
-const lastPaymentInfo = ref(null);
-
-const cargarMetodosPago = async () => {
-  try {
-    const res = await api.getPaymentMethods();
-    metodoPagos.value = res.data.filter(m => m.active);
-  } catch (err) {
-    console.error('Error cargando métodos de pago:', err);
-    metodoPagos.value = [
-      { name: 'efectivo', label: 'Efectivo', is_digital: false },
-      { name: 'tarjeta', label: 'Tarjeta', is_digital: true }
-    ];
-  }
+// --- Helpers de Iconos ---
+const getPaymentIcon = (method) => {
+   const methodLower = (method || '').toLowerCase();
+   if (methodLower.includes('efectivo') || methodLower.includes('cash')) return CashIcon;
+   if (methodLower.includes('tarjeta') || methodLower.includes('card')) return CreditCard;
+   if (methodLower.includes('nequi') || methodLower.includes('daviplata')) return Smartphone;
+   return Globe; // Default generic
 };
 
+const formatMetodo = (metodo) => {
+   // Intentar traducir o capitalizar
+   if (!metodo) return '';
+   return t(`cashier.methods.${metodo}`) !== `cashier.methods.${metodo}` 
+     ? t(`cashier.methods.${metodo}`) 
+     : metodo.charAt(0).toUpperCase() + metodo.slice(1);
+};
+
+
+// --- Métodos de Carga ---
+// Computed original
 const pedidosListosPagar = computed(() => {
   const listos = pedidoStore.pedidosPorEstado.listo_pagar || [];
   const enCaja = pedidoStore.pedidosPorEstado.en_caja || [];
   return [...listos, ...enCaja].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 });
 
-// Agrupar items por nombre para mostrar cantidades consolidadas
-const itemsAgrupados = computed(() => {
-  if (!pagoDetalle.value || !pagoDetalle.value.items) return [];
-  
-  const grupos = {};
-  
-  pagoDetalle.value.items.forEach(item => {
-    const key = `${item.menu_item_id || item.nombre}`;
-    
-    if (!grupos[key]) {
-      grupos[key] = {
-        nombre: item.nombre,
-        precio_unitario: item.precio_unitario || item.precio || 0,
-        cantidad: 0,
-        total: 0
-      };
-    }
-    
-    grupos[key].cantidad += item.cantidad;
-    grupos[key].total += (item.precio_unitario || item.precio || 0) * item.cantidad;
-  });
-  
-  return Object.values(grupos);
-});
-
-const actualizarPedidos = async () => {
+// --- Métodos de Carga ---
+const cargarDatos = async () => {
   loading.value = true;
   try {
+    // Usar store para activos (lógica original)
     await pedidoStore.cargarPedidosActivos();
-    // Cargar pedidos pagados del día por este cajero
-    const pedidosHoyRes = await api.getPedidosHoy();
     
-    pedidosPagadosHoy.value = pedidosHoyRes.data.filter(p => 
-      p.estado === 'pagado' && 
-      p.pagos && p.pagos.some(pago => String(pago.cajero_id) === String(usuarioStore.usuario.id))
+    // Usar API directa para historial de hoy (lógica original)
+    const reportesRes = await api.getPedidosHoy();
+    
+    // Filtrar localmente como antes
+    const pedidosFiltrados = (reportesRes.data || []).filter(p => 
+        (p.estado === 'pagado' || p.estado === 'en_caja') && 
+        p.pagos && 
+        p.pagos.some(pago => String(pago.cajero_id) === String(usuarioStore.usuario.id))
     );
+
+    pedidosFiltrados.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    historialPagos.value = pedidosFiltrados;
+    
   } catch (err) {
-    console.error('Error:', err);
+    console.error('Error cargando datos de caja:', err);
   } finally {
     loading.value = false;
   }
 };
 
-const saldoPendiente = ref(null);
+const cargarConfiguracionPago = async () => {
+    try {
+        const res = await api.getPaymentMethods(); // Get active payment methods
+        // Filtrar solo activos y mapear
+        metodosPago.value = res.data.filter(pm => pm.active).map(pm => ({
+            name: pm.name,
+            label: pm.label
+        }));
+    } catch (e) {
+        console.error("Error loading payment methods", e);
+        // Fallback default
+        metodosPago.value = [
+            { name: 'efectivo', label: 'Efectivo' },
+            { name: 'tarjeta', label: 'Tarjeta' },
+            { name: 'nequi', label: 'Nequi' },
+            { name: 'daviplata', label: 'Daviplata' }
+        ];
+    }
+};
 
-const seleccionarPedido = (pedido) => {
+
+// --- Reloj ---
+let timer;
+const updateClock = () => {
+  const now = new Date();
+  currentTime.value = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+// --- Acciones ---
+const abrirCaja = (pedido) => {
   pedidoSeleccionado.value = pedido;
-  saldoPendiente.value = pedido.pendiente !== undefined ? pedido.pendiente : pedido.total;
+  
+  // Calcular saldo pendiente preciso
+  const total = Number(pedido.total);
+  const pagado = Number(pedido.total_pagado || 0);
+  saldoPendiente.value = Math.max(0, total - pagado);
+  saldoPendiente.value = Math.max(0, total - pagado);
 };
 
-const cancelarPago = () => {
+// Reutilizamos la lógica para ver detalles desde el historial
+// (Eliminado: se usa la versión nueva más abajo)
+
+const cerrarModal = () => {
   pedidoSeleccionado.value = null;
+  saldoPendiente.value = 0;
 };
 
-const obtenerEmojiMetodo = (metodo) => {
-  const emojis = {
-    efectivo: '💵',
-    tarjeta: '💳',
-    nequi: '📱',
-    otro_digital: '🌐'
-  };
-  return emojis[metodo] || '💰';
+// --- Lógica Modal Detalles (Historial) ---
+const pagoDetalle = ref(null);
+
+const verDetallesPago = async (pedido) => {
+  try {
+    // Obtener ID del pedido
+    const pedidoId = typeof pedido === 'object' ? pedido.id : pedido;
+    
+    // Cargar detalles completos del pedido desde la API (incluye items)
+    const response = await api.getPedido(pedidoId);
+    pagoDetalle.value = response.data;
+  } catch (err) {
+    console.error('Error cargando detalles del pago:', err);
+    // Fallback: usar datos básicos si falla la API
+    if (typeof pedido === 'object') {
+      pagoDetalle.value = pedido;
+    }
+  }
 };
 
-const formatearHora = (fecha) => {
-  return new Date(fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const cerrarDetallePago = () => {
+  pagoDetalle.value = null;
 };
 
-// ✅ Agrupa items para el ticket
-const prepararTicket = (pedido, tipo, metodo = null, extras = {}) => {
+// Agrupar items para el ticket/detalle
+const itemsAgrupados = computed(() => {
+  if (!pagoDetalle.value || !pagoDetalle.value.items) return [];
+  const grupos = {};
+  pagoDetalle.value.items.forEach(item => {
+    // Clave única por nombre y precio
+    const key = `${item.nombre}-${item.precio_unitario}`;
+    if (!grupos[key]) {
+      grupos[key] = { ...item, cantidad: 0, total: 0 };
+    }
+    grupos[key].cantidad += item.cantidad;
+    grupos[key].total += (item.precio_unitario * item.cantidad);
+  });
+  return Object.values(grupos);
+});
+
+// Helper para iconos de metodo (reutilizando existente o nuevo)
+// const obtenerEmojiMetodo = (metodo) => { ... } // Eliminado para usar iconos
+
+const onPagoRegistrado = ({ data, montoAplicado, cambio, esMultiple }) => { // data es el pedido actualizado
+  // 1. Store the original pedido (with items) for ticket printing FIRST
+  // The backend response might not include items, so we use the original pedidoSeleccionado
+  pagoExitosoData.value = pedidoSeleccionado.value; // Use original pedido which has items
+  ultimoPagoMonto.value = montoAplicado;
+  ultimoCambio.value = cambio;
+  
+  // 2. Cerrar modal de cobro
+  cerrarModal();
+  
+  // 3. Reproducir sonido de caja
+  playCashSound();
+  
+  // 4. Recargar datos (se actualiza la grilla y el historial) - LAST to avoid clearing modal data
+  cargarDatos();
+};
+
+const cerrarModalExito = () => {
+    pagoExitosoData.value = null;
+    ultimoPagoMonto.value = 0;
+    ultimoCambio.value = 0;
+};
+
+const playCashSound = () => {
+  const audio = new Audio('/sounds/cash-register.mp3');
+  audio.volume = 0.5;
+  audio.play().catch(e => console.log('Audio autoplay blocked', e));
+};
+
+// --- Impresión ---
+// Agrupa items para el ticket
+const prepararTicket = (pedido, esRegalo, montoPago, cambio) => {
   const itemsAgrupadosParaTicket = {};
 
   (pedido.items || []).forEach(item => {
@@ -327,100 +511,51 @@ const prepararTicket = (pedido, tipo, metodo = null, extras = {}) => {
     propinaMonto = parseFloat(pedido.total || 0) - subtotal;
   }
 
-  ticketData.value = {
-    tipo,
+  return {
     mesa: pedido.mesa_numero,
     subtotal: subtotal,
     propinaMonto: propinaMonto,
     totalPedido: pedido.total,
     items: itemsFinales,
     cajero: usuarioStore.usuario.nombre,
-    metodoPago: metodo,
-    montoRecibido: extras.montoRecibido ?? null,
-    montoAplicado: extras.montoAplicado ?? null,
-    cambio: extras.cambio ?? null,
-    pagos: pedido.pagos || []
+    montoRecibido: montoPago,
+    cambio: cambio,
+    pagos: pedido.pagos || [],
+    esRegalo: esRegalo
   };
 };
 
-// ✅ NUEVO: Capturar info del pago ANTES de enviarlo al backend
-const onPagoPorProcesar = (paymentInfo) => {
-  console.log('🚀 Pago por procesar (PRE-envío):', paymentInfo);
-  lastPaymentInfo.value = paymentInfo;
-  console.log('💾 lastPaymentInfo guardado (PRE-envío):', lastPaymentInfo.value);
-};
-
-const onPagoRegistrado = async (evento) => {
-    const { data, metodo, montoRecibido, montoAplicado, cambio, esMultiple } = evento;
-    const { total_pagado, pendiente } = data;
-
-    // 🔍 DEBUG: Logging para diagnosticar problemas
-    console.log('📝 onPagoRegistrado llamado:', {
-        total_pagado,
-        pendiente,
-        'pendiente < 1': pendiente < 1,
-        metodo,
-        montoRecibido,
-        montoAplicado,
-        cambio,
-        esMultiple,
-        data
-    });
-
-    // ✅ NUEVO: Guardar info del pago para usarla en el listener de Socket.IO
-    lastPaymentInfo.value = {
-        metodo,
-        montoRecibido,
-        montoAplicado,
-        cambio,
-        esMultiple,
-        pedidoId: pedidoSeleccionado.value.id
-    };
+const imprimirTicket = async (pedido, montoPago, cambio, esRegalo) => {
+    // The pedido object from pagoExitosoData should already have items
+    // If not, we need to ensure we have the order ID to fetch
+    let orderData = pedido;
     
-    console.log('💾 lastPaymentInfo guardado:', lastPaymentInfo.value);
-
-    await actualizarPedidos();
-
-    // ✅ CAMBIO: usar pendiente < 1 en vez de <= 0 para manejar redondeos
-    if (pendiente < 1) {
-        const fullOrderRes = await api.getPedido(pedidoSeleccionado.value.id);
-        const fullOrder = fullOrderRes.data;
-
-        prepararTicket(
-            fullOrder,
-            'pago',
-            esMultiple ? 'MULTIPLE' : metodo,
-            { montoRecibido, montoAplicado, cambio }
-        );
-
-        alert(t('cashier.alert_payment_registered') +
-            (esMultiple ? `\n¡Pago Múltiple completado!` : `\nPagado ahora: $${Math.round(montoAplicado).toLocaleString()}`) +
-            `\nTotal pagado: $${Math.round(total_pagado).toLocaleString()}\n` +
-            `¡Pago completado! Imprimiendo ticket...`
-        );
-
-        imprimirContenido(ticketData.value);
-        pedidoSeleccionado.value = null; // Cerrar form
-    } else {
-        alert(t('cashier.alert_payment_registered') +
-            `\nPagado ahora: $${Math.round(montoAplicado).toLocaleString()}\n` +
-            `Pendiente: $${Math.round(pendiente).toLocaleString()}`
-        );
-        // Actualizar datos del pedido seleccionado para seguir pagando
-        const pedidoActualizado = pedidosListosPagar.value.find(p => p.id === pedidoSeleccionado.value.id);
-        if (pedidoActualizado) {
-             pedidoSeleccionado.value = { ...pedidoActualizado };
-             saldoPendiente.value = pedidoActualizado.pendiente;
+    // Only fetch if items are missing AND we have a valid ID
+    if ((!pedido.items || pedido.items.length === 0) && pedido.id) {
+        try {
+            const response = await api.getPedido(pedido.id);
+            orderData = response.data;
+        } catch (error) {
+            console.error('Error fetching order details:', error);
+            alert('Error al cargar los detalles del pedido');
+            return;
         }
     }
-};
+    
+    // If still no items, we can't print
+    if (!orderData.items || orderData.items.length === 0) {
+        console.error('No items available for printing');
+        alert('No se pueden obtener los items del pedido');
+        return;
+    }
+    
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        alert('Por favor permite ventanas emergentes para imprimir el ticket');
+        return;
+    }
 
-const imprimirContenido = (data) => {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('❌ Por favor permite ventanas emergentes para imprimir el ticket');
-    return;
-  }
+    const ticketData = prepararTicket(orderData, esRegalo, montoPago, cambio);
 
     const contenidoHTML = `
     <html>
@@ -443,13 +578,12 @@ const imprimirContenido = (data) => {
     <body>
       <div class="header">
         <h3>${import.meta.env.VITE_APP_TITLE.toUpperCase()}</h3>
-        <p>${t('ticket.nit')}: ${import.meta.env.VITE_APP_NIT}</p>
+        <p>${t('ticket.nit')}: ${import.meta.env.VITE_APP_NIT || 'N/A'}</p>
         <p>${t('ticket.date')}: ${new Date().toLocaleString()}</p>
-        <p>${t('common.table')}: ${data.mesa}</p>
-        <p>${t('ticket.server')}: ${data.cajero}</p>
+        <p>${t('common.table')}: ${ticketData.mesa}</p>
+        <p>${t('ticket.server')}: ${ticketData.cajero}</p>
         <div class="divider"></div>
-        <p>${data.tipo === 'pago' ? t('ticket.payment_title') : t('ticket.bill_title')}</p>
-        ${data.metodoPago ? `<p>${t('ticket.method')}: ${data.metodoPago.toUpperCase()}</p>` : ''}
+        <p>${esRegalo ? t('ticket.bill_title') : t('ticket.payment_title')}</p>
         <div class="divider"></div>
       </div>
 
@@ -457,55 +591,58 @@ const imprimirContenido = (data) => {
         <div class="row" style="font-weight:bold; border-bottom:1px solid black;">
           <span class="col-cant">${t('ticket.qty')}</span>
           <span class="col-desc">${t('ticket.desc')}</span>
-          <span class="col-total">${t('ticket.total')}</span>
+          <span class="col-total">${esRegalo ? '' : t('ticket.total')}</span>
         </div>
-        ${data.items.map(item => `
+        ${ticketData.items.map(item => `
           <div class="row">
             <span class="col-cant">${item.cantidad}</span>
             <span class="col-desc">${item.nombre}</span>
-            <span class="col-total">$${(item.cantidad * item.precio).toFixed(2)}</span>
+            <span class="col-total">${esRegalo ? '' : '$' + Math.round(item.cantidad * item.precio).toLocaleString()}</span>
           </div>
         `).join('')}
       </div>
 
+      ${!esRegalo ? `
       <div class="total-section">
         <div class="divider"></div>
         <div class="row">
           <span>${t('ticket.subtotal')}:</span>
-          <span>$${Math.round(data.subtotal).toLocaleString()}</span>
+          <span>$${Math.round(ticketData.subtotal).toLocaleString()}</span>
         </div>
+        ${ticketData.propinaMonto > 0 ? `
         <div class="row">
-          <span>${t('ticket.tip')} (${data.propinaMonto > 0 ? Math.round((data.propinaMonto / data.subtotal) * 100) : 0}%):</span>
-          <span>$${Math.round(data.propinaMonto).toLocaleString()}</span>
+          <span>${t('ticket.tip')} (${Math.round((ticketData.propinaMonto / ticketData.subtotal) * 100)}%):</span>
+          <span>$${Math.round(ticketData.propinaMonto).toLocaleString()}</span>
         </div>
+        ` : ''}
         <div class="divider"></div>
         <div class="row" style="font-size: 18px;">
           <span>${t('ticket.total').toUpperCase()}:</span>
-          <span>$${Math.round(data.totalPedido).toLocaleString()}</span>
+          <span>$${Math.round(ticketData.totalPedido).toLocaleString()}</span>
         </div>
-        ${data.montoRecibido != null ? `
+        ${ticketData.montoRecibido != null ? `
           <div class="row">
             <span>${t('ticket.received')}:</span>
-            <span>$${Math.round(data.montoRecibido).toLocaleString()}</span>
+            <span>$${Math.round(ticketData.montoRecibido).toLocaleString()}</span>
           </div>
         ` : ''}
-        ${data.cambio != null ? `
+        ${ticketData.cambio != null && ticketData.cambio > 0 ? `
           <div class="row">
             <span>${t('ticket.change')}:</span>
-            <span>$${Math.round(data.cambio).toLocaleString()}</span>
+            <span>$${Math.round(ticketData.cambio).toLocaleString()}</span>
           </div>
         ` : ''}
         <div class="divider"></div>
       </div>
+      ` : ''}
 
-
-      ${data.pagos && data.pagos.length > 0 ? `
+      ${ticketData.pagos && ticketData.pagos.length > 0 && !esRegalo ? `
         <div class="pagos-history" style="margin-top: 10px;">
            <div class="row" style="font-weight:bold;">
             <span>${t('ticket.payment_history') || 'Historial de Pagos'}</span>
           </div>
           <div class="divider"></div>
-          ${data.pagos.map(p => `
+          ${ticketData.pagos.map(p => `
             <div class="row" style="font-size: 11px; color: #333;">
               <span>${new Date(p.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} ${p.metodo_pago ? p.metodo_pago.toUpperCase() : 'PAGO'}</span>
               <span>$${Math.round(p.monto).toLocaleString()}</span>
@@ -517,182 +654,52 @@ const imprimirContenido = (data) => {
 
       <div class="footer">
         <p>${t('ticket.thanks')}</p>
-        <p>${t('ticket.tip_suggested')}</p>
+        ${!esRegalo ? `<p>${t('ticket.tip_suggested')}</p>` : ''}
       </div>
       
       <script>
         window.onload = function() {
           window.print();
-          // setTimeout(() => window.close(), 1000);
         }
       <\/script> 
     <\/body>
     <\/html>
   `;
 
-  printWindow.document.write(contenidoHTML);
-  printWindow.document.close();
+    printWindow.document.write(contenidoHTML);
+    printWindow.document.close();
 };
 
-const pedirCuenta = async (pedido) => {
-  try {
-    const response = await api.imprimirCuenta(pedido.id);
-    
-    if (response?.data?.content) {
-      // Versión simplificada: imprimir directo (sin recibos ni abrir en iframe)
-      const contenidoHTML = response.data.content;
-      const ventanaImpresion = window.open('', '_blank', 'width=300,height=600');
-      ventanaImpresion.document.write(contenidoHTML);
-      ventanaImpresion.document.close();
-      ventanaImpresion.print();
-      ventanaImpresion.close();
-    } else {
-      alert('Error al generar la cuenta');
-    }
-  } catch (error) {
-    console.error('Error al imprimir cuenta:', error);
-    alert('Error al solicitar cuenta: ' + (error.response?.data?.error || error.message));
-  }
+
+const formatearHora = (fecha) => {
+  return new Date(fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
-// ✅ NUEVO: Ver cuenta online
-const verCuentaOnline = (pedidoId) => {
-  const baseUrl = window.location.origin;
-  window.open(`${baseUrl}/cuenta/${pedidoId}`, '_blank');
-};
-
-const revertirPedido = async (pedido) => {
-  if (!confirm(`¿Desea devolver el pedido de la Mesa ${pedido.mesa_numero} a estado SERVIDO?\nEsto permitirá al mesero editarlo nuevamente.`)) return;
-  
-  try {
-    loading.value = true;
-    await api.actualizarEstadoPedido(pedido.id, 'servido');
-    alert('Pedido devuelto a estado servido exitosamente.');
-    await actualizarPedidos();
-  } catch (error) {
-    console.error('Error revirtiendo pedido:', error);
-    alert('Error al revertir el pedido');
-  } finally {
-    loading.value = false;
-  }
-};
-
-const verDetallesPago = async (pedidoId) => {
-  try {
-    const response = await api.getPedido(pedidoId);
-    pagoDetalle.value = response.data;
-  } catch (err) {
-    console.error('Error cargando detalles:', err);
-    alert('❌ Error al cargar detalles del pago');
-  }
-};
-
-const cerrarDetallePago = () => {
-  pagoDetalle.value = null;
-};
-
+// --- Lifecycle ---
 onMounted(() => {
-  actualizarPedidos();
-  cargarMetodosPago();
+  updateClock();
+  timer = setInterval(updateClock, 60000); // Cada minuto
+  cargarConfiguracionPago();
+  cargarDatos();
   
-  // ✅ NUEVO: Conectar Socket.IO para actualizaciones en tiempo real
   if (!socket.connected) socket.connect();
   
-  socket.on('pedido_actualizado', (data) => {
-    // ✅ OPTIMIZACIÓN: Solo actualizar si es relevante para cajero
-    // Estados que le importan al cajero: listo_pagar, en_caja, pagado, cancelado (para quitarlo)
-    const estadosRelevantes = ['listo_pagar', 'en_caja', 'pagado', 'cancelado'];
-    
-    // Verificar si el pedido ya estaba visible en la lista (para quitarlo si cambia de estado)
-    const estabaVisible = pedidosListosPagar.value.some(p => p.id === data.id);
-    
-    const esRelevante = estadosRelevantes.includes(data.estado) || estabaVisible;
-
-    if (!esRelevante) {
-        console.log('ignoring update', data.estado); // Debug log
-        return; 
-    }
-
-    console.log('📝 Pedido actualizado en caja (RELEVANTE):', data);
-    
-    // ✅ NUEVO: Si hay un pedido seleccionado (usuario trabajando), no recargar automáticamente
-    if (pedidoSeleccionado.value) {
-      console.log('⚠️ Usuario trabajando en pago, marcando actualización pendiente');
-      hayActualizacionPendiente.value = true;
-    } else {
-      // No hay trabajo activo, recargar normalmente
-      actualizarPedidos();
-    }
-  });
-  
-  socket.on('pedido_pagado', async (data) => {
-    console.log('💰 Pago registrado:', data);
-    console.log('🔍 lastPaymentInfo actual:', lastPaymentInfo.value);
-    
-    // Si el pedido se completó (pendiente < 1), preparar para imprimir
-    if (data.pendiente < 1 && data.pedido_id === pedidoSeleccionado.value?.id) {
-      try {
-        // Obtener pedido completo para el ticket
-        const fullOrderRes = await api.getPedido(data.pedido_id);
-        const fullOrder = fullOrderRes.data;
-
-        // ✅ USAR la info guardada del pago si está disponible
-        const paymentInfo = lastPaymentInfo.value?.pedidoId === data.pedido_id 
-          ? lastPaymentInfo.value 
-          : null;
-
-        console.log('🎫 Payment info para ticket:', paymentInfo);
-        console.log('🔄 Comparación pedidoId:', {
-          'lastPaymentInfo.pedidoId': lastPaymentInfo.value?.pedidoId,
-          'data.pedido_id': data.pedido_id,
-          'coinciden': lastPaymentInfo.value?.pedidoId === data.pedido_id
-        });
-
-        // Determinar método de pago para el ticket
-        const ultimoPago = data.pagos_detalles?.[data.pagos_detalles.length - 1];
-        const metodoPago = paymentInfo?.esMultiple 
-          ? 'MULTIPLE' 
-          : (paymentInfo?.metodo || ultimoPago?.metodo || 'efectivo');
-        
-        const ticketPaymentData = { 
-          montoRecibido: paymentInfo?.montoRecibido || data.monto, 
-          montoAplicado: paymentInfo?.montoAplicado || data.monto, 
-          cambio: paymentInfo?.cambio || 0
-        };
-        
-        console.log('🎟️ Datos para ticket:', ticketPaymentData);
-        
-        // Preparar ticket con la info correcta del monto recibido y cambio
-        prepararTicket(
-          fullOrder,
-          'pago',
-          metodoPago,
-          ticketPaymentData
-        );
-
-        alert(t('cashier.alert_payment_registered') +
-          (data.pagos_multiples ? `\n¡Pago Múltiple completado!` : `\nPagado ahora: $${Math.round(data.monto).toLocaleString()}`) +
-          `\nTotal pagado: $${Math.round(data.total_pagado).toLocaleString()}\n` +
-          `¡Pago completado! Imprimiendo ticket...`
-        );
-
-        imprimirContenido(ticketData.value);
-        pedidoSeleccionado.value = null; // Cerrar form
-        
-        // Limpiar info temporal del pago
-        lastPaymentInfo.value = null;
-      } catch (error) {
-        console.error('Error al preparar ticket:', error);
-      }
-    }
-    
-    actualizarPedidos();
-  });
+  // Escuchar eventos socket para actualizar en tiempo real
+  socket.on('nuevo_pedido', cargarDatos);
+  socket.on('pedido_actualizado', cargarDatos);
+  socket.on('item_servido', cargarDatos); // Por si cambia status a ready
+  socket.on('pago_registrado', cargarDatos);
 });
 
 onUnmounted(() => {
+  clearInterval(timer);
+  socket.off('nuevo_pedido');
   socket.off('pedido_actualizado');
-  socket.off('pedido_pagado');
+  socket.off('item_servido');
+  socket.off('pago_registrado');
 });
+
 </script>
+
 <style src="../assets/styles/CajaPanel.css" scoped></style>
+<style src="../assets/styles/PaymentDetailsModal.css" scoped></style>
