@@ -147,6 +147,11 @@ export default {
     return api.put(`/pedidos/items/${id}/serve`);
   },
 
+  // Batch Operations
+  iniciarItemsBatch: (itemIds) => api.put('/pedidos/items/batch-start', { itemIds }),
+  completarItemsBatch: (itemIds) => api.put('/pedidos/items/batch-complete', { itemIds }),
+  servirItemsBatch: (itemIds) => api.put('/pedidos/items/batch-serve', { itemIds }),
+
   // ✅ NUEVO: Actualizar notas
   actualizarNotasItem(id, notas) {
     return api.put(`/pedidos/items/${id}/notas`, { notas });

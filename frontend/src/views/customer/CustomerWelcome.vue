@@ -5,7 +5,7 @@
         <div class="logo-circle">
           <UtensilsCrossed :size="48" class="logo-icon" />
         </div>
-        <h1>{{ $t('home.welcome') }}</h1>
+        <h1>{{ restaurantName ? $t('home.welcome_to') + ' ' + restaurantName : $t('home.welcome') }}</h1>
         <p class="table-info">{{ $t('common.table') }} {{ tableId }}</p>
       </div>
       
@@ -21,16 +21,29 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { usePedidoStore } from '@/stores/pedidoStore';
 import { UtensilsCrossed, ArrowRight } from 'lucide-vue-next';
+import api from '@/api';
 
 const route = useRoute();
 const router = useRouter();
 const pedidoStore = usePedidoStore();
 
 const tableId = computed(() => route.params.tableId);
+const restaurantName = ref('');
+
+onMounted(async () => {
+  try {
+    const response = await api.getConfig();
+    if (response.data && response.data.name) {
+      restaurantName.value = response.data.name;
+    }
+  } catch (error) {
+    console.error('Error loading config:', error);
+  }
+});
 
 const startOrder = () => {
   // Save table context and navigate to menu
@@ -80,6 +93,8 @@ h1 {
   font-weight: 800;
   margin-bottom: 0.5rem;
   letter-spacing: -0.5px;
+  text-wrap: balance; /* Prevent widow words */
+  line-height: 1.2;
 }
 
 .table-info {

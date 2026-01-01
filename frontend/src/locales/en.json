@@ -84,7 +84,9 @@
         "item_pending": "Pending",
         "item_cooking": "Cooking",
         "item_ready": "Ready",
-        "item_served": "Served"
+        "item_served": "Served",
+        "start_all": "All",
+        "complete_all": "All"
     },
     "order_status": {
         "title": "Order Status",
@@ -226,6 +228,8 @@
         "no_active_orders": "No active orders",
         "send_to_kitchen": "Send Order to Kitchen",
         "mark_served": "Mark as Served",
+        "mark_all_served": "All Served",
+        "confirm_serve_all": "Mark ALL items for table {table} as served?",
         "ready_to_pay": "Ready to Pay",
         "edit": "Edit",
         "cancel": "Cancel",
@@ -257,7 +261,9 @@
         "back_to_panel": "Back to Panel",
         "back_to_order_status": "Back to Status",
         "confirm_payment": "Confirm Payment",
-        "ready_to_pay_confirm": "Confirm this order is ready to pay?"
+        "ready_to_pay_confirm": "Confirm this order is ready to pay?",
+        "delete_item": "Delete Item",
+        "confirm_delete_item": "Delete \"{name}\" from order?"
     },
     "cashier": {
         "title": "Cashier Panel",
@@ -304,6 +310,11 @@
         "payment_success": "Payment Successful",
         "print_ticket": "Print Ticket",
         "print_ticket_gift": "Print Gift Ticket",
+        "return_order": "Return Order",
+        "return": "Return",
+        "confirm_return": "Return this order?",
+        "confirm_return_table": "Return order from table {table} to waiter?",
+        "order_returned": "Order returned to waiter",
         "confirm_payment_prompt": "Confirm payment? This action cannot be undone.",
         "print_bill": "Print Bill",
         "view_bill_online": "View Bill",
@@ -360,7 +371,8 @@
         "thank_you": "Thank you for visiting!"
     },
     "home": {
-        "welcome": "Welcome to the Restaurant"
+        "welcome": "Welcome to the Restaurant",
+        "welcome_to": "Welcome to"
     },
     "login": {
         "username": "Username",

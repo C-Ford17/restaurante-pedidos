@@ -84,7 +84,9 @@
         "item_pending": "Pendiente",
         "item_cooking": "Cocinando",
         "item_ready": "Listo",
-        "item_served": "Servido"
+        "item_served": "Servido",
+        "start_all": "Todo",
+        "complete_all": "Todo"
     },
     "order_status": {
         "title": "Estado de tu Pedido",
@@ -226,6 +228,8 @@
         "no_active_orders": "No hay pedidos activos",
         "send_to_kitchen": "Enviar Comanda a Cocina",
         "mark_served": "Marcar como Servido",
+        "mark_all_served": "Todos Servidos",
+        "confirm_serve_all": "¿Marcar TODOS los items de la mesa {table} como servidos?",
         "ready_to_pay": "Listo para Pagar",
         "edit": "Editar",
         "cancel": "Cancelar",
@@ -259,7 +263,9 @@
         "back_to_panel": "Volver al Panel",
         "back_to_order_status": "Volver al Estado",
         "confirm_payment": "Confirmar Pago",
-        "ready_to_pay_confirm": "¿Confirmar que este pedido está listo para pagar?"
+        "ready_to_pay_confirm": "¿Confirmar que este pedido está listo para pagar?",
+        "delete_item": "Eliminar Item",
+        "confirm_delete_item": "¿Eliminar \"{name}\" del pedido?"
     },
     "cashier": {
         "title": "Panel de Caja",
@@ -305,7 +311,12 @@
         "alert_error_payment": "Error al registrar pago",
         "payment_success": "Pago Exitoso",
         "print_ticket": "Imprimir Ticket",
-        "print_ticket_gift": "Imprimir Ticket Regalo",
+        "print_ticket_gift": "Imprimir Ticket de Regalo",
+        "return_order": "Devolver Pedido",
+        "return": "Devolver",
+        "confirm_return": "¿Devolver este pedido?",
+        "confirm_return_table": "¿Devolver el pedido de la mesa {table} al mesero?",
+        "order_returned": "Pedido devuelto al mesero",
         "confirm_payment_prompt": "¿Confirmar el pago? Esta acción no se puede deshacer.",
         "print_bill": "Imprimir Cuenta",
         "view_bill_online": "Ver Cuenta",
@@ -362,7 +373,8 @@
         "thank_you": "¡Gracias por su visita!"
     },
     "home": {
-        "welcome": "Bienvenido al Restaurante"
+        "welcome": "Bienvenido al Restaurante",
+        "welcome_to": "Bienvenido a"
     },
     "login": {
         "username": "Usuario",

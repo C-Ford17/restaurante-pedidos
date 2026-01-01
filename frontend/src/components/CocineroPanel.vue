@@ -138,6 +138,24 @@
                 </div>
               </div>
 
+              <!-- Quick Actions for Table -->
+              <div v-if="mesa.expandida" class="mesa-quick-actions">
+                 <button 
+                    v-if="tieneItemsPendientes(mesa)"
+                    @click.stop="iniciarMesa(mesa)"
+                    class="btn-quick-action start"
+                 >
+                    <Play :size="16" /> {{ $t('kitchen.start_all') }}
+                 </button>
+                 <button 
+                    v-if="tieneItemsEnPreparacion(mesa)"
+                    @click.stop="completarMesa(mesa)"
+                    class="btn-quick-action complete"
+                 >
+                    <CheckCircle2 :size="16" /> {{ $t('kitchen.complete_all') }}
+                 </button>
+              </div>
+
               <!-- Contenido expandido -->
               <div v-if="mesa.expandida" class="mesa-body">
                 <div class="mesa-items-container">
@@ -213,6 +231,28 @@
     </div>
   </div>
 
+  <!-- Confirmation Modal for Batch Actions -->
+  <div v-if="mostrarConfirmacionBatch" class="modal-overlay" @click.self="mostrarConfirmacionBatch = false">
+    <div class="modal-content small-modal">
+      <div class="modal-header-clean">
+        <h3>{{ confirmacionBatchTitulo }}</h3>
+        <button @click="mostrarConfirmacionBatch = false" class="btn-close-clean"><X :size="20" /></button>
+      </div>
+      
+      <div class="modal-body-clean">
+        <p class="confirm-message">{{ confirmacionBatchMensaje }}</p>
+        
+        <div class="modal-actions-row">
+          <button @click="mostrarConfirmacionBatch = false" class="btn-secondary-action large">
+            {{ $t('common.cancel') }}
+          </button>
+          <button @click="confirmarAccionBatch" class="btn-primary-action large success">
+            {{ $t('common.yes') }} <CheckCircle2 :size="18" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
 </template>
 
@@ -220,20 +260,28 @@
 import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { usePedidoStore } from '../stores/pedidoStore';
 import { useNotificaciones } from '../composables/useNotificaciones';
+import { useI18n } from 'vue-i18n';
 import api from '../api';
 import socket from '../socket';
 import { 
   ChefHat, RefreshCw, Bell, Flame, BellRing, Inbox, Hash, User, 
   Play, FileText, UtensilsCrossed, CookingPot, Layers, Clock, 
-  ChevronDown, ChevronUp, CircleDashed, Timer, CheckCircle2, CheckCheck
+  ChevronDown, ChevronUp, CircleDashed, Timer, CheckCircle2, CheckCheck, X
 } from 'lucide-vue-next';
 
+const { t } = useI18n();
 const { notificaciones, cerrarNotificacion } = useNotificaciones('cocinero');
 
 const pedidoStore = usePedidoStore();
 const loading = ref(false);
 const now = ref(Date.now());
 const mesasExpandidas = ref(new Set()); // Track which tables are expanded
+
+// Batch confirmation modal
+const mostrarConfirmacionBatch = ref(false);
+const confirmacionBatchTitulo = ref('');
+const confirmacionBatchMensaje = ref('');
+const accionBatchPendiente = ref(null);
 
 const pedidosNuevos = computed(() => pedidoStore.pedidosPorEstado.nuevo || []);
 
@@ -302,12 +350,101 @@ const iniciarItem = async (itemId) => {
   }
 };
 
+const completadoBatch = ref(false);
+
 const completarItem = async (itemId) => {
   try {
     await api.completarItem(itemId);
   } catch (err) {
     console.error('Error completando item:', err);
     alert('Error al completar item');
+  }
+};
+
+// ✅ NUEVO: Batch Actions
+const tieneItemsPendientes = (mesa) => {
+  return mesa.items.some(i => !i.estado || i.estado === 'pendiente');
+};
+
+const tieneItemsEnPreparacion = (mesa) => {
+  return mesa.items.some(i => i.estado === 'en_preparacion');
+};
+
+const iniciarMesa = async (mesa) => {
+  console.log('🔘 iniciarMesa clicked for mesa:', mesa);
+  
+  const itemsPendientes = mesa.items
+    .filter(i => !i.estado || i.estado === 'pendiente');
+    
+  if (itemsPendientes.length === 0) {
+    console.warn('⚠️ No hay items pendientes para iniciar');
+    return;
+  }
+
+  // Show custom confirmation modal
+  confirmacionBatchTitulo.value = t('kitchen.start_all');
+  confirmacionBatchMensaje.value = `¿Iniciar todos los items pendientes de la mesa ${mesa.mesa_numero}? (${itemsPendientes.length} items)`;
+  accionBatchPendiente.value = async () => {
+    const itemIds = itemsPendientes.map(i => i.id);
+    loading.value = true;
+    
+    try {
+      console.log('🚀 Calling api.iniciarItemsBatch with:', itemIds);
+      const response = await api.iniciarItemsBatch(itemIds);
+      console.log('✅ Batch start success, response:', response);
+      setTimeout(() => {
+          pedidoStore.cargarPedidosActivos();
+      }, 500);
+    } catch (err) {
+      console.error('❌ Error batch start:', err);
+      alert('Error al iniciar algunos items');
+    } finally {
+      loading.value = false;
+    }
+  };
+  mostrarConfirmacionBatch.value = true;
+};
+
+const completarMesa = async (mesa) => {
+   console.log('🔘 completarMesa clicked for mesa:', mesa);
+   
+   const itemsEnPrep = mesa.items
+    .filter(i => i.estado === 'en_preparacion');
+
+   if (itemsEnPrep.length === 0) {
+     console.warn('⚠️ No hay items en preparación para completar');
+     return;
+   }
+
+   // Show custom confirmation modal
+   confirmacionBatchTitulo.value = t('kitchen.complete_all');
+   confirmacionBatchMensaje.value = `¿Marcar como LISTOS todos los items de la mesa ${mesa.mesa_numero}? (${itemsEnPrep.length} items)`;
+   accionBatchPendiente.value = async () => {
+     const itemIds = itemsEnPrep.map(i => i.id);
+     loading.value = true;
+     
+     try {
+       console.log('🚀 Calling api.completarItemsBatch with:', itemIds);
+       const response = await api.completarItemsBatch(itemIds);
+       console.log('✅ Batch complete success, response:', response);
+       setTimeout(() => {
+          pedidoStore.cargarPedidosActivos();
+       }, 500);
+     } catch (err) {
+       console.error('❌ Error batch complete:', err);
+       alert('Error al completar algunos items');
+     } finally {
+       loading.value = false;
+     }
+   };
+   mostrarConfirmacionBatch.value = true;
+};
+
+const confirmarAccionBatch = async () => {
+  mostrarConfirmacionBatch.value = false;
+  if (accionBatchPendiente.value) {
+    await accionBatchPendiente.value();
+    accionBatchPendiente.value = null;
   }
 };
 

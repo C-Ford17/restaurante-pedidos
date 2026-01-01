@@ -438,6 +438,61 @@
     border-top: 1px solid var(--k-border);
 }
 
+/* Quick Actions for Table */
+.mesa-quick-actions {
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--k-border);
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.btn-quick-action {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    justify-content: center;
+    min-width: 120px;
+}
+
+.btn-quick-action.start {
+    background: var(--k-primary);
+    color: white;
+    box-shadow: 0 2px 4px rgba(249, 115, 22, 0.3);
+}
+
+.btn-quick-action.start:hover {
+    background: var(--k-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(249, 115, 22, 0.4);
+}
+
+.btn-quick-action.complete {
+    background: var(--k-success);
+    color: white;
+    box-shadow: 0 2px 4px rgba(34, 197, 94, 0.3);
+}
+
+.btn-quick-action.complete:hover {
+    background: #15803d;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(34, 197, 94, 0.4);
+}
+
+.btn-quick-action:active {
+    transform: translateY(0);
+}
+
+
 .kitchen-item {
     display: flex;
     justify-content: space-between;
@@ -666,4 +721,128 @@
         width: 100%;
         justify-content: space-between;
     }
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: auto;
+    border: 1px solid var(--border-color);
+}
+
+.small-modal {
+    max-width: 400px;
+}
+
+/* Modal Styles for Confirmation */
+.modal-header-clean {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header-clean h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.btn-close-clean {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.btn-close-clean:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.modal-body-clean {
+    padding: 1.5rem;
+}
+
+.confirm-message {
+    font-size: 1rem;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.modal-actions-row {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.btn-secondary-action,
+.btn-primary-action {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.95rem;
+}
+
+.btn-secondary-action {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary-action:hover {
+    background: var(--border-color);
+}
+
+.btn-primary-action {
+    background: var(--k-primary);
+    color: white;
+}
+
+.btn-primary-action:hover {
+    background: var(--k-primary-dark);
+}
+
+.btn-primary-action.success {
+    background: var(--k-success);
+    color: white;
+}
+
+.btn-primary-action.success:hover {
+    background: #15803d;
+}
+
+.btn-secondary-action.large,
+.btn-primary-action.large {
+    min-width: 100px;
 }

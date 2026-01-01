@@ -218,23 +218,31 @@
              <span class="badge-count">{{ misItemsListos.length }}</span>
           </h3>
           <div class="ready-grid">
-            <div v-for="itemListo in misItemsListos" :key="itemListo.item_id" class="ready-card">
-              <div class="ready-header">
-                <span class="table-badge">{{ $t('common.table') }} {{ itemListo.mesa_numero }}</span>
-                <span class="time-badge">
-                   <Clock :size="12" /> {{ calcularTiempoDesde(itemListo.tiempoDesdeReady) }}
-                </span>
-              </div>
-              <div class="ready-body">
-                <div class="ready-info">
-                   <span class="ready-name">{{ itemListo.nombre }}</span>
-                   <span class="ready-qty">x{{ itemListo.cantidad_lista }}</span>
-                </div>
-                <button @click="marcarItemComoServido(itemListo.item_id)" class="btn-serve">
-                  {{ $t('waiter.mark_served') }} <CheckCircle2 :size="16" />
-                </button>
-              </div>
+          <div class="ready-grid">
+            <div v-for="grupo in misMesasListas" :key="grupo.mesa_numero" class="active-card ready-group">
+               <div class="active-header ready-header-group">
+                 <span class="table-badge">{{ $t('common.table') }} {{ grupo.mesa_numero }}</span>
+                 <button @click="servirMesa(grupo)" class="btn-serve-all">
+                    {{ $t('waiter.mark_all_served') }} <CheckCheck :size="16" />
+                 </button>
+               </div>
+               
+               <div class="active-body">
+                 <div class="ready-items-list">
+                    <div v-for="item in grupo.items" :key="item.item_id" class="ready-item-row">
+                       <span class="ready-qty">{{ item.cantidad_lista }}x</span>
+                       <span class="ready-name">{{ item.nombre }}</span>
+                       <span class="time-badge mini">
+                         <Clock :size="10" /> {{ calcularTiempoDesde(item.tiempoDesdeReady) }}
+                       </span>
+                       <button @click="marcarItemComoServido(item.item_id)" class="btn-icon-action check" title="Servir">
+                          <Check :size="14" />
+                       </button>
+                    </div>
+                 </div>
+               </div>
             </div>
+          </div>
           </div>
         </div>
 
@@ -530,6 +538,52 @@
     </div>
   </div>
 
+  <!-- Confirmation Modal for Batch Serve -->
+  <div v-if="mostrarConfirmacionServir" class="modal-overlay" @click.self="mostrarConfirmacionServir = false">
+    <div class="modal-content small-modal">
+      <div class="modal-header-clean">
+        <h3>{{ $t('waiter.mark_all_served') }}</h3>
+        <button @click="mostrarConfirmacionServir = false" class="btn-close-clean"><X :size="20" /></button>
+      </div>
+      
+      <div class="modal-body-clean">
+        <p class="confirm-message">{{ confirmacionServirMensaje }}</p>
+        
+        <div class="modal-actions-row">
+          <button @click="mostrarConfirmacionServir = false" class="btn-secondary-action large">
+            {{ $t('common.cancel') }}
+          </button>
+          <button @click="confirmarServirMesa" class="btn-primary-action large success">
+            {{ $t('common.yes') }} <CheckCircle2 :size="18" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal for Delete Item -->
+  <div v-if="mostrarConfirmacionEliminar" class="modal-overlay" @click.self="mostrarConfirmacionEliminar = false">
+    <div class="modal-content small-modal">
+      <div class="modal-header-clean">
+        <h3>{{ $t('waiter.delete_item') }}</h3>
+        <button @click="mostrarConfirmacionEliminar = false" class="btn-close-clean"><X :size="20" /></button>
+      </div>
+      
+      <div class="modal-body-clean">
+        <p class="confirm-message">{{ confirmacionEliminarMensaje }}</p>
+        
+        <div class="modal-actions-row">
+          <button @click="mostrarConfirmacionEliminar = false" class="btn-secondary-action large">
+            {{ $t('common.cancel') }}
+          </button>
+          <button @click="confirmarEliminarItem" class="btn-primary-action large danger">
+            {{ $t('common.yes') }} <Trash2 :size="18" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   </div>
 </template>
 
@@ -582,6 +636,16 @@ const itemsParaAgregar = ref([]);
 const categoriaEdicion = ref('');
 const busquedaEdicion = ref(''); 
 const showScrollUpButton = ref(true);
+
+// Batch serve confirmation
+const mostrarConfirmacionServir = ref(false);
+const confirmacionServirMensaje = ref('');
+const grupoParaServir = ref(null);
+
+// Delete item confirmation
+const mostrarConfirmacionEliminar = ref(false);
+const confirmacionEliminarMensaje = ref('');
+const itemParaEliminar = ref(null);
 
 // Computed para items del menú en el editor
 const itemsPorCategoriaEdicion = computed(() => {
@@ -787,8 +851,8 @@ const misPedidos = computed(() => {
   return pedidoStore.pedidos.filter(p => 
     (String(p.usuario_mesero_id) === String(usuarioStore.usuario.id) || p.usuario_mesero_id === null) &&
     p.estado !== 'cancelado' &&
-    p.estado !== 'servido' &&  // ✅ Exclude served/ready-to-pay from "Active" list to avoid dupes
-    p.estado !== 'listo_pagar'
+    p.estado !== 'listo_pagar' && // Exclude ready-to-pay from active list (shown in separate section)
+    p.estado !== 'pagado' // Exclude paid orders
   );
 });
 
@@ -844,6 +908,24 @@ const misItemsListos = computed(() => {
   });
   
   return itemsListos;
+});
+
+// ✅ NUEVO: Agrupar items listos por mesa para batch actions
+const misMesasListas = computed(() => {
+  const items = misItemsListos.value;
+  const grupos = {};
+  
+  items.forEach(item => {
+    if (!grupos[item.mesa_numero]) {
+      grupos[item.mesa_numero] = {
+        mesa_numero: item.mesa_numero,
+        items: []
+      };
+    }
+    grupos[item.mesa_numero].items.push(item);
+  });
+  
+  return Object.values(grupos).sort((a, b) => a.mesa_numero - b.mesa_numero);
 });
 
 const misPedidosServidos = computed(() => {
@@ -947,6 +1029,46 @@ const marcarItemComoServido = async (itemId) => {
   } catch (e) {
     console.error('Error serving item:', e);
     mostrarNotificacion('error', t('common.error'));
+  }
+};
+
+// ✅ NUEVO: Servir mesa completa
+const servirMesa = async (grupo) => {
+  console.log('🔘 servirMesa clicked for grupo:', grupo);
+  const itemIds = grupo.items.map(i => i.item_id);
+  console.log('📋 Item IDs to serve:', itemIds);
+  
+  if (itemIds.length === 0) {
+    console.warn('⚠️ No items to serve');
+    return;
+  }
+
+  // Show custom confirmation modal
+  confirmacionServirMensaje.value = `¿Marcar como servidos todos los items de la mesa ${grupo.mesa_numero}? (${itemIds.length} items)`;
+  grupoParaServir.value = grupo;
+  mostrarConfirmacionServir.value = true;
+};
+
+const confirmarServirMesa = async () => {
+  mostrarConfirmacionServir.value = false;
+  
+  if (!grupoParaServir.value) {
+    console.warn('⚠️ No grupo para servir');
+    return;
+  }
+  
+  const itemIds = grupoParaServir.value.items.map(i => i.item_id);
+  console.log('🚀 Calling api.servirItemsBatch with:', itemIds);
+  
+  try {
+    const response = await api.servirItemsBatch(itemIds);
+    console.log('✅ Batch serve success, response:', response);
+    mostrarNotificacion(`mesa-servida-${grupoParaServir.value.mesa_numero}`, t('waiter.alert_marked_served'), 'success');
+  } catch (e) {
+    console.error('❌ Error batch serve:', e);
+    mostrarNotificacion('error', t('common.error')); 
+  } finally {
+    grupoParaServir.value = null;
   }
 };
 
@@ -1061,14 +1183,29 @@ const dividirItemEnEdicion = async (item) => {
 };
 
 const eliminarItemDelPedido = async (item) => {
-    if (!confirm(t('waiter.confirm_cancel'))) return;
+    confirmacionEliminarMensaje.value = t('waiter.confirm_delete_item', { name: item.nombre });
+    itemParaEliminar.value = item;
+    mostrarConfirmacionEliminar.value = true;
+};
+
+const confirmarEliminarItem = async () => {
+    mostrarConfirmacionEliminar.value = false;
+    
+    if (!itemParaEliminar.value) return;
+    
     try {
-        await api.actualizarEstadoItem(item.id, 'cancelado');
-        const idx = pedidoEditando.value.items.findIndex(i => i.id === item.id);
+        await api.eliminarItemDePedido(pedidoEditando.value.id, itemParaEliminar.value.id, true);
+        const idx = pedidoEditando.value.items.findIndex(i => i.id === itemParaEliminar.value.id);
         if (idx !== -1) pedidoEditando.value.items.splice(idx, 1);
-         mostrarNotificacion('success', 'Item eliminado');
+        mostrarNotificacion('success', 'Item eliminado');
+        // Reload order to get updated total
+        const response = await api.getPedido(pedidoEditando.value.id);
+        pedidoEditando.value = response.data;
     } catch (e) {
+        console.error('Error eliminando item:', e);
         alert(t('common.error'));
+    } finally {
+        itemParaEliminar.value = null;
     }
 };
 

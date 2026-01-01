@@ -71,6 +71,10 @@
                <span class="total-amount">${{ Math.round(pedido.total || 0).toLocaleString() }}</span>
             </div>
             
+            <button @click.stop="devolverPedido(pedido)" class="btn-return-order" :title="$t('cashier.return_order')">
+              <ArrowLeft :size="16" /> {{ $t('cashier.return') }}
+            </button>
+            
              <!-- Estado de pago parcial -->
             <div v-if="pedido.total_pagado > 0" class="text-success text-sm text-right">
                 Pagado: ${{ Math.round(pedido.total_pagado).toLocaleString() }}
@@ -277,6 +281,29 @@
       </div>
     </div>
 
+    <!-- Confirmation Modal for Return Order -->
+    <div v-if="mostrarConfirmacionDevolver" class="modal-overlay" @click.self="cerrarConfirmacionDevolver">
+      <div class="modal-content small-modal">
+        <div class="modal-header-clean">
+          <h3>{{ $t('cashier.return_order') }}</h3>
+          <button @click="cerrarConfirmacionDevolver" class="btn-close-clean"><X :size="20" /></button>
+        </div>
+        
+        <div class="modal-body-clean">
+          <p class="confirm-message">{{ confirmacionDevolverMensaje }}</p>
+          
+          <div class="modal-actions-row">
+            <button @click="cerrarConfirmacionDevolver" class="btn-secondary-action large">
+              {{ $t('common.cancel') }}
+            </button>
+            <button @click="confirmarDevolver" class="btn-primary-action large warning">
+              {{ $t('common.yes') }} <ArrowLeft :size="18" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -291,7 +318,7 @@ import socket from '../socket';
 import { useI18n } from 'vue-i18n';
 import { 
   Wallet, User, Clock, RefreshCw, Receipt, CheckCircle2, History,
-  Banknote, Printer, CreditCard, Smartphone, Banknote as CashIcon, Globe, Eye
+  Banknote, Printer, CreditCard, Smartphone, Banknote as CashIcon, Globe, Eye, ArrowLeft, X
 } from 'lucide-vue-next';
 
 // --- Estado ---
@@ -314,6 +341,11 @@ const saldoPendiente = ref(0);
 const pagoExitosoData = ref(null); // Objeto pedido actualizado tras pago
 const ultimoPagoMonto = ref(0);
 const ultimoCambio = ref(0);
+
+// Return order confirmation
+const mostrarConfirmacionDevolver = ref(false);
+const confirmacionDevolverMensaje = ref('');
+const pedidoParaDevolver = ref(null);
 
 // --- Helpers de Iconos ---
 const getPaymentIcon = (method) => {
@@ -485,6 +517,34 @@ const playCashSound = () => {
   const audio = new Audio('/sounds/cash-register.mp3');
   audio.volume = 0.5;
   audio.play().catch(e => console.log('Audio autoplay blocked', e));
+};
+
+const devolverPedido = async (pedido) => {
+  confirmacionDevolverMensaje.value = t('cashier.confirm_return_table', { table: pedido.mesa_numero });
+  pedidoParaDevolver.value = pedido;
+  mostrarConfirmacionDevolver.value = true;
+};
+
+const confirmarDevolver = async () => {
+  mostrarConfirmacionDevolver.value = false;
+  
+  if (!pedidoParaDevolver.value) return;
+  
+  try {
+    await api.actualizarEstadoPedido(pedidoParaDevolver.value.id, 'servido');
+    cargarDatos();
+    alert(t('cashier.order_returned') || 'Pedido devuelto al mesero');
+  } catch (err) {
+    console.error('Error devolviendo pedido:', err);
+    alert(t('common.error') || 'Error al devolver pedido');
+  } finally {
+    pedidoParaDevolver.value = null;
+  }
+};
+
+const cerrarConfirmacionDevolver = () => {
+  mostrarConfirmacionDevolver.value = false;
+  pedidoParaDevolver.value = null;
 };
 
 // --- Impresión ---

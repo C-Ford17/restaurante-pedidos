@@ -11,33 +11,23 @@ async function actualizarEstadisticasTiempo(menuItemId, tiempoReal) {
     // Usar fecha de la BD para consistencia
     const localDateExpr = `(now() AT TIME ZONE '${TIMEZONE}')::date`;
 
-    const existing = await getAsync(`
-        SELECT * FROM item_time_stats 
-        WHERE menu_item_id = $1 AND fecha = ${localDateExpr}
-    `, [menuItemId]);
-
-    if (existing) {
-        const nuevoTotal = existing.total_preparaciones + 1;
-        const nuevoPromedio = Math.round(
-            (existing.tiempo_promedio_minutos * existing.total_preparaciones + tiempoReal) / nuevoTotal
-        );
-        const nuevoMin = Math.min(existing.tiempo_minimo_minutos, tiempoReal);
-        const nuevoMax = Math.max(existing.tiempo_maximo_minutos, tiempoReal);
-
-        await runAsync(`
-            UPDATE item_time_stats 
-            SET total_preparaciones = $1,
-                tiempo_promedio_minutos = $2,
-                tiempo_minimo_minutos = $3,
-                tiempo_maximo_minutos = $4
-            WHERE menu_item_id = $5 AND fecha = ${localDateExpr}
-        `, [nuevoTotal, nuevoPromedio, nuevoMin, nuevoMax, menuItemId]);
-    } else {
+    try {
         await runAsync(`
             INSERT INTO item_time_stats 
             (menu_item_id, fecha, total_preparaciones, tiempo_promedio_minutos, tiempo_minimo_minutos, tiempo_maximo_minutos)
-            VALUES ($1, ${localDateExpr}, 1, $2, $3, $4)
-        `, [menuItemId, tiempoReal, tiempoReal, tiempoReal]);
+            VALUES ($1, ${localDateExpr}, 1, $2, $2, $2)
+            ON CONFLICT (menu_item_id, fecha)
+            DO UPDATE SET
+                tiempo_promedio_minutos = ROUND(
+                    (item_time_stats.tiempo_promedio_minutos * item_time_stats.total_preparaciones + EXCLUDED.tiempo_promedio_minutos) 
+                    / (item_time_stats.total_preparaciones + 1)
+                ),
+                total_preparaciones = item_time_stats.total_preparaciones + 1,
+                tiempo_minimo_minutos = LEAST(item_time_stats.tiempo_minimo_minutos, EXCLUDED.tiempo_minimo_minutos),
+                tiempo_maximo_minutos = GREATEST(item_time_stats.tiempo_maximo_minutos, EXCLUDED.tiempo_maximo_minutos)
+        `, [menuItemId, tiempoReal]);
+    } catch (error) {
+        console.error('Error updating stats (ignoring to prevent flow breakage):', error);
     }
 }
 
@@ -705,6 +695,208 @@ router.put('/items/:id/serve', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+});
+
+// ============= BATCH OPERATIONS =============
+
+// PUT /api/pedidos/items/batch-start
+router.put('/items/batch-start', async (req, res) => {
+    const { itemIds } = req.body;
+    if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
+        return res.status(400).json({ error: 'Lista de IDs requerida' });
+    }
+
+    try {
+        // 1. Update all items
+        const placeholders = itemIds.map((_, i) => `$${i + 1}`).join(',');
+        await runAsync(`
+            UPDATE pedido_items 
+            SET started_at = CURRENT_TIMESTAMP, estado = 'en_preparacion'
+            WHERE id IN (${placeholders})
+        `, itemIds);
+
+        // 2. Fetch updated items to emit events
+        const items = await allAsync(`
+            SELECT pi.*, mi.nombre, p.mesa_numero, p.usuario_mesero_id
+            FROM pedido_items pi
+            JOIN menu_items mi ON pi.menu_item_id = mi.id
+            JOIN pedidos p ON pi.pedido_id = p.id
+            WHERE pi.id IN (${placeholders})
+        `, itemIds);
+
+        // 3. Emit events per item
+        for (const item of items) {
+            req.app.get('io').emit('item_started', {
+                item_id: item.id,
+                pedido_id: item.pedido_id,
+                mesa_numero: item.mesa_numero,
+                item_nombre: item.nombre
+            });
+        }
+
+        // 4. Update parent orders (if multiple orders involved, though unlikely in current UI usage)
+        const pedidoIds = [...new Set(items.map(i => i.pedido_id))];
+        for (const pid of pedidoIds) {
+            req.app.get('io').emit('pedido_actualizado', {
+                id: pid,
+                estado: 'en_cocina'
+            });
+        }
+
+        res.json({ message: `✓ ${items.length} items iniciados` });
+    } catch (error) {
+        console.error('Batch start error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// PUT /api/pedidos/items/batch-complete
+router.put('/items/batch-complete', async (req, res) => {
+    const { itemIds } = req.body;
+    if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
+        return res.status(400).json({ error: 'Lista de IDs requerida' });
+    }
+
+    try {
+        // 1. Fetch info BEFORE update to calculate times if needed (though we can rely on started_at)
+        // We need 'started_at' to calculate 'tiempo_real'.  Since batch update can't easily do varying logic per row without complex SQL,
+        // we might iterare or do a single complex UPDATE FROM VALUES.
+        // For simplicity and to fix the concurrency 500 error, we will iterate DB updates inside a "simulated transaction" 
+        // OR better: Fetch all, calculate times in JS, then update all.
+
+        const placeholders = itemIds.map((_, i) => `$${i + 1}`).join(',');
+        const itemsToUpdate = await allAsync(`
+             SELECT pi.*, mi.nombre, mi.es_directo, p.mesa_numero, p.usuario_mesero_id
+            FROM pedido_items pi
+            JOIN menu_items mi ON pi.menu_item_id = mi.id
+            JOIN pedidos p ON pi.pedido_id = p.id
+            WHERE pi.id IN (${placeholders})
+        `, itemIds);
+
+        const now = Date.now();
+        const updates = [];
+
+        for (const item of itemsToUpdate) {
+            let tiempoReal = null;
+            if (item.started_at) {
+                const startTime = new Date(item.started_at).getTime();
+                tiempoReal = Math.round((now - startTime) / 60000);
+            }
+            // Add promise to array
+            updates.push(runAsync(`
+                UPDATE pedido_items 
+                SET completed_at = CURRENT_TIMESTAMP, estado = 'listo', tiempo_real = $1
+                WHERE id = $2
+            `, [tiempoReal, item.id]));
+
+            // Save stats
+            if (tiempoReal !== null && item.menu_item_id) {
+                // Async stats update, don't await to block
+                actualizarEstadisticasTiempo(item.menu_item_id, tiempoReal).catch(console.error);
+            }
+        }
+
+        await Promise.all(updates);
+
+        // 2. Check Orders Status
+        const pedidoIds = [...new Set(itemsToUpdate.map(i => i.pedido_id))];
+
+        for (const pid of pedidoIds) {
+            const allItems = await allAsync(`SELECT estado FROM pedido_items WHERE pedido_id = $1`, [pid]);
+            const todosListos = allItems.every(i => i.estado === 'listo' || i.estado === 'servido');
+
+            if (todosListos) {
+                await runAsync(`UPDATE pedidos SET estado = 'listo' WHERE id = $1`, [pid]);
+                req.app.get('io').emit('pedido_actualizado', { id: pid, estado: 'listo' });
+            }
+        }
+
+        // 3. Emit Item Events & Push
+        for (const item of itemsToUpdate) {
+            req.app.get('io').emit('item_ready', {
+                item_id: item.id,
+                pedido_id: item.pedido_id,
+                mesa_numero: item.mesa_numero,
+                item_nombre: item.nombre,
+                mesero_id: item.usuario_mesero_id,
+                cantidad: item.cantidad,
+                completed_at: new Date().toISOString(),
+                tiempoDesdeReady: 0
+            });
+
+            // Push
+            if (item.usuario_mesero_id && !item.es_directo) {
+                sendPushToUser(item.usuario_mesero_id, 'item_ready', 'item_ready_body', [item.mesa_numero, item.nombre], {
+                    url: '/', pedidoId: item.pedido_id, mesa: item.mesa_numero
+                }).catch(e => console.warn('Push fail', e));
+            }
+        }
+
+        res.json({ message: `✓ ${itemsToUpdate.length} items completados` });
+
+    } catch (error) {
+        console.error('Batch complete error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// PUT /api/pedidos/items/batch-serve
+router.put('/items/batch-serve', async (req, res) => {
+    const { itemIds } = req.body;
+    if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
+        return res.status(400).json({ error: 'Lista de IDs requerida' });
+    }
+
+    try {
+        const placeholders = itemIds.map((_, i) => `$${i + 1}`).join(',');
+
+        // 1. Update all
+        await runAsync(`
+            UPDATE pedido_items 
+            SET served_at = CURRENT_TIMESTAMP, estado = 'servido'
+            WHERE id IN (${placeholders})
+        `, itemIds);
+
+        // 2. Fetch items to notify
+        const items = await allAsync(`
+             SELECT pi.id, pi.pedido_id, p.mesa_numero, p.usuario_mesero_id
+            FROM pedido_items pi
+            JOIN pedidos p ON pi.pedido_id = p.id
+            WHERE pi.id IN (${placeholders})
+        `, itemIds);
+
+        // 3. Check Orders
+        const pedidoIds = [...new Set(items.map(i => i.pedido_id))];
+        for (const pid of pedidoIds) {
+            const allItems = await allAsync(`SELECT estado FROM pedido_items WHERE pedido_id = $1`, [pid]);
+            const todosServidos = allItems.every(i => i.estado === 'servido');
+            if (todosServidos) {
+                await runAsync(`UPDATE pedidos SET estado = 'servido', delivered_at = CURRENT_TIMESTAMP WHERE id = $1`, [pid]);
+                req.app.get('io').emit('pedido_actualizado', {
+                    id: pid,
+                    // mesa_numero: ... (fetch if needed but frontend usually ignores it for global list update)
+                    estado: 'servido'
+                });
+            }
+        }
+
+        // 4. Emit Events
+        for (const item of items) {
+            req.app.get('io').emit('item_served', {
+                item_id: item.id,
+                pedido_id: item.pedido_id,
+                mesa_numero: item.mesa_numero,
+                mesero_id: item.usuario_mesero_id
+            });
+        }
+
+        res.json({ message: `✓ ${items.length} items servidos` });
+
+    } catch (error) {
+        console.error('Batch serve error:', error);
+        res.status(500).json({ error: error.message });
+    }
+
 });
 
 

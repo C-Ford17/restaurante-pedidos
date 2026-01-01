@@ -469,6 +469,17 @@
   border-color: #fecaca;
 }
 
+.btn-icon-action.check {
+  background: var(--w-success);
+  color: white;
+  border-color: var(--w-success);
+}
+
+.btn-icon-action.check:hover {
+  background: #15803d;
+  transform: scale(1.1);
+}
+
 .summary-footer {
   margin-top: 1.5rem;
 }
@@ -1890,11 +1901,195 @@
 
 .editor-body .categorias-tabs.mini.single-category .tab {
   width: auto;
-  min-width: 140px;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+/* Serve All Button */
+.btn-serve-all {
+  background: var(--w-success);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
   border-radius: 8px;
-  background: var(--w-primary) !important;
-  color: white !important;
   font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.3);
+}
+
+.btn-serve-all:hover {
+  background: #15803d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.4);
+}
+
+.btn-serve-all:active {
+  transform: translateY(0);
+}
+
+/* Ready Items Styling */
+.ready-header-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--w-border);
+}
+
+.ready-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ready-item-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--w-border);
+}
+
+.ready-qty {
+  font-weight: 700;
+  color: var(--w-primary);
+  min-width: 40px;
+}
+
+.ready-name {
+  flex: 1;
+  font-weight: 600;
+  color: var(--w-text);
+}
+
+.time-badge.mini {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #fff7ed;
+  color: #c2410c;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Modal Styles for Confirmation */
+.modal-header-clean {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--w-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header-clean h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--w-text);
+}
+
+.btn-close-clean {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--w-secondary);
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.btn-close-clean:hover {
+  background: var(--bg-secondary);
+  color: var(--w-text);
+}
+
+.modal-body-clean {
+  padding: 1.5rem;
+}
+
+.confirm-message {
+  font-size: 1rem;
+  color: var(--w-text);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.modal-actions-row {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.btn-secondary-action,
+.btn-primary-action {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+}
+
+.btn-secondary-action {
+  background: var(--bg-secondary);
+  color: var(--w-text);
+}
+
+.btn-secondary-action:hover {
+  background: var(--w-border);
+}
+
+.btn-primary-action {
+  background: var(--w-primary);
+  color: white;
+}
+
+.btn-primary-action:hover {
+  background: var(--w-primary-dark);
+}
+
+.btn-primary-action.success {
+  background: var(--w-success);
+}
+
+.btn-primary-action.success:hover {
+  background: #15803d;
+}
+
+.btn-primary-action.danger {
+  background: var(--w-danger);
+}
+
+.btn-primary-action.danger:hover {
+  background: #dc2626;
+}
+
+.btn-secondary-action.large,
+.btn-primary-action.large {
+  min-width: 100px;
+}
+
+.small-modal {
+  max-width: 400px;
+}
+
+.modal-content.small-modal {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
 }
 
 /* Ensure add-col has relative positioning for sticky to work if needed */
