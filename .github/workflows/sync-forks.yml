@@ -1,0 +1,43 @@
+on:
+  push:
+    branches:
+      - main
+      - demo
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # -----------------------------------------------------------------
+      # FORKS A SINCRONIZAR
+      # -----------------------------------------------------------------
+      
+      # 1. Dondeci Pedidos
+      - name: Sync to Dondeci
+        if: always()
+        uses: wei/git-sync@v3
+        with:
+          source_repo: ${{ github.repository }}
+          source_branch: ${{ github.ref_name }}
+          destination_repo: dondeci/dondeci-pedidos
+          destination_branch: ${{ github.ref_name }}
+          # Usa un secreto específico para este repo si quieres
+          destination_token: ${{ secrets.GH_PAT_DONDECI }} 
+
+      # 2. DemoChris77
+      - name: Sync to DemoChris77
+        if: always()
+        uses: wei/git-sync@v3
+        with:
+          source_repo: ${{ github.repository }}
+          source_branch: ${{ github.ref_name }}
+          destination_repo: demochris77/restaurante-pedidos
+          destination_branch: ${{ github.ref_name }}
+          # Y otro diferente para este
+          destination_token: ${{ secrets.GH_PAT_CHRIS }}
+
+      # -----------------------------------------------------------------
