@@ -93,7 +93,7 @@ router.get('/pedidos-hoy', async (req, res) => {
                 p.propina_monto,
                 p.estado,
                 p.created_at,
-                COUNT(pi.id) as items_count,
+                COUNT(DISTINCT pi.id) as items_count,
                 COALESCE(
                     json_agg(
                         json_build_object(
