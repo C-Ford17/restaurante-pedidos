@@ -3,7 +3,6 @@
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 ![Vue.js](https://img.shields.io/badge/vue.js-3.x-green.svg)
 ![Node.js](https://img.shields.io/badge/node.js-18.x-green.svg)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 > **Solución integral de gestión gastronómica en tiempo real.**  
 > Diseñado para optimizar el flujo operativo de restaurantes, desde la toma de comandas hasta la facturación.
