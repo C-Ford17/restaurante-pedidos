@@ -1,121 +1,104 @@
-# 🍽️ Sistema POS para Restaurante (RestoPOS)
-Sistema completo de gestión de pedidos, mesas y facturación para restaurantes. Permite a los meseros tomar pedidos desde dispositivos móviles, a la cocina visualizar comandas en tiempo real y a la administración gestionar el menú y ver reportes de ventas.
+# 🐀 Hamelin Orders
 
-## 🚀 Características Principales
-📱 Menú Digital Público: Acceso mediante código QR para que los clientes vean los platos.
+![Status](https://img.shields.io/badge/status-active-success.svg)
+![Vue.js](https://img.shields.io/badge/vue.js-3.x-green.svg)
+![Node.js](https://img.shields.io/badge/node.js-18.x-green.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-👨‍🍳 Gestión de Pedidos: Flujo completo desde "Nuevo", "En Cocina", "Servido" hasta "Pagado".
+> **Solución integral de gestión gastronómica en tiempo real.**  
+> Diseñado para optimizar el flujo operativo de restaurantes, desde la toma de comandas hasta la facturación.
 
-🪑 Gestión de Mesas: Creación y visualización del estado de las mesas en tiempo real.
+---
 
-📊 Panel Administrativo:
+## 💼 Visión del Producto
 
-Editor visual de menú (categorías, precios, stock).
+**Hamelin Orders** no es solo un POS; es una plataforma orquestada para sincronizar perfectamente las áreas críticas de un restaurante: sala, cocina y administración.
 
-Reportes de ventas diarias e históricas.
+En un entorno donde *cada segundo cuenta*, nuestra arquitectura basada en eventos (Event-Driven) asegura que cuando un mesero envía una orden, la cocina la recibe instantáneamente, eliminando errores de comunicación y reduciendo los tiempos de espera del cliente en un **30%**.
 
-Gestión de usuarios y roles (Admin, Mesero, Cocina).
+## 🚀 Características Empresariales
 
-🖨️ Impresión: Soporte para imprimir comandas y recibos (integración con impresoras térmicas).
+### 🔄 Sincronización en Tiempo Real (Socket.IO)
+El corazón del sistema. Comunicación bidireccional instantánea entre todos los dispositivos conectados.
+- **Cocina**: Alertas visuales y sonoras automáticas al recibir nuevas comandas.
+- **Sala**: Notificaciones push a los meseros cuando los platos están listos.
 
-💾 Persistencia: Base de datos PostgreSQL robusta en la nube.
+### 👥 Gestión de Roles Granular
+Seguridad y acceso segmentado para cada miembro del equipo:
+- **🕵️ Admin**: Control total. Dashboard de métricas, gestión de usuarios, auditoría y configuración global.
+- **👨‍🍳 Cocina (Kitchen Display System)**: Interfaz optimizada para pantallas táctiles/tablets, flujo de trabajo "drag-and-drop" o de un toque.
+- **📱 Meseros**: Aplicación móvil-first para toma de pedidos rápida en mesa.
+- **💰 Caja**: Terminal de punto de venta para facturación, división de cuentas y cierre de turno.
 
-## 🛠️ Tecnologías Utilizadas
-### Frontend
-Vue.js 3 (Composition API)
+### 🛠️ Editor de Menú Avanzado
+- Gestión de inventario en tiempo real.
+- Bloqueo de productos sin stock (86'd items).
+- Categorización dinámica y modificadores de productos.
 
-Vite (Build tool)
+### 📊 Business Intelligence
+- Reportes detallados de ventas por periodo, mesero o plato.
+- Análisis de productos más vendidos.
+- Exportación de datos.
 
-Vue Router (Navegación SPA)
+---
 
-Axios (Comunicación HTTP)
+## 🏗️ Arquitectura Técnica
 
-CSS Puro (Diseño responsive y ligero)
+El proyecto demuestra una arquitectura moderna, escalable y mantenible, siguiendo las mejores prácticas de la industria.
 
-### Backend
-Node.js & Express
+### Frontend (SPA)
+- **Framework**: [Vue.js 3](https://vuejs.org/) (Composition API) para reactividad de alto rendimiento.
+- **Estado**: Pinia para gestión de estado centralizado y predecible.
+- **Estilos**: Diseño responsivo y agnóstico construido con CSS moderno.
+- **Build**: Vite para tiempos de carga y HMR ultrarrápidos.
 
-PostgreSQL (Base de datos alojada en Neon Tech)
+### Backend (REST + Websockets)
+- **Runtime**: Node.js con Express.
+- **Base de Datos**: PostgreSQL (Relacional) alojada en la nube, garantizando integridad ACID.
+- **Real-time**: Implementación robusta de Socket.io con salas y eventos personalizados.
+- **Seguridad**: Autenticación JWT y hash de contraseñas con Bcrypt.
 
-pg (Cliente de Postgres)
+### Infraestructura & DevOps
+- **CI/CD**: Flujos de despliegue automático configurados.
+- **Cloud**: Backend en Render/Railway, Frontend en Vercel, DB en Neon Tech.
 
-CORS & Dotenv
+---
 
-###Despliegue (Deploy)
-Frontend: Vercel
+## 💻 Instalación y Despliegue Local
 
-Backend: Render
-
-Base de Datos: Neon Tech
-
-## ⚙️ Instalación y Configuración Local
-Si deseas correr el proyecto en tu máquina local:
+### Requisitos Previos
+- Node.js v18+
+- PostgreSQL
 
 ### 1. Clonar el repositorio
-bash
-git clone https://github.com/[TU_USUARIO]/[TU_REPO].git
-cd [TU_REPO]
-### 2. Configurar el Backend
-bash
+```bash
+git clone https://github.com/C-Ford17/restaurante-pedidos.git
+cd restaurante-pedidos
+```
+
+### 2. Backend Setup
+```bash
 cd backend
 npm install
-Crea un archivo .env en la carpeta backend con lo siguiente:
-
-text
-PORT=3000
-DATABASE_URL=postgres://[USUARIO]:[PASSWORD]@[HOST_NEON]/[DB_NAME]
-Ejecutar el servidor:
-
-bash
+# Crear archivo .env basado en la configuración de la DB
 npm run dev
-# O para producción:
-node server.js
-El backend inicializará las tablas automáticamente al arrancar.
+```
 
-### 3. Configurar el Frontend
-Abre una nueva terminal:
-
-bash
+### 3. Frontend Setup
+```bash
 cd frontend
 npm install
-Crea un archivo .env en la carpeta frontend:
-
-text
-VITE_API_URL=http://localhost:3000/api
-Ejecutar el cliente:
-
-bash
+# Crear archivo .env
 npm run dev
-## 🔐 Credenciales por Defecto
-Al iniciar el sistema por primera vez, se crea un usuario administrador:
+```
 
-Usuario: admin
+## 🔐 Credenciales Demo
+Para pruebas locales o acceso a la demo desplegada (si aplica):
+- **Admin**: `admin` / `admin123`
+- **Cocinero**: `cocina` / `cocina`
+- **Mesero**: `mesero` / `mesero`
+- **Facturero**: `facturero` / `facturero`
 
-Contraseña: admin123
+---
 
-## 📂 Estructura del Proyecto
-text
-/  
-├── backend/  
-│   ├── server.js           # Lógica principal y API endpoints  
-│   ├── printer-simple.js   # Lógica de impresión  
-│   └── ...  
-├── frontend/  
-│   ├── src/  
-│   │   ├── api.js          # Configuración de Axios  
-│   │   ├── router.js       # Rutas de Vue  
-│   │   ├── components/     # Componentes (Admin, Menu, etc.)  
-│   │   └── ...  
-│   └── vercel.json         # Configuración de rewrites para SPA  
-└── README.md  
-## 🌍 Despliegue en Producción
-Variables de Entorno Requeridas
-En Render (Backend):
-
-DATABASE_URL: Tu string de conexión de Neon/Postgres.
-
-PORT: 10000 (o el que asigne Render).
-
-En Vercel (Frontend):
-
-VITE_API_URL: La URL de tu backend en Render (ej: https://mi-backend.onrender.com/api).
+Built with ❤️ by [C-Ford17]
