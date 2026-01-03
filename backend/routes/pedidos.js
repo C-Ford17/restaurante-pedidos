@@ -1020,16 +1020,53 @@ router.post('/:id/items', async (req, res) => {
             }
             console.log(`  ✓ Menu item: ${menuItemData.nombre}`);
 
-
-            // Verificar inventario (stock disponible = stock_actual - stock_reservado)
+            // ✅ VERIFICACIÓN DE INVENTARIO MEJORADA
             if (menuItemData.usa_inventario) {
-                const stockDisponible = (menuItemData.stock_actual || 0) - (menuItemData.stock_reservado || 0);
-                console.log(`  📊 Stock check: ${menuItemData.nombre} - Disponible: ${stockDisponible}, Solicitado: ${item.cantidad}`);
-                if (stockDisponible < item.cantidad) {
-                    console.error(`❌ Stock insuficiente para ${menuItemData.nombre}`);
-                    return res.status(400).json({
-                        error: `Stock insuficiente para ${menuItemData.nombre}. Disponible: ${stockDisponible}`
-                    });
+                // Primero verificar si tiene receta (ingredientes)
+                const ingredients = await allAsync(
+                    'SELECT inventory_item_id, quantity_required FROM dish_ingredients WHERE menu_item_id = $1',
+                    [item.menu_item_id]
+                );
+
+                if (ingredients && ingredients.length > 0) {
+                    // TIENE RECETA: Verificar stock de ingredientes
+                    console.log(`  📊 Verificando ingredientes de receta (${ingredients.length} ingredientes)...`);
+
+                    for (const ing of ingredients) {
+                        const totalRequired = ing.quantity_required * item.cantidad;
+                        const invItem = await getAsync(
+                            'SELECT current_stock, name FROM inventory_items WHERE id = $1',
+                            [ing.inventory_item_id]
+                        );
+
+                        if (!invItem) {
+                            console.error(`❌ Ingrediente no encontrado: ${ing.inventory_item_id}`);
+                            return res.status(400).json({
+                                error: `Ingrediente requerido no encontrado para ${menuItemData.nombre}`
+                            });
+                        }
+
+                        console.log(`    → ${invItem.name}: Stock ${invItem.current_stock}, Requerido ${totalRequired}`);
+
+                        if (invItem.current_stock < totalRequired) {
+                            console.error(`❌ Stock insuficiente de ingrediente: ${invItem.name}`);
+                            return res.status(400).json({
+                                error: `Stock insuficiente de ${invItem.name} para preparar ${menuItemData.nombre}`
+                            });
+                        }
+                    }
+                    console.log(`  ✅ Todos los ingredientes disponibles`);
+                } else {
+                    // NO TIENE RECETA: Verificar stock simple del plato
+                    const stockDisponible = (menuItemData.stock_actual || 0) - (menuItemData.stock_reservado || 0);
+                    console.log(`  📊 Stock simple check: ${menuItemData.nombre} - Disponible: ${stockDisponible}, Solicitado: ${item.cantidad}`);
+
+                    if (stockDisponible < item.cantidad) {
+                        console.error(`❌ Stock insuficiente para ${menuItemData.nombre}`);
+                        return res.status(400).json({
+                            error: `Stock insuficiente para ${menuItemData.nombre}. Disponible: ${stockDisponible}`
+                        });
+                    }
                 }
             }
 
@@ -1075,29 +1112,50 @@ router.post('/:id/items', async (req, res) => {
 
             totalAdicional += item.cantidad * item.precio_unitario;
 
-            // ✅ NUEVA LÓGICA: Reservar stock en lugar de descontarlo
+            // ✅ GESTIÓN DE INVENTARIO: Descontar/Reservar según el tipo
             if (menuItemData.usa_inventario) {
-                const stockDisponible = (menuItemData.stock_actual || 0) - (menuItemData.stock_reservado || 0);
+                // Verificar si tiene receta
+                const ingredients = await allAsync(
+                    'SELECT inventory_item_id, quantity_required FROM dish_ingredients WHERE menu_item_id = $1',
+                    [item.menu_item_id]
+                );
 
-                if (stockDisponible < item.cantidad) {
-                    throw new Error(`Stock insuficiente para ${menuItemData.nombre}. Disponible: ${stockDisponible}`);
+                if (ingredients && ingredients.length > 0) {
+                    // TIENE RECETA: Descontar ingredientes
+                    console.log(`  🔧 Descontando ingredientes de inventario...`);
+                    for (const ing of ingredients) {
+                        const totalRequired = ing.quantity_required * item.cantidad;
+                        await runAsync(
+                            'UPDATE inventory_items SET current_stock = current_stock - $1 WHERE id = $2',
+                            [totalRequired, ing.inventory_item_id]
+                        );
+                        console.log(`    → Descontado ${totalRequired} de ingrediente ${ing.inventory_item_id}`);
+                    }
+                } else if (menuItemData.es_directo) {
+                    // ITEM DIRECTO SIN RECETA: Descontar stock directamente
+                    console.log(`  🔧 Descontando stock directo...`);
+                    await runAsync(
+                        'UPDATE menu_items SET stock_actual = stock_actual - $1 WHERE id = $2',
+                        [item.cantidad, item.menu_item_id]
+                    );
+                } else {
+                    // ITEM NORMAL SIN RECETA: Reservar stock
+                    console.log(`  🔧 Reservando stock...`);
+                    const nuevoReservado = (menuItemData.stock_reservado || 0) + item.cantidad;
+                    const stockDisponible = (menuItemData.stock_actual || 0) - nuevoReservado;
+
+                    let nuevoEstado = menuItemData.estado_inventario;
+                    if (stockDisponible <= 0) {
+                        nuevoEstado = 'no_disponible';
+                    } else if (stockDisponible <= menuItemData.stock_minimo) {
+                        nuevoEstado = 'poco_stock';
+                    }
+
+                    await runAsync(
+                        'UPDATE menu_items SET stock_reservado = $1, estado_inventario = $2 WHERE id = $3',
+                        [nuevoReservado, nuevoEstado, item.menu_item_id]
+                    );
                 }
-
-                const nuevoReservado = (menuItemData.stock_reservado || 0) + item.cantidad;
-                let nuevoEstado = menuItemData.estado_inventario;
-
-                const nuevoDisponible = stockDisponible - item.cantidad;
-                if (nuevoDisponible <= 0) {
-                    nuevoEstado = 'no_disponible';
-                } else if (nuevoDisponible <= menuItemData.stock_minimo) {
-                    nuevoEstado = 'poco_stock';
-                }
-
-                await runAsync(`
-                    UPDATE menu_items 
-                    SET stock_reservado = $1, estado_inventario = $2
-                    WHERE id = $3
-                `, [nuevoReservado, nuevoEstado, item.menu_item_id]);
             }
         }
 
