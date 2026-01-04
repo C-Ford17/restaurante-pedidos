@@ -689,6 +689,19 @@
   gap: 0.5rem;
 }
 
+/* Two-row layout for served orders */
+.active-actions.served-layout {
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.actions-row {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+
 .btn-edit,
 .btn-pay,
 .btn-view-bill,

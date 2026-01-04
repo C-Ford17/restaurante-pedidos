@@ -261,29 +261,7 @@
           </div>
         </div>
 
-        <!-- Pedidos Servidos -->
-        <div class="section served-section" v-if="misPedidosServidos.length > 0">
-          <h3><CheckCheck :size="20" class="text-info" /> {{ $t('waiter.orders_served') }}</h3>
-          <div class="served-grid">
-            <div v-for="pedido in misPedidosServidos" :key="pedido.id" class="served-card">
-              <div class="served-header">
-                <span class="table-badge">{{ $t('common.table') }} {{ pedido.mesa_numero }}</span>
-                <span class="price-badge">${{ pedido.total }}</span>
-              </div>
-              <div class="served-body">
-                <span class="items-count"><Layers :size="14" /> {{ pedido.items_count }} items</span>
-                <div class="served-actions">
-                  <button @click="verCuenta(pedido.id)" class="btn-view-bill">
-                    {{ $t('waiter.view_bill') }} <Eye :size="16" />
-                  </button>
-                  <button @click="marcarListoPagar(pedido.id)" class="btn-pay">
-                    {{ $t('waiter.ready_to_pay') }} <DollarSign :size="16" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+
 
         <!-- Pedidos Activos -->
         <div class="section active-orders-section">
@@ -305,35 +283,54 @@
                    <span><Layers :size="14" /> {{ pedido.items_count }} items</span>
                    <span class="active-price">${{ pedido.total }}</span>
                 </div>
-                <div class="active-actions">
-                  <button 
-                    v-if="pedido.estado !== 'listo_pagar'"
-                    @click="abrirEditorPedido(pedido)" 
-                    class="btn-edit"
-                  >
-                    <Edit3 :size="16" /> {{ $t('waiter.edit') }}
-                  </button>
-                  <button 
-                    v-if="['nuevo', 'en_cocina'].includes(pedido.estado)"
-                    @click="iniciarCambioMesa(pedido)" 
-                    class="btn-edit"
-                    style="margin-left: 0.25rem;"
-                    title="Cambiar Mesa"
-                  >
-                    <ArrowLeftRight :size="16" />
-                  </button>
+                <div class="active-actions" :class="{ 'served-layout': pedido.estado === 'servido' }">
+                  <!-- Primera fila: Editar, Cambiar Mesa, Cancelar, QR -->
+                  <div class="actions-row">
+                    <button 
+                      v-if="pedido.estado !== 'listo_pagar'"
+                      @click="abrirEditorPedido(pedido)" 
+                      class="btn-edit"
+                    >
+                      <Edit3 :size="16" /> {{ $t('waiter.edit') }}
+                    </button>
+                    <button 
+                      v-if="['nuevo', 'en_cocina'].includes(pedido.estado)"
+                      @click="iniciarCambioMesa(pedido)" 
+                      class="btn-edit"
+                      style="margin-left: 0.25rem;"
+                      title="Cambiar Mesa"
+                    >
+                      <ArrowLeftRight :size="16" />
+                    </button>
 
-                  <button 
-                    v-if="['nuevo', 'en_cocina'].includes(pedido.estado)"
-                    @click="cancelarPedido(pedido.id)"
-                    class="btn-cancel"
-                    title="Cancelar"
-                  >
-                    <Trash2 :size="16" />
-                  </button>
-                  <button @click="mostrarQRCliente(pedido.id)" class="btn-qr" title="QR">
-                    <QrCode :size="16" />
-                  </button>
+                    <button 
+                      v-if="['nuevo', 'en_cocina'].includes(pedido.estado)"
+                      @click="cancelarPedido(pedido.id)"
+                      class="btn-cancel"
+                      title="Cancelar"
+                    >
+                      <Trash2 :size="16" />
+                    </button>
+                    <button @click="mostrarQRCliente(pedido.id)" class="btn-qr" title="QR">
+                      <QrCode :size="16" />
+                    </button>
+                  </div>
+                  
+                  <!-- Segunda fila: Ver Cuenta y Listo para Pagar (solo para pedidos servidos) -->
+                  <div v-if="pedido.estado === 'servido'" class="actions-row">
+                    <button 
+                      @click="verCuenta(pedido.id)" 
+                      class="btn-view-bill"
+                    >
+                      {{ $t('waiter.view_bill') }} <Eye :size="16" />
+                    </button>
+                    <button 
+                      @click="marcarListoPagar(pedido.id)" 
+                      class="btn-pay"
+                    >
+                      {{ $t('waiter.ready_to_pay') }} <DollarSign :size="16" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -960,10 +957,11 @@ const itemsPorCategoria = computed(() => {
 const misPedidos = computed(() => {
   if (!usuarioStore.usuario?.id) return [];
   // ✅ Include orders assigned to me OR unassigned (null)
+  // ✅ Now includes 'servido' state - served orders stay in active list
   return pedidoStore.pedidos.filter(p => 
     (String(p.usuario_mesero_id) === String(usuarioStore.usuario.id) || p.usuario_mesero_id === null) &&
     p.estado !== 'cancelado' &&
-    p.estado !== 'listo_pagar' && // Exclude ready-to-pay from active list (shown in separate section)
+    p.estado !== 'listo_pagar' && // Exclude ready-to-pay from active list (goes to cashier)
     p.estado !== 'pagado' // Exclude paid orders
   );
 });
