@@ -348,11 +348,25 @@ const iniciarPedido = async (pedidoId) => {
   }
 };
 
-// ✅ NUEVO: Iniciar todo (Mover a cocina + Iniciar todos los items)
 const iniciarTodoPedido = async (pedido) => {
   if (!pedido.items || pedido.items.length === 0) return;
 
-  const itemIds = pedido.items.map(i => i.id);
+  // Filter items that are already processed
+  const itemsPendientes = pedido.items.filter(i => !['listo', 'servido', 'cancelado', 'en_preparacion'].includes(i.estado));
+  
+  if (itemsPendientes.length === 0) {
+    // If all items are already in progress or done, just ensure order is in kitchen
+    try {
+        if (pedido.estado === 'nuevo') {
+            await pedidoStore.actualizarEstadoPedido(pedido.id, 'en_cocina');
+        }
+    } catch (e) {
+        console.error(e);
+    }
+    return;
+  }
+
+  const itemIds = itemsPendientes.map(i => i.id);
   loading.value = true;
   
   try {

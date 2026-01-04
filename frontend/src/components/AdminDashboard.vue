@@ -520,7 +520,7 @@
                     <td>{{ formatearHora(pedido.created_at) }}</td>
                     <td class="text-center">{{ pedido.mesa_numero }}</td>
                     <td>{{ pedido.mesero }}</td>
-                    <td class="text-center"><strong>${{ pedido.total }}</strong></td>
+                    <td class="text-center"><strong>${{ getMontoMetodo(pedido, modalMetodoPago.metodo) }}</strong></td>
                     <td>
                       <span :class="['estado-badge', `estado-${pedido.estado}`]">
                         {{ $t('status.' + pedido.estado) || pedido.estado.toUpperCase() }}
@@ -595,6 +595,16 @@ const filtroEstado = ref('');
 
 // Modal de método de pago
 const modalMetodoPago = ref(null);
+
+// Helper para obtener el monto pagado por un método específico en un pedido
+const getMontoMetodo = (pedido, metodo) => {
+  if (!pedido.pagos || !pedido.pagos.length) return 0;
+  
+  const pagosFiltrados = pedido.pagos.filter(p => p.metodo_pago === metodo);
+  const total = pagosFiltrados.reduce((sum, p) => sum + Number(p.monto), 0);
+    
+  return Number(total).toFixed(2);
+};
 
 const ventasTotal = computed(() => {
   return detallesVentas.value

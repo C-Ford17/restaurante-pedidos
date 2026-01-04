@@ -93,7 +93,7 @@ router.get('/pedidos-hoy', async (req, res) => {
                 p.propina_monto,
                 p.estado,
                 p.created_at,
-                COUNT(DISTINCT pi.id) as items_count,
+                (SELECT COUNT(*) FROM pedido_items pi WHERE pi.pedido_id = p.id) as items_count,
                 COALESCE(
                     json_agg(
                         json_build_object(
@@ -108,7 +108,6 @@ router.get('/pedidos-hoy', async (req, res) => {
                 SUM(t.monto) as total_pagado_real
             FROM pedidos p
             LEFT JOIN usuarios u ON p.usuario_mesero_id = u.id
-            LEFT JOIN pedido_items pi ON p.id = pi.pedido_id
             LEFT JOIN transacciones t ON p.id = t.pedido_id
             ${whereClause}
             GROUP BY p.id, p.mesa_numero, u.nombre, p.total, p.propina_monto, p.estado, p.created_at
