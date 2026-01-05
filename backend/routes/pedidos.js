@@ -150,13 +150,14 @@ router.post('/', async (req, res) => {
                 }
             }
 
-            // == GESTIÓN DE INVENTARIO ==
-            if (menuItemData.usa_inventario && !menuItemData.es_directo) {
-                // Check recipes
+            // == GESTIÓN DE INVENTARIO UNIFICADA ==
+            if (menuItemData.usa_inventario) {
+                // 1. Check for recipes (Ingredients) FIRST
+                // This allows "Direct Items" to have recipes (e.g., Soda + Lemon Slice)
                 const ingredients = await clientAll('SELECT inventory_item_id, quantity_required FROM dish_ingredients WHERE menu_item_id = $1', [item.menu_item_id]);
 
                 if (ingredients && ingredients.length > 0) {
-                    // DEDUCT RAW MATERIALS
+                    // == RECIPE BASED DEDUCTION ==
                     for (const ing of ingredients) {
                         const totalRequired = ing.quantity_required * cantidad;
 
@@ -171,33 +172,33 @@ router.post('/', async (req, res) => {
                         await clientRun('UPDATE inventory_items SET current_stock = current_stock - $1 WHERE id = $2', [totalRequired, ing.inventory_item_id]);
                     }
                 } else {
-                    // SIMPLE STOCK FALLBACK
+                    // == SIMPLE STOCK DEDUCTION (Fallback) ==
+                    // Used for items without recipes (Cans, Bottles, or simple Direct items)
                     const stockDisponible = (menuItemData.stock_actual || 0) - (menuItemData.stock_reservado || 0);
 
                     if (stockDisponible < cantidad) {
-                        throw new Error(`Stock insuficiente para ${itemName} (Inventario Simple). Disponible: ${stockDisponible}, Solicitado: ${cantidad}`);
+                        throw new Error(`Stock insuficiente para ${itemName}. Disponible: ${stockDisponible}, Solicitado: ${cantidad}`);
                     }
 
-                    const nuevoReservado = (menuItemData.stock_reservado || 0) + cantidad;
-                    let nuevoEstado = menuItemData.estado_inventario;
+                    if (menuItemData.es_directo) {
+                        // Direct items deduct immediately from actual stock
+                        await clientRun(`UPDATE menu_items SET stock_actual = stock_actual - $1 WHERE id = $2`, [cantidad, item.menu_item_id]);
+                    } else {
+                        // Indirect items reserve stock first
+                        const nuevoReservado = (menuItemData.stock_reservado || 0) + cantidad;
+                        let nuevoEstado = menuItemData.estado_inventario;
 
-                    const nuevoDisponible = stockDisponible - cantidad;
-                    if (nuevoDisponible <= 0) nuevoEstado = 'no_disponible';
-                    else if (nuevoDisponible <= menuItemData.stock_minimo) nuevoEstado = 'poco_stock';
+                        const nuevoDisponible = stockDisponible - cantidad;
+                        if (nuevoDisponible <= 0) nuevoEstado = 'no_disponible';
+                        else if (nuevoDisponible <= menuItemData.stock_minimo) nuevoEstado = 'poco_stock';
 
-                    await clientRun(`
-                         UPDATE menu_items 
-                         SET stock_reservado = $1, estado_inventario = $2
-                         WHERE id = $3
-                     `, [nuevoReservado, nuevoEstado, item.menu_item_id]);
+                        await clientRun(`
+                             UPDATE menu_items 
+                             SET stock_reservado = $1, estado_inventario = $2
+                             WHERE id = $3
+                         `, [nuevoReservado, nuevoEstado, item.menu_item_id]);
+                    }
                 }
-            } else if (menuItemData.usa_inventario && menuItemData.es_directo) {
-                // DIRECT ITEMS
-                const stockDisponible = (menuItemData.stock_actual || 0) - (menuItemData.stock_reservado || 0);
-                if (stockDisponible < cantidad) {
-                    throw new Error(`Stock insuficiente para ${itemName} (Directo). Disponible: ${stockDisponible}, Solicitado: ${cantidad}`);
-                }
-                await clientRun(`UPDATE menu_items SET stock_actual = stock_actual - $1 WHERE id = $2`, [cantidad, item.menu_item_id]);
             }
         }
 

@@ -104,7 +104,7 @@
                  <div v-else-if="item.estado_inventario === 'poco_stock' && !item.usa_inventario" class="stock-badge low">
                     {{ $t('waiter.low_stock') }}
                  </div>
-                 <div v-else-if="item.usa_inventario && !item.es_directo" class="stock-badge count">
+                 <div v-else-if="item.usa_inventario" class="stock-badge count">
                     {{ getRemainingStockMain(item) }} {{ $t('waiter.available') }}
                  </div>
               </div>

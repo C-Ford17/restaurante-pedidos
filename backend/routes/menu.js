@@ -47,8 +47,8 @@ router.get('/', async (req, res) => {
 
         // 4. Calcular stock lógico para cada item
         const itemsWithCalculatedStock = items.map(item => {
-            // Solo procesar si usa inventario y NO es directo (los directos usan stock simple manual)
-            if (item.usa_inventario && !item.es_directo && recipeMap[item.id]) {
+            // Solo procesar si usa inventario (ya sea directo o no, si tiene receta calculamos)
+            if (item.usa_inventario && recipeMap[item.id]) {
                 const ingredients = recipeMap[item.id];
 
                 // ✅ Attach ingredients info only if needed for frontend validation
