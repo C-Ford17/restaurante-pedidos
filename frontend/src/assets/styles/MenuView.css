@@ -2,6 +2,8 @@
 .public-menu {
     font-family: 'Outfit', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     color: #f3f4f6;
+    background-color: #111827;
+    /* Dark base for readability */
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
@@ -18,6 +20,8 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    background-color: #111827;
+    /* Fallback if no image */
     /* Dark overlay for readability */
     box-shadow: inset 0 0 0 1000px rgba(0, 0, 0, 0.4);
 }
