@@ -1,0 +1,273 @@
+generator client {
+  provider = "prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================================
+// SAAS CORE (NEW)
+// ==========================================================
+
+model Organization {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique // For navigation: app.com/restaurante-slug/login
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  users       User[]
+  menuItems   MenuItem[]
+  tables      Table[]
+  orders      Order[]
+  inventory   InventoryItem[]
+  categories  Category[]
+  config      Config[]
+
+  @@map("organizations")
+}
+
+// ==========================================================
+// MIGRATED MODELS (Mapped to existing tables)
+// ==========================================================
+
+model User {
+  id             String   @id @default(uuid())
+  username       String   
+  password       String
+  name           String   @map("nombre")
+  role           String   @map("rol") // admin, mesero, cocinero, cajero
+  language       String?  @default("es")
+  createdAt      DateTime @default(now()) @map("created_at")
+  
+  // Organization (SaaS)
+  organizationId String?  @map("organization_id") // Optional for migration, enforce later
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  // Relationships
+  orders         Order[]  @relation("WaiterOrders") // Orders taken by this waiter
+  transactions   Transaction[] // Transactions processed by this cashier
+  pushSubscriptions PushSubscription[]
+
+  @@map("usuarios")
+}
+
+model MenuItem {
+  id              String   @id @default(uuid())
+  name            String   @map("nombre")
+  category        String   @map("categoria") // Legacy string, maybe migrate to relation
+  price           Decimal  @map("precio") @db.Decimal(10, 2)
+  estimatedTime   Int      @default(15) @map("tiempo_estimado")
+  minPrepTime     Int      @default(15) @map("tiempo_preparacion_min")
+  available       Boolean  @default(true) @map("disponible")
+  description     String?  @map("descripcion")
+  
+  // Inventory fields
+  useInventory    Boolean  @default(false) @map("usa_inventario")
+  currentStock    Int?     @map("stock_actual")
+  minStock        Int?     @map("stock_minimo")
+  inventoryStatus String?  @default("disponible") @map("estado_inventario") // disponible, poco_stock, no_disponible
+  
+  imageUrl        String?  @map("image_url") @db.VarChar(500)
+  legacyImage     String?  @map("imagen_url") // Old text field
+  isDirect        Boolean  @default(false) @map("es_directo") // Doesn't go to kitchen?
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @map("updated_at")
+
+  // Organization (SaaS)
+  organizationId  String?  @map("organization_id")
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+
+  // Relationships
+  orderItems      OrderItem[]
+  ingredients     DishIngredient[]
+  timeStats       ItemTimeStat[]
+
+  @@map("menu_items")
+}
+
+model Table {
+  id            Int      @id @default(autoincrement())
+  number        Int      @unique @map("numero")
+  capacity      Int      @default(4)
+  status        String   @default("disponible") @map("estado") // disponible, ocupada, reservada
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Organization (SaaS)
+  organizationId String? @map("organization_id")
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  @@map("mesas")
+}
+
+model Order {
+  id              String   @id @default(uuid())
+  tableNumber     Int      @map("mesa_numero")
+  waiterId        String?  @map("usuario_mesero_id")
+  total           Decimal  @db.Decimal(10, 2)
+  subtotal        Decimal  @default(0) @db.Decimal(10, 2)
+  tipAmount       Decimal  @default(0) @map("propina_monto") @db.Decimal(10, 2)
+  tipPercentage   Int      @default(0) @map("propina_porcentaje")
+  status          String   @default("nuevo") @map("estado") // nuevo, en_cocina, listo, servido, listo_pagar, en_caja, pagado, cancelado
+  notes           String?  @map("notas")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  startedAt       DateTime? @map("started_at")
+  deliveredAt     DateTime? @map("delivered_at")
+  completedAt     DateTime? @map("completed_at")
+
+  // Organization (SaaS)
+  organizationId  String?  @map("organization_id")
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+
+  // Relationships
+  waiter          User?    @relation("WaiterOrders", fields: [waiterId], references: [id])
+  items           OrderItem[]
+  transactions    Transaction[]
+
+  @@map("pedidos")
+}
+
+model OrderItem {
+  id              String   @id @default(uuid())
+  orderId         String   @map("pedido_id")
+  menuItemId      String   @map("menu_item_id")
+  quantity        Int      @default(1) @map("cantidad")
+  unitPrice       Decimal  @map("precio_unitario") @db.Decimal(10, 2)
+  notes           String?  @map("notas")
+  status          String   @default("pendiente") @map("estado") // pendiente, en_preparacion, listo, servido
+  
+  startedAt       DateTime? @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  servedAt        DateTime? @map("served_at")
+  realTime        Int?     @map("tiempo_real")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relationships
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem        MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@map("pedido_items")
+}
+
+model InventoryItem {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  unit         String   @default("kg")
+  currentStock Decimal  @default(0) @map("current_stock") @db.Decimal(10, 4)
+  minStock     Decimal  @default(0) @map("min_stock") @db.Decimal(10, 4)
+  costPerUnit  Decimal  @default(0) @map("cost_per_unit") @db.Decimal(10, 2)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @map("updated_at")
+
+  // Organization (SaaS)
+  organizationId String? @map("organization_id")
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  // Relationships
+  dishIngredients DishIngredient[]
+
+  @@map("inventory_items")
+}
+
+model DishIngredient {
+  id              Int      @id @default(autoincrement())
+  menuItemId      String   @map("menu_item_id")
+  inventoryItemId String   @map("inventory_item_id") @db.Uuid
+  quantityRequired Decimal @map("quantity_required") @db.Decimal(10, 4)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relationships
+  menuItem        MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+
+  @@unique([menuItemId, inventoryItemId])
+  @@map("dish_ingredients")
+}
+
+model Category {
+  id           Int      @id @default(autoincrement())
+  name         String   @unique
+  active       Boolean  @default(true)
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Organization (SaaS)
+  organizationId String? @map("organization_id")
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  @@map("categories")
+}
+
+model Transaction {
+  id              String   @id @default(uuid())
+  orderId         String   @map("pedido_id")
+  cashierId       String?  @map("usuario_facturero_id")
+  amount          Decimal  @map("monto") @db.Decimal(10, 2)
+  paymentMethod   String   @map("metodo_pago")
+  reference       String?  @map("referencia_transaccion")
+  completed       Boolean  @default(false) @map("completada")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relationships
+  order           Order    @relation(fields: [orderId], references: [id])
+  cashier         User?    @relation(fields: [cashierId], references: [id])
+
+  @@map("transacciones")
+}
+
+model PushSubscription {
+  id          Int      @id @default(autoincrement())
+  userId      String?  @map("user_id")
+  role        String
+  endpoint    String
+  keysP256dh  String   @map("keys_p256dh")
+  keysAuth    String   @map("keys_auth")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @map("updated_at")
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint], map: "push_subscriptions_user_id_endpoint_key")
+  @@map("push_subscriptions")
+}
+
+// Config table is key-value, often global or per org? 
+// For SaaS, key should be unique PER organization.
+model Config {
+  key         String   @id @map("clave") // Legacy PK was key only
+  value       String?  @map("valor")
+  
+  // Organization (SaaS) - This breaks current PK if we want multi-tenant config in same table.
+  // We might need to change PK to (organizationId, key) or add an ID.
+  // For now, let's assume this table might need a migration to Composite PK.
+  organizationId String? @map("organization_id")
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  @@map("configuracion")
+  // @@id([organizationId, key]) // Future goal
+}
+
+model ItemTimeStat {
+  id                    Int      @id @default(autoincrement())
+  menuItemId            String   @map("menu_item_id")
+  date                  DateTime @map("fecha") @db.Date
+  totalPreparations     Int      @default(0) @map("total_preparaciones")
+  avgTimeSeconds        Int      @default(0) @map("tiempo_promedio")
+  avgTimeMinutes        Decimal  @default(0) @map("tiempo_promedio_minutos") @db.Decimal(5, 2)
+  minTimeSeconds        Int?     @map("tiempo_minimo")
+  minTimeMinutes        Int?     @map("tiempo_minimo_minutos")
+  maxTimeSeconds        Int?     @map("tiempo_maximo")
+  maxTimeMinutes        Int?     @map("tiempo_maximo_minutos")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @default(now()) @map("updated_at")
+
+  menuItem              MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@unique([menuItemId, date])
+  @@map("item_time_stats")
+}
