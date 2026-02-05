@@ -39,7 +39,7 @@ export async function createMPSubscription(params: {
                     frequency: 1,
                     frequency_type: 'months',
                     transaction_amount: amount,
-                    currency_id: 'ARS',
+                    currency_id: 'COP',
                     free_trial: trialDays > 0 ? {
                         frequency: trialDays,
                         frequency_type: 'days'
