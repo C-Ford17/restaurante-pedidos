@@ -12,25 +12,25 @@ export const mercadopago = new MercadoPagoConfig({
     },
 })
 
-// Plan configurations
+// Plan configurations (prices in Colombian Pesos)
 export const MERCADOPAGO_PLANS = {
     starter: {
         name: 'Starter',
-        price: 29,
+        price: 120000, // COP $120,000 (~$29 USD)
         maxTables: 5,
         maxUsers: 2,
         description: 'Perfecto para restaurantes pequeños',
     },
     professional: {
         name: 'Professional',
-        price: 79,
+        price: 320000, // COP $320,000 (~$79 USD)
         maxTables: 20,
         maxUsers: 10,
         description: 'Ideal para restaurantes en crecimiento',
     },
     enterprise: {
         name: 'Enterprise',
-        price: 199,
+        price: 800000, // COP $800,000 (~$199 USD)
         maxTables: 999,
         maxUsers: 999,
         description: 'Para cadenas y múltiples locales',

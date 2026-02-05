@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
                         description: selectedPlan.description,
                         quantity: 1,
                         unit_price: selectedPlan.price,
-                        currency_id: 'USD', // Change to 'COP' for Colombian Pesos
+                        currency_id: 'COP', // Colombian Pesos
                     },
                 ],
                 payer: {
