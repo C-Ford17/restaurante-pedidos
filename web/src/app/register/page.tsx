@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { PublicNavbar } from '@/components/public/navbar'
 import { PublicFooter } from '@/components/public/footer'
 import { Container } from '@/components/ui/container'
 import { useLanguage } from '@/components/providers/language-provider'
-import { ArrowRight, ArrowLeft, Check, Building2, User, CreditCard, Loader2 } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Check, Building2, User, CreditCard, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import Link from 'next/link'
 
 type Step = 1 | 2 | 3 | 4
@@ -29,6 +29,80 @@ export default function RegisterPage() {
         // Step 3: Plan Selection
         selectedPlan: 'professional'
     })
+
+    // Availability checking state
+    const [availability, setAvailability] = useState({
+        slug: { checking: false, available: null as boolean | null },
+        email: { checking: false, available: null as boolean | null },
+        username: { checking: false, available: null as boolean | null }
+    })
+
+    // Debounced availability check
+    const checkAvailability = useCallback(async (type: 'slug' | 'email' | 'username', value: string) => {
+        if (!value || value.length < 3) {
+            setAvailability(prev => ({
+                ...prev,
+                [type]: { checking: false, available: null }
+            }))
+            return
+        }
+
+        setAvailability(prev => ({
+            ...prev,
+            [type]: { checking: true, available: null }
+        }))
+
+        try {
+            const response = await fetch('/api/check-availability', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, value: value.toLowerCase() })
+            })
+
+            const data = await response.json()
+
+            setAvailability(prev => ({
+                ...prev,
+                [type]: { checking: false, available: data.available }
+            }))
+        } catch (error) {
+            console.error(`Error checking ${type} availability:`, error)
+            setAvailability(prev => ({
+                ...prev,
+                [type]: { checking: false, available: null }
+            }))
+        }
+    }, [])
+
+    // Debounce effect for slug
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (formData.slug) {
+                checkAvailability('slug', formData.slug)
+            }
+        }, 500)
+        return () => clearTimeout(timer)
+    }, [formData.slug, checkAvailability])
+
+    // Debounce effect for email
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (formData.contactEmail) {
+                checkAvailability('email', formData.contactEmail)
+            }
+        }, 500)
+        return () => clearTimeout(timer)
+    }, [formData.contactEmail, checkAvailability])
+
+    // Debounce effect for username
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (formData.username) {
+                checkAvailability('username', formData.username)
+            }
+        }, 500)
+        return () => clearTimeout(timer)
+    }, [formData.username, checkAvailability])
 
     const updateField = (field: string, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }))
@@ -208,31 +282,67 @@ export default function RegisterPage() {
                                             {t('register.step1.slug')} {t('register.required')}
                                         </label>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-slate-500 dark:text-slate-400">app.restaurantepos.com/</span>
-                                            <input
-                                                type="text"
-                                                value={formData.slug}
-                                                onChange={(e) => updateField('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                                                className="flex-1 px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                                placeholder={t('register.step1.slugPlaceholder')}
-                                            />
+                                            <span className="text-slate-500 dark:text-slate-400">app.hamelinfoods.com/</span>
+                                            <div className="flex-1 relative">
+                                                <input
+                                                    type="text"
+                                                    value={formData.slug}
+                                                    onChange={(e) => updateField('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                                                    className="w-full px-4 py-3 pr-10 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                                    placeholder={t('register.step1.slugPlaceholder')}
+                                                />
+                                                {availability.slug.checking && (
+                                                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-slate-400" size={18} />
+                                                )}
+                                                {!availability.slug.checking && availability.slug.available === true && (
+                                                    <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" size={18} />
+                                                )}
+                                                {!availability.slug.checking && availability.slug.available === false && (
+                                                    <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500" size={18} />
+                                                )}
+                                            </div>
                                         </div>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                            {t('register.step1.slugHint')}
-                                        </p>
+                                        {availability.slug.available === false && (
+                                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">Este slug ya está en uso</p>
+                                        )}
+                                        {availability.slug.available === true && (
+                                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">✓ Disponible</p>
+                                        )}
+                                        {!availability.slug.checking && !availability.slug.available && (
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                                {t('register.step1.slugHint')}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                             {t('register.step1.email')} {t('register.required')}
                                         </label>
-                                        <input
-                                            type="email"
-                                            value={formData.contactEmail}
-                                            onChange={(e) => updateField('contactEmail', e.target.value)}
-                                            className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                            placeholder={t('register.step1.emailPlaceholder')}
-                                        />
+                                        <div className="relative">
+                                            <input
+                                                type="email"
+                                                value={formData.contactEmail}
+                                                onChange={(e) => updateField('contactEmail', e.target.value)}
+                                                className="w-full px-4 py-3 pr-10 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                                placeholder={t('register.step1.emailPlaceholder')}
+                                            />
+                                            {availability.email.checking && (
+                                                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-slate-400" size={18} />
+                                            )}
+                                            {!availability.email.checking && availability.email.available === true && (
+                                                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" size={18} />
+                                            )}
+                                            {!availability.email.checking && availability.email.available === false && (
+                                                <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500" size={18} />
+                                            )}
+                                        </div>
+                                        {availability.email.available === false && (
+                                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">Este email ya está registrado</p>
+                                        )}
+                                        {availability.email.available === true && (
+                                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">✓ Disponible</p>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -261,13 +371,30 @@ export default function RegisterPage() {
                                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                             {t('register.step2.username')} {t('register.required')}
                                         </label>
-                                        <input
-                                            type="text"
-                                            value={formData.username}
-                                            onChange={(e) => updateField('username', e.target.value)}
-                                            className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                            placeholder={t('register.step2.usernamePlaceholder')}
-                                        />
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                value={formData.username}
+                                                onChange={(e) => updateField('username', e.target.value)}
+                                                className="w-full px-4 py-3 pr-10 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                                placeholder={t('register.step2.usernamePlaceholder')}
+                                            />
+                                            {availability.username.checking && (
+                                                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-slate-400" size={18} />
+                                            )}
+                                            {!availability.username.checking && availability.username.available === true && (
+                                                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500" size={18} />
+                                            )}
+                                            {!availability.username.checking && availability.username.available === false && (
+                                                <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500" size={18} />
+                                            )}
+                                        </div>
+                                        {availability.username.available === false && (
+                                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">Este nombre de usuario ya está en uso</p>
+                                        )}
+                                        {availability.username.available === true && (
+                                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">✓ Disponible</p>
+                                        )}
                                     </div>
 
                                     <div>
@@ -342,7 +469,7 @@ export default function RegisterPage() {
                                         <div className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg">
                                             <h3 className="font-semibold text-slate-900 dark:text-white mb-2">{t('register.step4.restaurantSection')}</h3>
                                             <p className="text-slate-600 dark:text-slate-300">{formData.restaurantName}</p>
-                                            <p className="text-sm text-slate-500 dark:text-slate-400">app.restaurantepos.com/{formData.slug}</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400">app.hamelinfoods.com/{formData.slug}</p>
                                             <p className="text-sm text-slate-500 dark:text-slate-400">{formData.contactEmail}</p>
                                         </div>
 

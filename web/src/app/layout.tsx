@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "RestaurantePOS - Sistema de Gestión para Restaurantes",
+  title: "Hamelin Foods - Sistema de Gestión para Restaurantes",
   description: "Sistema POS completo para restaurantes modernos. Gestiona mesas, pedidos, cocina y pagos.",
 }
 

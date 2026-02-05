@@ -19,8 +19,11 @@ model Organization {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Subscription limits
-  maxTables   Int      @default(5) @map("max_tables")
-  maxUsers    Int      @default(2) @map("max_users")
+  subscriptionPlan   String   @default("basic") @map("subscription_plan") // basic, professional, enterprise
+  subscriptionStatus String   @default("trial") @map("subscription_status") // trial, active, past_due, blocked, cancelled
+  trialEndsAt        DateTime? @map("trial_ends_at")
+  maxTables          Int      @default(5) @map("max_tables")
+  maxUsers           Int      @default(2) @map("max_users")
 
   // Relationships
   users        User[]
@@ -97,15 +100,17 @@ model MenuItem {
 
 model Table {
   id            Int      @id @default(autoincrement())
-  number        Int      @unique @map("numero")
+  number        Int      @map("numero")
   capacity      Int      @default(4)
   status        String   @default("disponible") @map("estado") // disponible, ocupada, reservada
+  isBlocked     Boolean  @default(false) @map("is_blocked") // Bloqueada cuando hay pedido activo
   createdAt     DateTime @default(now()) @map("created_at")
 
   // Organization (SaaS)
   organizationId String? @map("organization_id")
   organization   Organization? @relation(fields: [organizationId], references: [id])
 
+  @@unique([number, organizationId], name: "unique_table_per_org")
   @@map("mesas")
 }
 
@@ -284,14 +289,30 @@ model ItemTimeStat {
 model Subscription {
   id                   String   @id @default(uuid())
   organizationId       String   @unique @map("organization_id")
-  plan                 String   // starter, professional, enterprise
-  status               String   // active, canceled, past_due
-  paymentProvider      String   @default("mercadopago") @map("payment_provider") // mercadopago, stripe, etc
-  customerId           String?  @map("customer_id") // Payment provider customer ID
-  subscriptionId       String?  @map("subscription_id") // Payment provider subscription/payment ID
-  currentPeriodStart   DateTime @map("current_period_start")
+  plan                 String   // basic, professional, enterprise
+  status               String   // pending, authorized, paused, cancelled
+  
+  // Mercado Pago
+  paymentProvider      String   @default("mercadopago") @map("payment_provider")
+  preapprovalId        String?  @unique @map("preapproval_id") // MP subscription ID
+  customerId           String?  @map("customer_id")
+  amount               Float?   // Monthly amount in ARS
+  
+  // Billing cycle
+  currentPeriodStart   DateTime @default(now()) @map("current_period_start")
   currentPeriodEnd     DateTime @map("current_period_end")
+  nextBillingDate      DateTime? @map("next_billing_date")
+  lastPaymentDate      DateTime? @map("last_payment_date")
+  
+  // Payment tracking
+  paymentFailures      Int      @default(0) @map("payment_failures")
+  gracePeriodUntil     DateTime? @map("grace_period_until")
+  
+  // Plan changes (applies next billing cycle)
+  pendingPlan          String?  @map("pending_plan")
+  pendingPlanAmount    Float?   @map("pending_plan_amount")
   cancelAtPeriodEnd    Boolean  @default(false) @map("cancel_at_period_end")
+  
   createdAt            DateTime @default(now()) @map("created_at")
   updatedAt            DateTime @updatedAt @map("updated_at")
 

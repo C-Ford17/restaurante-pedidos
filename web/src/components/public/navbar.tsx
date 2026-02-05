@@ -32,7 +32,7 @@ export function PublicNavbar() {
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 font-bold text-xl text-slate-900 dark:text-white">
                         <UtensilsCrossed className="text-orange-600 dark:text-orange-500" size={28} />
-                        <span className="hidden sm:inline">RestaurantePOS</span>
+                        <span className="hidden sm:inline">Hamelin Foods</span>
                     </Link>
 
                     {/* Desktop Navigation */}

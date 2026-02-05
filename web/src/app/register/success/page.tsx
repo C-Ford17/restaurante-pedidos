@@ -28,7 +28,7 @@ function SuccessContent() {
             <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 flex items-center justify-center">
                 <div className="text-center">
                     <Loader2 className="w-16 h-16 text-orange-600 dark:text-orange-500 animate-spin mx-auto mb-4" />
-                    <p className="text-slate-600 dark:text-slate-300">Procesando tu pago...</p>
+                    <p className="text-slate-600 dark:text-slate-300">{t('loading.processing')}</p>
                 </div>
             </div>
         )

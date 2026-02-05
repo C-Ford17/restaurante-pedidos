@@ -16,6 +16,7 @@ import {
 import { signOut } from 'next-auth/react' // Client-side signOut
 import { Button } from '@/components/ui/button' // We might need to create this or use raw HTML
 import Link from 'next/link'
+import { useTheme } from 'next-themes'
 
 interface User {
     name?: string | null
@@ -25,10 +26,12 @@ interface User {
 
 interface NavbarProps {
     user: User
+    slug: string
 }
 
-export default function Navbar({ user }: NavbarProps) {
+export default function Navbar({ user, slug }: NavbarProps) {
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+    const { theme, setTheme } = useTheme()
     const isConnected = true // Mock for now
 
     const roleColors: Record<string, string> = {
@@ -57,8 +60,8 @@ export default function Navbar({ user }: NavbarProps) {
 
                     <div
                         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${isConnected
-                                ? 'bg-green-50 text-green-700 border-green-200'
-                                : 'bg-red-50 text-red-700 border-red-200'
+                            ? 'bg-green-50 text-green-700 border-green-200'
+                            : 'bg-red-50 text-red-700 border-red-200'
                             }`}
                     >
                         {isConnected ? <Wifi size={12} /> : <WifiOff size={12} />}
@@ -109,11 +112,49 @@ export default function Navbar({ user }: NavbarProps) {
                                 </div>
 
                                 <div className="flex flex-col gap-1 py-1">
-                                    <button className="flex items-center gap-2 w-full p-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg text-left">
+                                    <Link
+                                        href={`/${slug}/settings`}
+                                        className="flex items-center gap-2 w-full p-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-left"
+                                    >
                                         <Settings size={16} />
                                         Configuración
+                                    </Link>
+
+                                    {/* Theme Toggle */}
+                                    <button
+                                        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                                        className="flex items-center justify-between w-full p-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-left"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <Sun size={16} className="dark:hidden" />
+                                            <Moon size={16} className="hidden dark:block" />
+                                            <span>Tema</span>
+                                        </div>
+                                        <span className="text-xs text-slate-400">
+                                            <span className="dark:hidden">Claro</span>
+                                            <span className="hidden dark:inline">Oscuro</span>
+                                        </span>
                                     </button>
-                                    {/* Add Theme Toggles here later */}
+
+                                    {/* Language Toggle */}
+                                    <button
+                                        onClick={() => {
+                                            // TODO: Implement language switching
+                                            const currentLang = localStorage.getItem('language') || 'es'
+                                            const newLang = currentLang === 'es' ? 'en' : 'es'
+                                            localStorage.setItem('language', newLang)
+                                            // Reload or update context
+                                        }}
+                                        className="flex items-center justify-between w-full p-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-left"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-base">🌐</span>
+                                            <span>Idioma</span>
+                                        </div>
+                                        <span className="text-xs text-slate-400 uppercase">
+                                            ES
+                                        </span>
+                                    </button>
                                 </div>
 
                                 <div className="border-t border-slate-100 my-1 pt-1">

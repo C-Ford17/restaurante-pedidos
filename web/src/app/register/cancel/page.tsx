@@ -5,7 +5,7 @@ import { PublicNavbar } from '@/components/public/navbar'
 import { PublicFooter } from '@/components/public/footer'
 import { Container } from '@/components/ui/container'
 import { useLanguage } from '@/components/providers/language-provider'
-import { XCircle } from 'lucide-react'
+import { XCircle, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
 function CancelContent() {
@@ -66,7 +66,11 @@ function CancelContent() {
 
 export default function RegisterCancelPage() {
     return (
-        <Suspense fallback={<div>Cargando...</div>}>
+        <Suspense fallback={
+            <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 flex items-center justify-center">
+                <Loader2 className="w-16 h-16 text-orange-600 dark:text-orange-500 animate-spin" />
+            </div>
+        }>
             <CancelContent />
         </Suspense>
     )

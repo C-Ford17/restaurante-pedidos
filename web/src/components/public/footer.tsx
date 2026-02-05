@@ -12,7 +12,7 @@ export function PublicFooter() {
             <Container>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div>
-                        <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-4">RestaurantePOS</h3>
+                        <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-4">Hamelin Foods</h3>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
                             {t('footer.tagline')}
                         </p>
@@ -44,7 +44,7 @@ export function PublicFooter() {
                 </div>
 
                 <div className="border-t border-slate-300 dark:border-slate-800 mt-8 pt-8 text-center text-sm text-slate-600 dark:text-slate-400">
-                    © {new Date().getFullYear()} RestaurantePOS. {t('footer.rights')}
+                    © {new Date().getFullYear()} Hamelin Foods. {t('footer.rights')}
                 </div>
             </Container>
         </footer>

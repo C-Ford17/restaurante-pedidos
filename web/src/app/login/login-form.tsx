@@ -17,8 +17,24 @@ export default function LoginForm() {
     // Handle successful login
     useEffect(() => {
         if (errorMessage === 'success') {
-            router.push('/dashboard')
-            router.refresh()
+            // Fetch user's organization slug
+            fetch('/api/user/organization')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.slug) {
+                        router.push(`/${data.slug}/dashboard`)
+                    } else {
+                        // Fallback to regular dashboard if no slug
+                        router.push('/dashboard')
+                    }
+                    router.refresh()
+                })
+                .catch(error => {
+                    console.error('Error fetching organization:', error)
+                    // Fallback to regular dashboard on error
+                    router.push('/dashboard')
+                    router.refresh()
+                })
         }
     }, [errorMessage, router])
 
