@@ -28,6 +28,7 @@ export const authConfig = {
                 if ('role' in user) token.role = user.role;
                 if ('name' in user) token.name = user.name;
                 if ('organizationId' in user) token.organizationId = user.organizationId;
+                if ('organizationSlug' in user) token.organizationSlug = user.organizationSlug;
             }
             return token;
         },
@@ -38,6 +39,7 @@ export const authConfig = {
                 session.user.role = token.role as string;
                 session.user.name = token.name as string;
                 session.user.organizationId = token.organizationId as string | undefined;
+                session.user.organizationSlug = token.organizationSlug as string | undefined;
             }
             return session;
         }

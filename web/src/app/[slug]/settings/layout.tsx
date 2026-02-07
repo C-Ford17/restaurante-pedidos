@@ -1,15 +1,19 @@
-import { ReactNode } from 'react'
-import Link from 'next/link'
-import { CreditCard, Users, LayoutGrid, ArrowLeft } from 'lucide-react'
+'use client'
 
-export default async function SettingsLayout({
+import { ReactNode, use } from 'react'
+import Link from 'next/link'
+import { CreditCard, Users, LayoutGrid, ArrowLeft, Building2, UserCircle } from 'lucide-react'
+import { useLanguage } from '@/components/providers/language-provider'
+
+export default function SettingsLayout({
     children,
     params
 }: {
     children: ReactNode
     params: Promise<{ slug: string }>
 }) {
-    const { slug } = await params
+    const { t } = useLanguage()
+    const { slug } = use(params)
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -19,15 +23,15 @@ export default async function SettingsLayout({
                 className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-6 transition-colors"
             >
                 <ArrowLeft size={16} />
-                Volver al Dashboard
+                {t('settings.backToDashboard')}
             </Link>
 
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-                    Configuración
+                    {t('settings.title')}
                 </h1>
                 <p className="text-slate-600 dark:text-slate-400 mt-2">
-                    Gestiona la configuración de tu organización
+                    {t('settings.subtitle')}
                 </p>
             </div>
 
@@ -38,17 +42,27 @@ export default async function SettingsLayout({
                         <SettingsNavLink
                             href={`/${slug}/settings/subscription`}
                             icon={<CreditCard size={18} />}
-                            label="Suscripción"
+                            label={t('settings.subscription.title')}
+                        />
+                        <SettingsNavLink
+                            href={`/${slug}/settings/organization`}
+                            icon={<Building2 size={18} />}
+                            label={t('settings.organization.title')}
+                        />
+                        <SettingsNavLink
+                            href={`/${slug}/settings/account`}
+                            icon={<UserCircle size={18} />}
+                            label={t('settings.account.title')}
                         />
                         <SettingsNavLink
                             href={`/${slug}/settings/users`}
                             icon={<Users size={18} />}
-                            label="Usuarios"
+                            label={t('settings.users.title')}
                         />
                         <SettingsNavLink
                             href={`/${slug}/settings/tables`}
                             icon={<LayoutGrid size={18} />}
-                            label="Mesas"
+                            label={t('settings.tables.title')}
                         />
                     </nav>
                 </aside>

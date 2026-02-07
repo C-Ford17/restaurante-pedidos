@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react'
 import { UsageIndicator } from '@/components/settings/usage-indicator'
 import { UpgradeBanner } from '@/components/settings/upgrade-banner'
 import { AddUserModal } from '@/components/settings/add-user-modal'
+import { PlanUpgradeModal } from '@/components/settings/plan-upgrade-modal'
 import { Loader2, Users as UsersIcon, Mail, Shield } from 'lucide-react'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface User {
     id: string
@@ -29,6 +31,7 @@ export default function UsersPage() {
     const [limits, setLimits] = useState<UsageLimits | null>(null)
     const [loading, setLoading] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false)
 
     useEffect(() => {
         fetchData()
@@ -55,6 +58,8 @@ export default function UsersPage() {
         }
     }
 
+    const { t } = useLanguage()
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -73,10 +78,10 @@ export default function UsersPage() {
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                            Gestión de Usuarios
+                            {t('settings.users.title')}
                         </h2>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                            Administra los usuarios de tu organización
+                            {t('settings.users.subtitle')}
                         </p>
                     </div>
                 </div>
@@ -97,6 +102,7 @@ export default function UsersPage() {
                 <UpgradeBanner
                     type={atLimit ? 'limit-reached' : 'warning'}
                     resourceType="usuarios"
+                    onUpgradeClick={() => setIsUpgradeModalOpen(true)}
                 />
             )}
 
@@ -104,7 +110,7 @@ export default function UsersPage() {
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-6">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="font-semibold text-slate-900 dark:text-white">
-                        Usuarios Actuales
+                        {t('settings.users.current')}
                     </h3>
                     <button
                         disabled={atLimit}
@@ -114,7 +120,7 @@ export default function UsersPage() {
                             : 'bg-orange-600 hover:bg-orange-700 text-white'
                             }`}
                     >
-                        Agregar Usuario
+                        {t('settings.users.add')}
                     </button>
                 </div>
 
@@ -122,7 +128,7 @@ export default function UsersPage() {
                     <div className="text-center py-12">
                         <UsersIcon className="mx-auto text-slate-300 dark:text-slate-600 mb-4" size={48} />
                         <p className="text-slate-500 dark:text-slate-400">
-                            No hay usuarios registrados
+                            {t('settings.users.empty')}
                         </p>
                     </div>
                 ) : (
@@ -151,7 +157,7 @@ export default function UsersPage() {
                                     </div>
                                 </div>
                                 <button className="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">
-                                    Eliminar
+                                    {t('settings.users.delete')}
                                 </button>
                             </div>
                         ))}
@@ -164,6 +170,14 @@ export default function UsersPage() {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSuccess={fetchData}
+            />
+
+            {/* Plan Upgrade Modal */}
+            <PlanUpgradeModal
+                isOpen={isUpgradeModalOpen}
+                onClose={() => setIsUpgradeModalOpen(false)}
+                onSuccess={fetchData}
+                currentPlan="Básico"
             />
         </div>
     )

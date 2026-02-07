@@ -6,11 +6,11 @@ const client = new MercadoPagoConfig({
 
 const preapproval = new PreApproval(client)
 
-// Plan pricing in ARS
+// Plan pricing in COP
 export const PLAN_PRICING = {
-    basic: 15000,
-    professional: 35000,
-    enterprise: 75000
+    basic: 60000,
+    professional: 100000,
+    enterprise: 400000
 } as const
 
 export type PlanType = keyof typeof PLAN_PRICING

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { X, Loader2 } from 'lucide-react'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface AddTableModalProps {
     isOpen: boolean
@@ -11,6 +12,7 @@ interface AddTableModalProps {
 
 export function AddTableModal({ isOpen, onClose, onSuccess }: AddTableModalProps) {
     const [loading, setLoading] = useState(false)
+    const { t } = useLanguage()
     const [formData, setFormData] = useState({
         numero: '',
         capacidad: '4'
@@ -53,7 +55,7 @@ export function AddTableModal({ isOpen, onClose, onSuccess }: AddTableModalProps
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full">
                 <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
                     <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                        Agregar Mesa
+                        {t('tablemodal.title')}
                     </h2>
                     <button
                         onClick={onClose}
@@ -66,7 +68,7 @@ export function AddTableModal({ isOpen, onClose, onSuccess }: AddTableModalProps
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                            Número de mesa
+                            {t('tablemodal.number')}
                         </label>
                         <input
                             type="number"
@@ -74,14 +76,14 @@ export function AddTableModal({ isOpen, onClose, onSuccess }: AddTableModalProps
                             min="1"
                             value={formData.numero}
                             onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
-                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-slate-700 dark:text-white"
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white text-slate-900 dark:bg-slate-700 dark:text-white"
                             placeholder="1"
                         />
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                            Capacidad (personas)
+                            {t('tablemodal.capacity')}
                         </label>
                         <input
                             type="number"
@@ -90,7 +92,7 @@ export function AddTableModal({ isOpen, onClose, onSuccess }: AddTableModalProps
                             max="20"
                             value={formData.capacidad}
                             onChange={(e) => setFormData({ ...formData, capacidad: e.target.value })}
-                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-slate-700 dark:text-white"
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white text-slate-900 dark:bg-slate-700 dark:text-white"
                             placeholder="4"
                         />
                     </div>
@@ -101,7 +103,7 @@ export function AddTableModal({ isOpen, onClose, onSuccess }: AddTableModalProps
                             onClick={onClose}
                             className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                         >
-                            Cancelar
+                            {t('modal.cancel')}
                         </button>
                         <button
                             type="submit"
@@ -109,7 +111,7 @@ export function AddTableModal({ isOpen, onClose, onSuccess }: AddTableModalProps
                             className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {loading && <Loader2 size={16} className="animate-spin" />}
-                            {loading ? 'Creando...' : 'Crear Mesa'}
+                            {loading ? t('modal.processing') : t('tablemodal.create')}
                         </button>
                     </div>
                 </form>

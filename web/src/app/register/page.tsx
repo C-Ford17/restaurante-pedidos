@@ -199,9 +199,9 @@ export default function RegisterPage() {
     ]
 
     const plans = [
-        { id: 'starter', name: 'Starter', price: 29, description: t('pricing.starter.description') },
-        { id: 'professional', name: 'Professional', price: 79, description: t('pricing.professional.description') },
-        { id: 'enterprise', name: 'Enterprise', price: 199, description: t('pricing.enterprise.description') }
+        { id: 'basic', name: 'Starter', price: 60000, description: t('pricing.starter.description') },
+        { id: 'professional', name: 'Professional', price: 100000, description: t('pricing.professional.description') },
+        { id: 'enterprise', name: 'Enterprise', price: 400000, description: t('pricing.enterprise.description') }
     ]
 
     return (
@@ -303,10 +303,10 @@ export default function RegisterPage() {
                                             </div>
                                         </div>
                                         {availability.slug.available === false && (
-                                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">Este slug ya está en uso</p>
+                                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">{t('register.validation.slugTaken')}</p>
                                         )}
                                         {availability.slug.available === true && (
-                                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">✓ Disponible</p>
+                                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">{t('register.validation.available')}</p>
                                         )}
                                         {!availability.slug.checking && !availability.slug.available && (
                                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -338,10 +338,10 @@ export default function RegisterPage() {
                                             )}
                                         </div>
                                         {availability.email.available === false && (
-                                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">Este email ya está registrado</p>
+                                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">{t('register.validation.emailTaken')}</p>
                                         )}
                                         {availability.email.available === true && (
-                                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">✓ Disponible</p>
+                                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">{t('register.validation.available')}</p>
                                         )}
                                     </div>
                                 </div>
@@ -390,10 +390,10 @@ export default function RegisterPage() {
                                             )}
                                         </div>
                                         {availability.username.available === false && (
-                                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">Este nombre de usuario ya está en uso</p>
+                                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">{t('register.validation.usernameTaken')}</p>
                                         )}
                                         {availability.username.available === true && (
-                                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">✓ Disponible</p>
+                                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">{t('register.validation.available')}</p>
                                         )}
                                     </div>
 
@@ -518,7 +518,7 @@ export default function RegisterPage() {
                                         {submitting ? (
                                             <>
                                                 <Loader2 className="animate-spin" size={20} />
-                                                Procesando...
+                                                {t('modal.processing')}
                                             </>
                                         ) : (
                                             <>

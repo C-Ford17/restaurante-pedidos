@@ -24,6 +24,13 @@ model Organization {
   trialEndsAt        DateTime? @map("trial_ends_at")
   maxTables          Int      @default(5) @map("max_tables")
   maxUsers           Int      @default(2) @map("max_users")
+  maxMenuItems       Int?     @map("max_menu_items") // Subscription limit
+
+  // Organization details
+  nit           String?  @map("nit")
+  phone         String?  @map("phone")
+  phoneCountry  String?  @default("+57") @map("phone_country")
+  email         String?  @map("email")
 
   // Relationships
   users        User[]
@@ -32,6 +39,7 @@ model Organization {
   orders       Order[]
   inventory    InventoryItem[]
   categories   Category[]
+  paymentMethods PaymentMethod[]
   config       Config[]
   subscription Subscription?
 
@@ -66,7 +74,8 @@ model User {
 model MenuItem {
   id              String   @id @default(uuid())
   name            String   @map("nombre")
-  category        String   @map("categoria") // Legacy string, maybe migrate to relation
+  category        String   @map("categoria")
+  categoryRel     Category? @relation(fields: [category], references: [name])
   price           Decimal  @map("precio") @db.Decimal(10, 2)
   estimatedTime   Int      @default(15) @map("tiempo_estimado")
   minPrepTime     Int      @default(15) @map("tiempo_preparacion_min")
@@ -211,6 +220,21 @@ model Category {
   organization   Organization? @relation(fields: [organizationId], references: [id])
 
   @@map("categories")
+  menuItems    MenuItem[]
+}
+
+model PaymentMethod {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique  // slug-like: efectivo, tarjeta, nequi
+  label     String?  // Display name: "Efectivo", "Tarjeta Débito/Crédito"
+  active    Boolean  @default(true)
+  isDigital Boolean  @default(false) @map("is_digital")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("payment_methods")
 }
 
 model Transaction {

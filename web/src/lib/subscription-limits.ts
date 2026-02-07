@@ -1,114 +1,69 @@
 import prisma from '@/lib/prisma'
 
-export interface UsageLimits {
-    tables: {
-        current: number
-        max: number
-        percentage: number
-        canAdd: boolean
-        isUnlimited: boolean
-    }
-    users: {
-        current: number
-        max: number
-        percentage: number
-        canAdd: boolean
-        isUnlimited: boolean
-    }
-}
-
-/**
- * Get current usage and limits for an organization
- */
-export async function getUsageLimits(organizationId: string): Promise<UsageLimits> {
-    const org = await prisma.organization.findUnique({
+export async function checkMenuItemLimit(organizationId: string): Promise<boolean> {
+    // Fetch organization subscription details
+    const organization = await prisma.organization.findUnique({
         where: { id: organizationId },
-        include: {
-            _count: {
-                select: {
-                    tables: true,
-                    users: {
-                        // Exclude admin from user count
-                        where: {
-                            role: {
-                                not: 'admin'
-                            }
-                        }
-                    }
-                }
-            }
+        select: {
+            subscriptionPlan: true,
+            maxMenuItems: true
         }
     })
 
-    if (!org) {
-        throw new Error('Organization not found')
+    if (!organization) return false
+
+    // If maxMenuItems is null, it's unlimited
+    if (organization.maxMenuItems === null || organization.maxMenuItems === undefined) {
+        return true
     }
 
-    // 999 represents unlimited
-    const isTablesUnlimited = org.maxTables >= 999
-    const isUsersUnlimited = org.maxUsers >= 999
-
-    return {
-        tables: {
-            current: org._count.tables,
-            max: org.maxTables,
-            percentage: isTablesUnlimited ? 0 : (org._count.tables / org.maxTables) * 100,
-            canAdd: isTablesUnlimited || org._count.tables < org.maxTables,
-            isUnlimited: isTablesUnlimited
-        },
-        users: {
-            current: org._count.users, // This now excludes admin
-            max: org.maxUsers,
-            percentage: isUsersUnlimited ? 0 : (org._count.users / org.maxUsers) * 100,
-            canAdd: isUsersUnlimited || org._count.users < org.maxUsers,
-            isUnlimited: isUsersUnlimited
+    // Count active menu items
+    const activeMenuItems = await prisma.menuItem.count({
+        where: {
+            organizationId,
+            available: true
         }
-    }
+    })
+
+    return activeMenuItems < organization.maxMenuItems
 }
 
-/**
- * Check if organization can add a new table
- */
-export async function checkTableLimit(organizationId: string): Promise<boolean> {
-    const limits = await getUsageLimits(organizationId)
-    return limits.tables.canAdd
+export async function getMenuItemLimit(organizationId: string) {
+    const organization = await prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: { maxMenuItems: true }
+    })
+    return organization?.maxMenuItems ?? null
 }
 
-/**
- * Check if organization can add a new user
- */
-export async function checkUserLimit(organizationId: string): Promise<boolean> {
-    const limits = await getUsageLimits(organizationId)
-    return limits.users.canAdd
-}
-
-/**
- * Get organization with usage statistics
- */
 export async function getOrganizationWithUsage(organizationId: string) {
-    const org = await prisma.organization.findUnique({
+    const organization = await prisma.organization.findUnique({
         where: { id: organizationId },
         include: {
-            subscription: true,
             _count: {
                 select: {
+                    menuItems: { where: { available: true } },
                     tables: true,
-                    users: true,
-                    menuItems: true,
-                    orders: true
+                    users: true
                 }
             }
         }
     })
 
-    if (!org) {
-        throw new Error('Organization not found')
-    }
-
-    const limits = await getUsageLimits(organizationId)
+    if (!organization) return null
 
     return {
-        ...org,
-        usage: limits
+        ...organization,
+        usage: {
+            menuItems: organization._count.menuItems,
+            tables: organization._count.tables,
+            users: organization._count.users
+        }
     }
+}
+
+export async function getMenuItemCount(organizationId: string) {
+    return await prisma.menuItem.count({
+        where: { organizationId }
+    })
 }

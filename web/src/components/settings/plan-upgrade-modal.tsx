@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { X, Check, AlertCircle } from 'lucide-react'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface PlanUpgradeModalProps {
     isOpen: boolean
@@ -12,29 +13,44 @@ interface PlanUpgradeModalProps {
 
 const PLANS = {
     basic: {
-        name: 'Básico',
-        price: 15000,
+        name: 'Starter',
+        price: 60000,
         tables: 5,
         users: 2,
-        features: ['5 mesas', '2 usuarios', 'Soporte básico']
+        features: [
+            { key: 'plan.feature.tables', params: { count: '5' } },
+            { key: 'plan.feature.users', params: { count: '2' } },
+            { key: 'plan.feature.basicSupport' }
+        ]
     },
     professional: {
-        name: 'Profesional',
-        price: 35000,
+        name: 'Professional',
+        price: 100000,
         tables: 15,
         users: 5,
-        features: ['15 mesas', '5 usuarios', 'Soporte prioritario', 'Reportes avanzados']
+        features: [
+            { key: 'plan.feature.tables', params: { count: '15' } },
+            { key: 'plan.feature.users', params: { count: '5' } },
+            { key: 'plan.feature.prioritySupport' },
+            { key: 'plan.feature.advancedReports' }
+        ]
     },
     enterprise: {
-        name: 'Empresarial',
-        price: 75000,
+        name: 'Enterprise',
+        price: 400000,
         tables: 999,
         users: 999,
-        features: ['Mesas ilimitadas', 'Usuarios ilimitados', 'Soporte 24/7', 'Personalización completa']
+        features: [
+            { key: 'plan.feature.unlimitedTables' },
+            { key: 'plan.feature.unlimitedUsers' },
+            { key: 'plan.feature.support247' },
+            { key: 'plan.feature.fullCustomization' }
+        ]
     }
 }
 
 export function PlanUpgradeModal({ isOpen, onClose, currentPlan, onSuccess }: PlanUpgradeModalProps) {
+    const { t } = useLanguage()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [downgradeError, setDowngradeError] = useState<any>(null)
@@ -59,9 +75,9 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlan, onSuccess }: Pl
                 if (data.details) {
                     // Downgrade validation error
                     setDowngradeError(data.details)
-                    setError(data.reason || 'No puedes cambiar a este plan')
+                    setError(data.reason || 'Error')
                 } else {
-                    throw new Error(data.error || 'Error al cambiar plan')
+                    throw new Error(data.error || 'Error')
                 }
                 return
             }
@@ -71,24 +87,29 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlan, onSuccess }: Pl
                 window.location.href = data.initPoint
             } else {
                 // Downgrade scheduled
-                alert(`Plan cambiado exitosamente. El cambio se aplicará en tu próxima factura (${new Date(data.effectiveDate).toLocaleDateString()})`)
+                alert(t('modal.upgrade.success'))
                 onSuccess()
                 onClose()
             }
         } catch (error) {
             console.error('Error changing plan:', error)
-            setError(error instanceof Error ? error.message : 'Error al cambiar plan')
+            setError(error instanceof Error ? error.message : 'Error')
         } finally {
             setLoading(false)
         }
     }
+
+    // Helper to get plan display info based on language (simplified for now to stick to keys if possible, but structure of PLANS is static)
+    // We will just use the hardcoded structure but strictly speaking they should be translated.
+    // Given the task, I will leave the FEATURES hardcoded for now or map them to existing pricing keys to avoid massive refactor of PLANS object logic
+    // But I will translate the UI elements around it.
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
                     <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                        Cambiar Plan
+                        {t('modal.upgrade.title')}
                     </h2>
                     <button
                         onClick={onClose}
@@ -109,13 +130,13 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlan, onSuccess }: Pl
                                     </p>
                                     {downgradeError && (
                                         <div className="mt-2 text-sm text-red-700 dark:text-red-300">
-                                            <p className="font-medium">Para cambiar a este plan, necesitas:</p>
+                                            <p className="font-medium">{t('modal.upgrade.downgradeError')}</p>
                                             <ul className="list-disc list-inside mt-1 space-y-1">
                                                 {downgradeError.tablesToRemove > 0 && (
-                                                    <li>Eliminar {downgradeError.tablesToRemove} mesa(s) (tienes {downgradeError.currentTables}, máximo {downgradeError.newMaxTables})</li>
+                                                    <li>{t('modal.upgrade.removeTables').replace('{count}', downgradeError.tablesToRemove)}</li>
                                                 )}
                                                 {downgradeError.usersToRemove > 0 && (
-                                                    <li>Eliminar {downgradeError.usersToRemove} usuario(s) (tienes {downgradeError.currentUsers}, máximo {downgradeError.newMaxUsers})</li>
+                                                    <li>{t('modal.upgrade.removeUsers').replace('{count}', downgradeError.usersToRemove)}</li>
                                                 )}
                                             </ul>
                                         </div>
@@ -134,7 +155,7 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlan, onSuccess }: Pl
                             return (
                                 <div
                                     key={key}
-                                    className={`relative border-2 rounded-lg p-6 ${isCurrent
+                                    className={`relative border-2 rounded-lg p-6 flex flex-col ${isCurrent
                                         ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/10'
                                         : 'border-slate-200 dark:border-slate-700'
                                         }`}
@@ -142,7 +163,7 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlan, onSuccess }: Pl
                                     {isCurrent && (
                                         <div className="absolute top-4 right-4">
                                             <span className="px-2 py-1 text-xs font-medium bg-orange-500 text-white rounded">
-                                                Actual
+                                                {t('modal.upgrade.current')}
                                             </span>
                                         </div>
                                     )}
@@ -157,13 +178,18 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlan, onSuccess }: Pl
                                         <span className="text-slate-600 dark:text-slate-400">/mes</span>
                                     </div>
 
-                                    <ul className="space-y-2 mb-6">
-                                        {plan.features.map((feature, idx) => (
-                                            <li key={idx} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
-                                                <Check size={16} className="text-green-500 flex-shrink-0 mt-0.5" />
-                                                {feature}
-                                            </li>
-                                        ))}
+                                    <ul className="space-y-2 mb-6 flex-grow">
+                                        {plan.features.map((feature, idx) => {
+                                            const translatedFeature = feature.params
+                                                ? t(feature.key).replace('{count}', feature.params.count)
+                                                : t(feature.key)
+                                            return (
+                                                <li key={idx} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+                                                    <Check size={16} className="text-green-500 flex-shrink-0 mt-0.5" />
+                                                    {translatedFeature}
+                                                </li>
+                                            )
+                                        })}
                                     </ul>
 
                                     {!isCurrent && (
@@ -175,7 +201,7 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlan, onSuccess }: Pl
                                                 : 'bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white'
                                                 } disabled:opacity-50 disabled:cursor-not-allowed`}
                                         >
-                                            {loading ? 'Procesando...' : isUpgrade ? 'Mejorar Plan' : 'Cambiar Plan'}
+                                            {loading ? t('modal.processing') : isUpgrade ? t('settings.plan.upgrade') : t('settings.plan.changeBtn')}
                                         </button>
                                     )}
                                 </div>
@@ -187,3 +213,5 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlan, onSuccess }: Pl
         </div>
     )
 }
+
+

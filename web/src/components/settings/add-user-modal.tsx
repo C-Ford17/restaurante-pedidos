@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { X, Loader2 } from 'lucide-react'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface AddUserModalProps {
     isOpen: boolean
@@ -11,6 +12,7 @@ interface AddUserModalProps {
 
 export function AddUserModal({ isOpen, onClose, onSuccess }: AddUserModalProps) {
     const [loading, setLoading] = useState(false)
+    const { t } = useLanguage()
     const [formData, setFormData] = useState({
         name: '',
         username: '',
@@ -52,7 +54,7 @@ export function AddUserModal({ isOpen, onClose, onSuccess }: AddUserModalProps) 
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full">
                 <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
                     <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                        Agregar Usuario
+                        {t('usermodal.title')}
                     </h2>
                     <button
                         onClick={onClose}
@@ -65,35 +67,35 @@ export function AddUserModal({ isOpen, onClose, onSuccess }: AddUserModalProps) 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                            Nombre completo
+                            {t('usermodal.fullname')}
                         </label>
                         <input
                             type="text"
                             required
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-slate-700 dark:text-white"
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white text-slate-900 dark:bg-slate-700 dark:text-white"
                             placeholder="Juan Pérez"
                         />
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                            Usuario (email)
+                            {t('usermodal.username')}
                         </label>
                         <input
                             type="email"
                             required
                             value={formData.username}
                             onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-slate-700 dark:text-white"
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white text-slate-900 dark:bg-slate-700 dark:text-white"
                             placeholder="juan@ejemplo.com"
                         />
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                            Contraseña
+                            {t('usermodal.password')}
                         </label>
                         <input
                             type="password"
@@ -101,23 +103,23 @@ export function AddUserModal({ isOpen, onClose, onSuccess }: AddUserModalProps) 
                             minLength={6}
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-slate-700 dark:text-white"
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white text-slate-900 dark:bg-slate-700 dark:text-white"
                             placeholder="Mínimo 6 caracteres"
                         />
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                            Rol
+                            {t('usermodal.role')}
                         </label>
                         <select
                             value={formData.role}
                             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 dark:bg-slate-700 dark:text-white"
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white text-slate-900 dark:bg-slate-700 dark:text-white"
                         >
-                            <option value="mesero">Mesero</option>
-                            <option value="cocinero">Cocinero</option>
-                            <option value="cajero">Cajero</option>
+                            <option value="mesero">{t('role.waiter') || 'Waiter'}</option>
+                            <option value="cocinero">{t('role.cook') || 'Cook'}</option>
+                            <option value="cajero">{t('role.cashier') || 'Cashier'}</option>
                         </select>
                     </div>
 
@@ -127,7 +129,7 @@ export function AddUserModal({ isOpen, onClose, onSuccess }: AddUserModalProps) 
                             onClick={onClose}
                             className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                         >
-                            Cancelar
+                            {t('modal.cancel')}
                         </button>
                         <button
                             type="submit"
@@ -135,7 +137,7 @@ export function AddUserModal({ isOpen, onClose, onSuccess }: AddUserModalProps) 
                             className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {loading && <Loader2 size={16} className="animate-spin" />}
-                            {loading ? 'Creando...' : 'Crear Usuario'}
+                            {loading ? t('modal.processing') : t('usermodal.create')}
                         </button>
                     </div>
                 </form>

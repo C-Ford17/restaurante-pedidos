@@ -13,7 +13,7 @@ export default function PricingPage() {
     const plans = [
         {
             nameKey: 'pricing.starter.name',
-            price: 29,
+            price: 60000,
             descKey: 'pricing.starter.desc',
             popular: false,
             features: [
@@ -27,7 +27,7 @@ export default function PricingPage() {
         },
         {
             nameKey: 'pricing.professional.name',
-            price: 79,
+            price: 100000,
             descKey: 'pricing.professional.desc',
             popular: true,
             features: [
@@ -43,7 +43,7 @@ export default function PricingPage() {
         },
         {
             nameKey: 'pricing.enterprise.name',
-            price: 199,
+            price: 400000,
             descKey: 'pricing.enterprise.desc',
             popular: false,
             features: [

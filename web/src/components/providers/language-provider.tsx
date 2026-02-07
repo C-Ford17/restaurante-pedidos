@@ -290,6 +290,255 @@ const translations = {
         'terms.section7.title': '7. Modificaciones',
         'terms.section7.content': 'Nos reservamos el derecho de modificar estos términos en cualquier momento. Te notificaremos de cambios significativos por email.',
         'terms.contact': 'Para preguntas sobre estos términos, contáctanos en legal@hamelinfoods.com',
+
+        // Dashboard
+        'dashboard.welcome': 'Bienvenido',
+        'dashboard.subtitle': 'Selecciona una opción del menú o espera a que se cargue tu panel de control.',
+
+        // Settings - General
+        'settings.title': 'Configuración',
+        'settings.subtitle': 'Gestiona la configuración de tu organización',
+        'settings.backToDashboard': 'Volver al Dashboard',
+
+        // Settings - Organization
+        'settings.org.title': 'Información de la Organización',
+        'settings.org.name': 'Nombre',
+        'settings.org.slug': 'Slug',
+        'settings.org.created': 'Fecha de creación',
+
+        // Settings - Subscription
+        'settings.subscription.title': 'Suscripción',
+        'settings.sub.statusTitle': 'Estado de Suscripción',
+        'settings.sub.status.trial': 'Período de prueba',
+        'settings.sub.status.active': 'Activa',
+        'settings.sub.status.past_due': 'Pago pendiente',
+        'settings.sub.status.blocked': 'Bloqueada',
+        'settings.sub.status.cancelled': 'Cancelada',
+        'settings.sub.nextBilling': 'Próxima factura',
+        'settings.sub.pendingChange': 'Cambio de plan programado:',
+        'settings.sub.pendingChangeDesc': 'Tu plan cambiará a {plan} en la próxima factura.',
+        'settings.sub.cancelledState': 'Suscripción cancelada:',
+        'settings.sub.cancelledStateDesc': 'Tu suscripción finalizará el {date}. Después volverás al plan básico.',
+        'settings.sub.cancelBtn': 'Cancelar suscripción',
+
+        // Settings - Plan
+        'settings.plan.title': 'Plan Actual',
+        'settings.plan.subtitle': 'Gestiona tu suscripción y límites',
+        'settings.plan.changeBtn': 'Cambiar Plan',
+        'settings.plan.upgrade': 'Mejorar Plan',
+
+        // Settings - Tables
+        'settings.tables.title': 'Gestión de Mesas',
+        'settings.tables.subtitle': 'Administra las mesas de tu restaurante',
+        'settings.tables.current': 'Mesas actuales',
+        'settings.tables.label': 'Mesas',
+        'settings.tables.add': 'Agregar Mesa',
+        'settings.tables.name': 'Nombre',
+        'settings.tables.capacity': 'Capacidad',
+        'settings.tables.status': 'Estado',
+        'settings.tables.actions': 'Acciones',
+        'settings.tables.edit': 'Editar',
+        'settings.tables.delete': 'Eliminar',
+        'settings.tables.active': 'Activa',
+        'settings.tables.inactive': 'Inactiva',
+        'settings.tables.table': 'Mesa',
+        'settings.tables.people': 'personas',
+        'settings.tables.empty': 'No hay mesas creadas aún',
+
+        // Settings - Users
+        'settings.users.title': 'Gestión de Usuarios',
+        'settings.users.subtitle': 'Administra los usuarios de tu organización',
+        'settings.users.current': 'Usuarios actuales',
+        'settings.users.label': 'Usuarios',
+        'settings.users.add': 'Agregar Usuario',
+        'settings.users.name': 'Nombre',
+        'settings.users.username': 'Usuario',
+        'settings.users.role': 'Rol',
+        'settings.users.actions': 'Acciones',
+        'settings.users.edit': 'Editar',
+        'settings.users.delete': 'Eliminar',
+
+        // Navbar
+        // Navigation
+        'nav.dashboard': 'Panel',
+        'nav.settings': 'Configuración',
+        'nav.logout': 'Cerrar Sesión',
+        'nav.online': 'En línea',
+        'nav.offline': 'Sin conexión',
+        'nav.theme': 'Tema',
+        'nav.language': 'Idioma',
+        'nav.light': 'Claro',
+        'nav.dark': 'Oscuro',
+
+        // Admin Panel
+        'admin.dashboard': 'Panel Admin',
+        'admin.dashboard.subtitle': 'Resumen general de su restaurante',
+        'admin.menu': 'Menú',
+        'admin.inventory': 'Inventario',
+        'admin.settings': 'Configuración Admin',
+        'admin.refresh': 'Actualizar',
+        'admin.stats.totalSales': 'Ventas Totales',
+        'admin.stats.orders': 'Pedidos',
+        'admin.stats.paidOrders': 'Pedidos Pagados',
+        'admin.stats.tips': 'Propinas',
+        'admin.dashboard.comingSoon': 'Próximamente',
+        'admin.dashboard.comingSoonDesc': 'Estamos trabajando en nuevas métricas y reportes para ayudarte a gestionar mejor tu restaurante.',
+
+        // Admin Menu & Settings
+        'admin.menu.edit': 'Editar Plato',
+        'admin.menu.add': 'Agregar Plato',
+        'admin.menu.subtitle': 'Gestiona tus platos y categorías',
+        'admin.menu.name': 'Nombre del plato',
+        'admin.menu.ingredients': 'Ingredientes',
+
+        'admin.inventory.edit': 'Editar Artículo',
+        'admin.inventory.add': 'Agregar Artículo',
+        'admin.inventory.name': 'Nombre del Artículo',
+        'admin.inventory.unit': 'Unidad de Medida',
+        'admin.inventory.cost': 'Costo por Unidad',
+        'admin.inventory.stock': 'Stock Actual',
+        'admin.inventory.minStock': 'Stock Mínimo',
+        'admin.inventory.subtitle': 'Gestiona tu inventario e ingredientes',
+        'admin.menu.category': 'Categoría',
+        'admin.menu.selectCategory': 'Selecciona una categoría',
+        'admin.menu.time': 'Tiempo est. (min)',
+        'admin.menu.description': 'Descripción',
+        'admin.menu.image': 'URL de imagen',
+        'admin.menu.available': 'Disponible para ordenar',
+        'admin.menu.details': 'Detalles',
+        'admin.menu.recipe': 'Receta / Inventario',
+        'admin.menu.isDirect': 'Es Directo (No Cocina)',
+        'admin.menu.useInventory': 'Usar Inventario',
+        'admin.menu.currentStock': 'Stock Actual',
+        'admin.menu.search': 'Buscar platos...',
+        'admin.menu.unavailable': 'No disponible',
+        'admin.menu.noDescription': 'Sin descripción',
+        'admin.menu.noItems': 'No se encontraron platos',
+
+        'admin.filter.allCategories': 'Todas las categorías',
+
+        'admin.categories.edit': 'Editar Categoría',
+        'admin.categories.add': 'Agregar Categoría',
+        'admin.categories.name': 'Nombre',
+        'admin.categories.order': 'Orden',
+        'admin.categories.active': 'Activa',
+
+        'admin.settings.subtitle': 'Gestiona categorías y métodos de pago',
+        'admin.categories': 'Categorías',
+        'admin.payment': 'Métodos de Pago',
+        'admin.payment.edit': 'Editar Método',
+        'admin.payment.add': 'Agregar Método',
+        'admin.payment.name': 'Nombre Interno (Slug)',
+        'admin.payment.label': 'Nombre Visible',
+        'admin.payment.active': 'Activo',
+
+        // Modals - General
+        'modal.cancel': 'Cancelar',
+        'modal.processing': 'Procesando...',
+        'modal.save': 'Guardar',
+        'modal.delete': 'Eliminar',
+        'modal.confirm': 'Confirmar',
+
+        // Modal - Upgrade Plan
+        'modal.upgrade.title': 'Cambiar Plan',
+        'modal.upgrade.current': 'Actual',
+        'modal.upgrade.success': 'Plan cambiado exitosamente',
+        'modal.upgrade.downgradeError': 'Para cambiar a este plan, necesitas:',
+        'modal.upgrade.removeTables': 'Eliminar {count} mesa(s)',
+        'modal.upgrade.removeUsers': 'Eliminar {count} usuario(s)',
+
+        // Modal - Cancel Subscription
+        'modal.cancel.title': '¿Cancelar suscripción?',
+        'modal.cancel.text': 'Tu suscripción se cancelará al final del período de facturación actual',
+        'modal.cancel.note': 'Nota: Seguirás teniendo acceso a todas las funciones hasta el final del período de facturación.',
+        'modal.cancel.keepBtn': 'Mantener suscripción',
+        'modal.cancel.confirmBtn': 'Sí, cancelar',
+        'modal.cancel.success': 'Suscripción cancelada. Se aplicará al final del período de facturación.',
+        'modal.cancel.error': 'Error al cancelar suscripción',
+
+        // Modal - Delete
+        'modal.delete.title': 'Eliminar',
+        'modal.delete.tableText': '¿Estás seguro de que quieres eliminar',
+        'modal.delete.warning': 'Esta acción no se puede deshacer.',
+
+        // Upgrade Banner
+        'upgrade.warning.title': 'Cerca del límite de {resource}',
+        'upgrade.warning.message': 'Estás cerca de alcanzar el límite de {resource} de tu plan {plan}. Considera actualizar para evitar interrupciones.',
+        'upgrade.limit.title': 'Has alcanzado el límite de {resource}',
+        'upgrade.limit.message': 'Tu plan {plan} no permite agregar más {resource}. Actualiza tu plan para continuar.',
+        'upgrade.button': 'Actualizar Plan',
+
+        // Plan Features
+        'plan.feature.tables': '{count} mesas',
+        'plan.feature.users': '{count} usuarios',
+        'plan.feature.unlimitedTables': 'Mesas ilimitadas',
+        'plan.feature.unlimitedUsers': 'Usuarios ilimitados',
+        'plan.feature.basicSupport': 'Soporte básico',
+        'plan.feature.prioritySupport': 'Soporte prioritario',
+        'plan.feature.support247': 'Soporte 24/7',
+        'plan.feature.advancedReports': 'Reportes avanzados',
+        'plan.feature.fullCustomization': 'Personalización completa',
+
+        // Settings - Organization
+        'settings.organization.title': 'Organización',
+        'settings.organization.subtitle': 'Administra los detalles de tu organización',
+        'settings.organization.nit': 'NIT',
+        'settings.organization.nitPlaceholder': 'Ingresa el NIT de tu empresa',
+        'settings.organization.phone': 'Teléfono',
+        'settings.organization.phonePlaceholder': '300 123 4567',
+        'settings.organization.email': 'Correo Electrónico',
+        'settings.organization.emailPlaceholder': 'contacto@empresa.com',
+        'settings.organization.save': 'Guardar Cambios',
+        'settings.organization.success': 'Organización actualizada correctamente',
+        'settings.organization.error': 'Error al actualizar la organización',
+
+        // Settings - Account
+        'settings.account.title': 'Cuenta',
+        'settings.account.subtitle': 'Administra tu cuenta y contraseña',
+        'settings.account.profile': 'Perfil',
+        'settings.account.name': 'Nombre',
+        'settings.account.username': 'Usuario',
+        'settings.account.changePassword': 'Cambiar Contraseña',
+        'settings.account.currentPassword': 'Contraseña Actual',
+        'settings.account.newPassword': 'Nueva Contraseña',
+        'settings.account.confirmPassword': 'Confirmar Contraseña',
+        'settings.account.updateProfile': 'Actualizar Perfil',
+        'settings.account.updatePassword': 'Actualizar Contraseña',
+        'settings.account.profileSuccess': 'Perfil actualizado correctamente',
+        'settings.account.passwordSuccess': 'Contraseña actualizada correctamente',
+        'settings.account.profileError': 'Error al actualizar el perfil',
+        'settings.account.passwordError': 'Error al actualizar la contraseña',
+        'settings.account.passwordMismatch': 'Las contraseñas no coinciden',
+        'settings.account.passwordWeak': 'La contraseña debe tener al menos 6 caracteres',
+
+        // Modal - Add User
+        'usermodal.title': 'Agregar Usuario',
+        'usermodal.fullname': 'Nombre Completo',
+        'usermodal.name': 'Nombre Completo',
+        'usermodal.username': 'Usuario',
+        'usermodal.password': 'Contraseña',
+        'usermodal.role': 'Rol',
+        'usermodal.create': 'Crear Usuario',
+        'usermodal.cancel': 'Cancelar',
+
+        // Modal - Add Table
+        'tablemodal.title': 'Agregar Mesa',
+        'tablemodal.number': 'Número de Mesa',
+        'tablemodal.capacity': 'Capacidad',
+        'tablemodal.create': 'Crear Mesa',
+        'tablemodal.cancel': 'Cancelar',
+
+        // Roles
+        'role.admin': 'Administrador',
+        'role.waiter': 'Mesero',
+        'role.cook': 'Cocinero',
+        'role.cashier': 'Cajero',
+
+        // Register Validation (additional)
+        'register.validation.available': '✓ Disponible',
+        'register.validation.slugTaken': 'Este slug ya está en uso',
+        'register.validation.emailTaken': 'Este email ya está registrado',
+        'register.validation.usernameTaken': 'Este nombre de usuario ya está en uso',
     },
     en: {
         // Navbar
@@ -568,6 +817,255 @@ const translations = {
         'terms.section7.title': '7. Modifications',
         'terms.section7.content': 'We reserve the right to modify these terms at any time. We will notify you of significant changes by email.',
         'terms.contact': 'For questions about these terms, contact us at legal@hamelinfoods.com',
+
+        // Dashboard
+        'dashboard.welcome': 'Welcome',
+        'dashboard.subtitle': 'Select an option from the menu or wait for your control panel to load.',
+
+        // Settings - General
+        'settings.title': 'Settings',
+        'settings.subtitle': 'Manage your organization settings',
+        'settings.backToDashboard': 'Back to Dashboard',
+
+        // Settings - Organization
+        'settings.org.title': 'Organization Information',
+        'settings.org.name': 'Name',
+        'settings.org.slug': 'Slug',
+        'settings.org.created': 'Created date',
+
+        // Settings - Subscription
+        'settings.subscription.title': 'Subscription',
+        'settings.sub.statusTitle': 'Subscription Status',
+        'settings.sub.status.trial': 'Trial period',
+        'settings.sub.status.active': 'Active',
+        'settings.sub.status.past_due': 'Payment pending',
+        'settings.sub.status.blocked': 'Blocked',
+        'settings.sub.status.cancelled': 'Cancelled',
+        'settings.sub.nextBilling': 'Next billing',
+        'settings.sub.pendingChange': 'Scheduled plan change:',
+        'settings.sub.pendingChangeDesc': 'Your plan will change to {plan} on the next billing cycle.',
+        'settings.sub.cancelledState': 'Subscription cancelled:',
+        'settings.sub.cancelledStateDesc': 'Your subscription will end on {date}. After that, you will revert to the basic plan.',
+        'settings.sub.cancelBtn': 'Cancel subscription',
+
+        // Settings - Plan
+        'settings.plan.title': 'Current Plan',
+        'settings.plan.subtitle': 'Manage your subscription and limits',
+        'settings.plan.changeBtn': 'Change Plan',
+        'settings.plan.upgrade': 'Upgrade Plan',
+
+        // Settings - Tables
+        'settings.tables.title': 'Table Management',
+        'settings.tables.subtitle': 'Manage your restaurant tables',
+        'settings.tables.current': 'Current tables',
+        'settings.tables.label': 'Tables',
+        'settings.tables.add': 'Add Table',
+        'settings.tables.name': 'Name',
+        'settings.tables.capacity': 'Capacity',
+        'settings.tables.status': 'Status',
+        'settings.tables.actions': 'Actions',
+        'settings.tables.edit': 'Edit',
+        'settings.tables.delete': 'Delete',
+        'settings.tables.active': 'Active',
+        'settings.tables.inactive': 'Inactive',
+        'settings.tables.table': 'Table',
+        'settings.tables.people': 'people',
+        'settings.tables.empty': 'No tables created yet',
+
+        // Settings - Users
+        'settings.users.title': 'User Management',
+        'settings.users.subtitle': 'Manage your organization users',
+        'settings.users.current': 'Current users',
+        'settings.users.label': 'Users',
+        'settings.users.add': 'Add User',
+        'settings.users.name': 'Name',
+        'settings.users.username': 'Username',
+        'settings.users.role': 'Role',
+        'settings.users.actions': 'Actions',
+        'settings.users.edit': 'Edit',
+        'settings.users.delete': 'Delete',
+
+        // Navbar
+        'nav.dashboard': 'Dashboard',
+        'nav.settings': 'Settings',
+        'nav.theme': 'Theme',
+        'nav.language': 'Language',
+        'nav.logout': 'Sign Out',
+        'nav.online': 'Online',
+        'nav.offline': 'Offline',
+        'nav.light': 'Light',
+        'nav.dark': 'Dark',
+
+        // Admin Panel
+        'admin.dashboard': 'Admin Dashboard',
+        'admin.dashboard.subtitle': 'General overview of your restaurant',
+        'admin.menu': 'Menu',
+        'admin.inventory': 'Inventory',
+        'admin.settings': 'Admin Settings',
+        'admin.refresh': 'Refresh',
+        'admin.stats.totalSales': 'Total Sales',
+        'admin.stats.orders': 'Orders',
+        'admin.stats.paidOrders': 'Paid Orders',
+        'admin.stats.tips': 'Tips',
+        'admin.dashboard.comingSoon': 'Coming Soon',
+        'admin.dashboard.comingSoonDesc': 'We are working on new metrics and reports to help you better manage your restaurant.',
+
+        // Admin Menu & Settings
+        'admin.menu.ingredients': 'Ingredients',
+
+        'admin.inventory.edit': 'Edit Item',
+        'admin.inventory.add': 'Add Item',
+        'admin.inventory.name': 'Item Name',
+        'admin.inventory.unit': 'Unit of Measure',
+        'admin.inventory.cost': 'Cost per Unit',
+        'admin.inventory.stock': 'Current Stock',
+        'admin.inventory.minStock': 'Minimum Stock',
+        'admin.inventory.subtitle': 'Manage your inventory and ingredients',
+        'admin.menu.edit': 'Edit Dish',
+        'admin.menu.add': 'Add Dish',
+        'admin.menu.subtitle': 'Manage your dishes and categories',
+        'admin.menu.name': 'Dish Name',
+        'admin.menu.price': 'Price',
+        'admin.menu.category': 'Category',
+        'admin.menu.selectCategory': 'Select a category',
+        'admin.menu.time': 'Est. Time (min)',
+        'admin.menu.description': 'Description',
+        'admin.menu.image': 'Image URL',
+        'admin.menu.available': 'Available for ordering',
+        'admin.menu.details': 'Details',
+        'admin.menu.recipe': 'Recipe / Inventory',
+        'admin.menu.isDirect': 'Is Direct (No Kitchen)',
+        'admin.menu.useInventory': 'Use Inventory',
+        'admin.menu.currentStock': 'Current Stock',
+        'admin.menu.search': 'Search dishes...',
+        'admin.menu.unavailable': 'Unavailable',
+        'admin.menu.noDescription': 'No description',
+        'admin.menu.noItems': 'No menu items found',
+
+        'admin.filter.allCategories': 'All Categories',
+
+        'admin.categories.edit': 'Edit Category',
+        'admin.categories.add': 'Add Category',
+        'admin.categories.name': 'Name',
+        'admin.categories.order': 'Order',
+        'admin.categories.active': 'Active',
+
+        'admin.settings.subtitle': 'Manage categories and payment methods',
+        'admin.categories': 'Categories',
+        'admin.payment': 'Payment Methods',
+        'admin.payment.edit': 'Edit Method',
+        'admin.payment.add': 'Add Method',
+        'admin.payment.name': 'Internal Name (Slug)',
+        'admin.payment.label': 'Display Name',
+        'admin.payment.active': 'Active',
+
+        // Modals - General
+        'modal.cancel': 'Cancel',
+        'modal.processing': 'Processing...',
+        'modal.save': 'Save',
+        'modal.delete': 'Delete',
+        'modal.confirm': 'Confirm',
+
+        // Modal - Upgrade Plan
+        'modal.upgrade.title': 'Change Plan',
+        'modal.upgrade.current': 'Current',
+        'modal.upgrade.success': 'Plan changed successfully',
+        'modal.upgrade.downgradeError': 'To change to this plan, you need to:',
+        'modal.upgrade.removeTables': 'Remove {count} table(s)',
+        'modal.upgrade.removeUsers': 'Remove {count} user(s)',
+
+        // Modal - Cancel Subscription
+        'modal.cancel.title': 'Cancel subscription?',
+        'modal.cancel.text': 'Your subscription will be cancelled at the end of the current billing period',
+        'modal.cancel.note': 'Note: You will continue to have access to all features until the end of the billing period.',
+        'modal.cancel.keepBtn': 'Keep subscription',
+        'modal.cancel.confirmBtn': 'Yes, cancel',
+        'modal.cancel.success': 'Subscription cancelled. It will apply at the end of the billing period.',
+        'modal.cancel.error': 'Error cancelling subscription',
+
+        // Modal - Delete
+        'modal.delete.title': 'Delete',
+        'modal.delete.tableText': 'Are you sure you want to delete',
+        'modal.delete.warning': 'This action cannot be undone.',
+
+        // Upgrade Banner
+        'upgrade.warning.title': 'Near {resource} limit',
+        'upgrade.warning.message': 'You are close to reaching your {plan} plan\'s {resource} limit. Consider upgrading to avoid interruptions.',
+        'upgrade.limit.title': 'You have reached the {resource} limit',
+        'upgrade.limit.message': 'Your {plan} plan does not allow adding more {resource}. Upgrade your plan to continue.',
+        'upgrade.button': 'Upgrade Plan',
+
+        // Plan Features
+        'plan.feature.tables': '{count} tables',
+        'plan.feature.users': '{count} users',
+        'plan.feature.unlimitedTables': 'Unlimited tables',
+        'plan.feature.unlimitedUsers': 'Unlimited users',
+        'plan.feature.basicSupport': 'Basic support',
+        'plan.feature.prioritySupport': 'Priority support',
+        'plan.feature.support247': '24/7 Support',
+        'plan.feature.advancedReports': 'Advanced reports',
+        'plan.feature.fullCustomization': 'Full customization',
+
+        // Settings - Organization
+        'settings.organization.title': 'Organization',
+        'settings.organization.subtitle': 'Manage your organization details',
+        'settings.organization.nit': 'Tax ID',
+        'settings.organization.nitPlaceholder': 'Enter your company tax ID',
+        'settings.organization.phone': 'Phone',
+        'settings.organization.phonePlaceholder': '300 123 4567',
+        'settings.organization.email': 'Email',
+        'settings.organization.emailPlaceholder': 'contact@company.com',
+        'settings.organization.save': 'Save Changes',
+        'settings.organization.success': 'Organization updated successfully',
+        'settings.organization.error': 'Error updating organization',
+
+        // Settings - Account
+        'settings.account.title': 'Account',
+        'settings.account.subtitle': 'Manage your account and password',
+        'settings.account.profile': 'Profile',
+        'settings.account.name': 'Name',
+        'settings.account.username': 'Username',
+        'settings.account.changePassword': 'Change Password',
+        'settings.account.currentPassword': 'Current Password',
+        'settings.account.newPassword': 'New Password',
+        'settings.account.confirmPassword': 'Confirm Password',
+        'settings.account.updateProfile': 'Update Profile',
+        'settings.account.updatePassword': 'Update Password',
+        'settings.account.profileSuccess': 'Profile updated successfully',
+        'settings.account.passwordSuccess': 'Password updated successfully',
+        'settings.account.profileError': 'Error updating profile',
+        'settings.account.passwordError': 'Error updating password',
+        'settings.account.passwordMismatch': 'Passwords do not match',
+        'settings.account.passwordWeak': 'Password must be at least 6 characters',
+
+        // Modal - Add User
+        'usermodal.title': 'Add User',
+        'usermodal.fullname': 'Full Name',
+        'usermodal.name': 'Full Name',
+        'usermodal.username': 'Username',
+        'usermodal.password': 'Password',
+        'usermodal.role': 'Role',
+        'usermodal.create': 'Create User',
+        'usermodal.cancel': 'Cancel',
+
+        // Modal - Add Table
+        'tablemodal.title': 'Add Table',
+        'tablemodal.number': 'Table Number',
+        'tablemodal.capacity': 'Capacity',
+        'tablemodal.create': 'Create Table',
+        'tablemodal.cancel': 'Cancel',
+
+        // Roles
+        'role.admin': 'Administrator',
+        'role.waiter': 'Waiter',
+        'role.cook': 'Cook',
+        'role.cashier': 'Cashier',
+
+        // Register Validation (additional)
+        'register.validation.available': '✓ Available',
+        'register.validation.slugTaken': 'This slug is already taken',
+        'register.validation.emailTaken': 'This email is already registered',
+        'register.validation.usernameTaken': 'This username is already taken',
     }
 }
 

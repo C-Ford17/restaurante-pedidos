@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { AlertTriangle, Loader2 } from 'lucide-react'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface CancelSubscriptionModalProps {
     isOpen: boolean
@@ -18,6 +19,8 @@ export function CancelSubscriptionModal({
     loading,
     nextBillingDate
 }: CancelSubscriptionModalProps) {
+    const { t } = useLanguage()
+
     if (!isOpen) return null
 
     return (
@@ -32,17 +35,17 @@ export function CancelSubscriptionModal({
                         </div>
                         <div className="flex-1">
                             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                                ¿Cancelar suscripción?
+                                {t('modal.cancel.title')}
                             </h3>
                             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                                Tu suscripción se cancelará al final del período de facturación actual
+                                {t('modal.cancel.text')}
                                 {nextBillingDate && (
                                     <> ({new Date(nextBillingDate).toLocaleDateString()})</>
-                                )}. Después de esa fecha, tu plan volverá al plan básico gratuito.
+                                )}.
                             </p>
                             <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 mb-4">
                                 <p className="text-sm text-orange-800 dark:text-orange-200">
-                                    <strong>Nota:</strong> Seguirás teniendo acceso a todas las funciones hasta el final del período de facturación.
+                                    <strong>{t('modal.cancel.note')}</strong>
                                 </p>
                             </div>
                         </div>
@@ -55,7 +58,7 @@ export function CancelSubscriptionModal({
                         disabled={loading}
                         className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
                     >
-                        Mantener suscripción
+                        {t('modal.cancel.keepBtn')}
                     </button>
                     <button
                         onClick={onConfirm}
@@ -63,10 +66,12 @@ export function CancelSubscriptionModal({
                         className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                         {loading && <Loader2 size={16} className="animate-spin" />}
-                        {loading ? 'Cancelando...' : 'Sí, cancelar'}
+                        {loading ? t('modal.processing') : t('modal.cancel.confirmBtn')}
                     </button>
                 </div>
             </div>
         </div>
     )
 }
+
+
