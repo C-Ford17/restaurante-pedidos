@@ -109,6 +109,20 @@ export const en = {
     'pricing.feature.accountManager': 'Dedicated account manager',
     'pricing.feature.customization': 'Advanced customization',
 
+    'pricing.starter.desc': 'Perfect for small restaurants',
+    'pricing.professional.desc': 'Ideal for growing restaurants',
+    'pricing.enterprise.desc': 'For chains and multiple locations',
+
+    // Register Cancel
+    'payment.cancel.title': 'Payment Cancelled',
+    'payment.cancel.subtitle': 'Your payment process was cancelled and no charges were made.',
+    'payment.cancel.whatToDo': 'What can you do now?',
+    'payment.cancel.option1': 'Check if there was a problem with your card or account.',
+    'payment.cancel.option2': 'Try to make the payment again with another method.',
+    'payment.cancel.option3': 'Contact support if you think this is an error.',
+    'payment.cancel.retry': 'Retry Registration',
+    'payment.cancel.home': 'Go to Home',
+
     // Footer
     'footer.tagline': 'Modern and easy-to-use restaurant management system.',
     'footer.product': 'Product',
@@ -185,6 +199,17 @@ export const en = {
     'register.validation.usernameTaken': 'This username is already taken',
     'register.validation.emailTaken': 'This email is already registered',
     'register.validation.available': 'Available!',
+
+    'payment.pending.title': 'Payment Pending',
+    'payment.pending.subtitle': 'Your payment is being processed.',
+    'payment.success.title': 'Payment Successful!',
+    'payment.success.subtitle': 'Your account has been created successfully.',
+    'payment.success.steps': 'Next steps:',
+    'payment.success.step1': 'Your restaurant is now configured.',
+    'payment.success.step2': 'Log in with your username and password.',
+    'payment.success.step3': 'Start creating your digital menu.',
+    'payment.success.message': 'Welcome aboard!',
+    'payment.success.button': 'Go to Dashboard',
 
     // Common
     'common.loading.status': 'Fetching order status...',

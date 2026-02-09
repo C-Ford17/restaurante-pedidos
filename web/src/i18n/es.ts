@@ -109,6 +109,20 @@ export const es = {
     'pricing.feature.accountManager': 'Gestor de cuenta dedicado',
     'pricing.feature.customization': 'Personalización avanzada',
 
+    'pricing.starter.desc': 'Perfecto para restaurantes pequeños',
+    'pricing.professional.desc': 'Ideal para restaurantes en crecimiento',
+    'pricing.enterprise.desc': 'Para cadenas y múltiples locales',
+
+    // Register Cancel
+    'payment.cancel.title': 'Pago Cancelado',
+    'payment.cancel.subtitle': 'Tu proceso de pago ha sido cancelado y no se ha realizado ningún cargo.',
+    'payment.cancel.whatToDo': '¿Qué puedes hacer ahora?',
+    'payment.cancel.option1': 'Verificar si hubo algún problema con tu tarjeta o cuenta.',
+    'payment.cancel.option2': 'Intentar realizar el pago nuevamente con otro método.',
+    'payment.cancel.option3': 'Contactar con soporte si crees que esto es un error.',
+    'payment.cancel.retry': 'Reintentar Registro',
+    'payment.cancel.home': 'Ir al Inicio',
+
     'footer.tagline': 'Sistema de gestión para restaurantes moderno y fácil de usar.',
     'footer.product': 'Producto',
     'footer.features': 'Características',
@@ -181,13 +195,16 @@ export const es = {
     'register.validation.emailTaken': 'Este email ya está registrado',
     'register.validation.available': '¡Disponible!',
 
-    // Payment Pages
-    'payment.success.title': '¡Pago Exitoso!',
-    'payment.success.subtitle': 'Tu cuenta ha sido creada exitosamente.',
-    'payment.cancel.title': 'Pago Cancelado',
-    'payment.cancel.subtitle': 'El proceso de pago fue cancelado.',
     'payment.pending.title': 'Pago Pendiente',
     'payment.pending.subtitle': 'Tu pago está siendo procesado.',
+    'payment.success.title': '¡Pago Exitoso!',
+    'payment.success.subtitle': 'Tu cuenta ha sido creada exitosamente.',
+    'payment.success.steps': 'Próximos pasos:',
+    'payment.success.step1': 'Tu restaurante ya está configurado.',
+    'payment.success.step2': 'Accede con tu usuario y contraseña.',
+    'payment.success.step3': 'Comienza a crear tu menú digital.',
+    'payment.success.message': '¡Bienvenido a bordo!',
+    'payment.success.button': 'Ir al Panel de Control',
 
     // Common
     'common.loading.status': 'Buscando estado del pedido...',
