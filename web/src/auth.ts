@@ -96,4 +96,43 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
             },
         }),
     ],
+    callbacks: {
+        ...authConfig.callbacks,
+        async jwt({ token, user, trigger }) {
+            // 1. Al iniciar sesión por primera vez (user existe)
+            if (user) {
+                token.id = user.id;
+                token.role = (user as any).role;
+                token.organizationId = (user as any).organizationId;
+
+                // Si el slug ya viene (desde Credentials.authorize), lo guardamos
+                if ((user as any).organizationSlug) {
+                    token.organizationSlug = (user as any).organizationSlug;
+                }
+            }
+
+            // 2. Si tenemos ID de organización pero NO tenemos el slug (común en Google Login)
+            // O si ha habido un cambio reciente (como el registro exitoso)
+            if (token.organizationId && !token.organizationSlug) {
+                const org = await prisma.organization.findUnique({
+                    where: { id: token.organizationId as string },
+                    select: { slug: true }
+                });
+                if (org) {
+                    token.organizationSlug = org.slug;
+                }
+            }
+
+            return token;
+        },
+        async session({ session, token }) {
+            if (token && session.user) {
+                session.user.id = token.id as string;
+                session.user.role = token.role as string;
+                session.user.organizationId = token.organizationId as string | undefined;
+                session.user.organizationSlug = token.organizationSlug as string | undefined;
+            }
+            return session;
+        }
+    }
 });
