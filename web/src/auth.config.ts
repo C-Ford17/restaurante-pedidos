@@ -27,6 +27,8 @@ export const authConfig = {
                 // Validamos que user exista y tenga las propiedades antes de asignarlas
                 if ('role' in user) token.role = user.role;
                 if ('name' in user) token.name = user.name;
+                if ('username' in user) token.username = user.username;
+                if ('switchToken' in user) token.switchToken = user.switchToken;
                 if ('organizationId' in user) token.organizationId = user.organizationId;
                 if ('organizationSlug' in user) token.organizationSlug = user.organizationSlug;
             }
@@ -38,6 +40,8 @@ export const authConfig = {
                 // Aseguramos tipos en la sesión
                 session.user.role = token.role as string;
                 session.user.name = token.name as string;
+                session.user.username = token.username as string;
+                session.user.switchToken = token.switchToken as string | undefined;
                 session.user.organizationId = token.organizationId as string | undefined;
                 session.user.organizationSlug = token.organizationSlug as string | undefined;
             }

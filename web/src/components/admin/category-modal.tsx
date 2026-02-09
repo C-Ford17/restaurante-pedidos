@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLanguage } from '@/components/providers/language-provider'
 import { X, Save, Loader2, AlertCircle } from 'lucide-react'
 
@@ -22,10 +22,26 @@ export default function CategoryModal({ isOpen, onClose, onSuccess, category }: 
     const [error, setError] = useState('')
 
     const [formData, setFormData] = useState({
-        name: category?.name || '',
-        displayOrder: category?.displayOrder || 0,
-        active: category?.active ?? true
+        name: '',
+        displayOrder: 0,
+        active: true
     })
+
+    useEffect(() => {
+        if (category) {
+            setFormData({
+                name: category.name,
+                displayOrder: category.displayOrder,
+                active: category.active
+            })
+        } else {
+            setFormData({
+                name: '',
+                displayOrder: 0,
+                active: true
+            })
+        }
+    }, [category, isOpen])
 
     if (!isOpen) return null
 

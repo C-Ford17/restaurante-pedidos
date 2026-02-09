@@ -16,10 +16,10 @@ const PLANS = {
         name: 'Starter',
         price: 60000,
         tables: 5,
-        users: 2,
+        users: 3,
         features: [
             { key: 'plan.feature.tables', params: { count: '5' } },
-            { key: 'plan.feature.users', params: { count: '2' } },
+            { key: 'plan.feature.users', params: { count: '3' } },
             { key: 'plan.feature.basicSupport' }
         ]
     },
@@ -27,10 +27,10 @@ const PLANS = {
         name: 'Professional',
         price: 100000,
         tables: 15,
-        users: 5,
+        users: 10,
         features: [
             { key: 'plan.feature.tables', params: { count: '15' } },
-            { key: 'plan.feature.users', params: { count: '5' } },
+            { key: 'plan.feature.users', params: { count: '10' } },
             { key: 'plan.feature.prioritySupport' },
             { key: 'plan.feature.advancedReports' }
         ]
@@ -180,8 +180,9 @@ export function PlanUpgradeModal({ isOpen, onClose, currentPlan, onSuccess }: Pl
 
                                     <ul className="space-y-2 mb-6 flex-grow">
                                         {plan.features.map((feature, idx) => {
-                                            const translatedFeature = feature.params
-                                                ? t(feature.key).replace('{count}', feature.params.count)
+                                            const params = (feature as any).params
+                                            const translatedFeature = params
+                                                ? t(feature.key).replace('{count}', params.count)
                                                 : t(feature.key)
                                             return (
                                                 <li key={idx} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">

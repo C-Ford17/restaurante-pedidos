@@ -23,7 +23,7 @@ model Organization {
   subscriptionStatus String   @default("trial") @map("subscription_status") // trial, active, past_due, blocked, cancelled
   trialEndsAt        DateTime? @map("trial_ends_at")
   maxTables          Int      @default(5) @map("max_tables")
-  maxUsers           Int      @default(2) @map("max_users")
+  maxUsers           Int      @default(3) @map("max_users")
   maxMenuItems       Int?     @map("max_menu_items") // Subscription limit
 
   // Organization details
@@ -31,6 +31,7 @@ model Organization {
   phone         String?  @map("phone")
   phoneCountry  String?  @default("+57") @map("phone_country")
   email         String?  @map("email")
+  tipPercentage Int      @default(10) @map("tip_percentage")
 
   // Relationships
   users        User[]
@@ -57,6 +58,7 @@ model User {
   name           String   @map("nombre")
   role           String   @map("rol") // admin, mesero, cocinero, cajero
   language       String?  @default("es")
+  switchToken    String?  @unique @map("switch_token") // For seamless account switching
   createdAt      DateTime @default(now()) @map("created_at")
   
   // Organization (SaaS)
@@ -112,7 +114,7 @@ model Table {
   number        Int      @map("numero")
   capacity      Int      @default(4)
   status        String   @default("disponible") @map("estado") // disponible, ocupada, reservada
-  isBlocked     Boolean  @default(false) @map("is_blocked") // Bloqueada cuando hay pedido activo
+  isBlockable   Boolean  @default(true) @map("is_blockable") // Config: Si la mesa se puede bloquear
   createdAt     DateTime @default(now()) @map("created_at")
 
   // Organization (SaaS)
@@ -169,6 +171,8 @@ model OrderItem {
   // Relationships
   order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   menuItem        MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  transactionId   String?  @map("transaction_id")
+  transaction     Transaction? @relation(fields: [transactionId], references: [id])
 
   @@map("pedido_items")
 }
@@ -242,6 +246,7 @@ model Transaction {
   orderId         String   @map("pedido_id")
   cashierId       String?  @map("usuario_facturero_id")
   amount          Decimal  @map("monto") @db.Decimal(10, 2)
+  tipAmount       Decimal  @default(0) @map("monto_propina") @db.Decimal(10, 2)
   paymentMethod   String   @map("metodo_pago")
   reference       String?  @map("referencia_transaccion")
   completed       Boolean  @default(false) @map("completada")
@@ -250,6 +255,7 @@ model Transaction {
   // Relationships
   order           Order    @relation(fields: [orderId], references: [id])
   cashier         User?    @relation(fields: [cashierId], references: [id])
+  items           OrderItem[]
 
   @@map("transacciones")
 }

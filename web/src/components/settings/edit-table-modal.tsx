@@ -12,6 +12,7 @@ interface EditTableModalProps {
         id: number
         number: number
         capacity: number
+        isBlockable: boolean
     } | null
 }
 
@@ -20,19 +21,22 @@ export function EditTableModal({ isOpen, onClose, onSuccess, table }: EditTableM
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
         number: '',
-        capacity: ''
+        capacity: '',
+        isBlockable: true
     })
 
     useEffect(() => {
         if (table) {
             setFormData({
                 number: table.number.toString(),
-                capacity: table.capacity.toString()
+                capacity: table.capacity.toString(),
+                isBlockable: table.isBlockable ?? true
             })
         } else {
             setFormData({
                 number: '',
-                capacity: ''
+                capacity: '',
+                isBlockable: true
             })
         }
     }, [table])
@@ -48,7 +52,8 @@ export function EditTableModal({ isOpen, onClose, onSuccess, table }: EditTableM
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     number: parseInt(formData.number),
-                    capacity: parseInt(formData.capacity)
+                    capacity: parseInt(formData.capacity),
+                    isBlockable: formData.isBlockable
                 })
             })
 
@@ -111,6 +116,19 @@ export function EditTableModal({ isOpen, onClose, onSuccess, table }: EditTableM
                             onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
                             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white text-slate-900 dark:bg-slate-700 dark:text-white"
                         />
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-2">
+                        <input
+                            type="checkbox"
+                            id="isBlockable-edit"
+                            checked={formData.isBlockable}
+                            onChange={(e) => setFormData({ ...formData, isBlockable: e.target.checked })}
+                            className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-orange-600 focus:ring-orange-500 bg-white dark:bg-slate-700 cursor-pointer"
+                        />
+                        <label htmlFor="isBlockable-edit" className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                            {t('tablemodal.is_blockable') || 'Waiters can block (QR)'}
+                        </label>
                     </div>
 
                     <div className="flex gap-3 pt-4">

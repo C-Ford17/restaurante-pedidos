@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useLanguage } from '@/components/providers/language-provider'
 import { X, Save, Loader2, AlertCircle, Upload, Plus, Trash2, ChevronDown, Clock, AlertTriangle, LinkIcon } from 'lucide-react'
+import NextImage from 'next/image'
 
 interface Category {
     id: number
@@ -69,12 +70,57 @@ export default function MenuItemModal({ isOpen, onClose, onSuccess, categories, 
         }
     }, [isOpen])
 
+    // Update form data when menuItem changes
+    useEffect(() => {
+        if (menuItem) {
+            setFormData({
+                name: menuItem.name || '',
+                price: menuItem.price || '',
+                category: menuItem.category || menuItem.categoria || (categories[0]?.name || ''),
+                description: menuItem.description || '',
+                estimatedTime: menuItem.estimatedTime || 15,
+                available: menuItem.available ?? menuItem.disponible ?? true,
+                imageUrl: menuItem.imageUrl || menuItem.image_url || '',
+                isDirect: menuItem.isDirect ?? false,
+                useInventory: menuItem.useInventory ?? false,
+                currentStock: menuItem.currentStock || ''
+            })
+
+            // Update ingredients if they exist
+            if (menuItem.ingredients && Array.isArray(menuItem.ingredients)) {
+                setIngredients(
+                    menuItem.ingredients.map((ing: any) => ({
+                        inventoryItemId: ing.inventoryItemId,
+                        quantityRequired: Number(ing.quantityRequired)
+                    }))
+                )
+            } else {
+                setIngredients([])
+            }
+        } else {
+            // Reset form for new item
+            setFormData({
+                name: '',
+                price: '',
+                category: categories[0]?.name || '',
+                description: '',
+                estimatedTime: 15,
+                available: true,
+                imageUrl: '',
+                isDirect: false,
+                useInventory: false,
+                currentStock: ''
+            })
+            setIngredients([])
+        }
+    }, [menuItem, categories])
+
     // Ensure default category is set
     useEffect(() => {
-        if (!formData.category && categories.length > 0) {
+        if (!formData.category && categories.length > 0 && !menuItem) {
             setFormData(prev => ({ ...prev, category: categories[0].name }))
         }
-    }, [categories, formData.category])
+    }, [categories, formData.category, menuItem])
 
     if (!isOpen) return null
 
@@ -123,8 +169,19 @@ export default function MenuItemModal({ isOpen, onClose, onSuccess, categories, 
 
             const payload = {
                 ...formData,
-                currentStock: formData.currentStock ? parseInt(formData.currentStock) : null,
-                ingredients: formData.useInventory ? ingredients : []
+                currentStock: formData.currentStock !== '' ? parseInt(formData.currentStock.toString()) : null,
+                ingredients: ingredients
+                    .filter(ing => ing.inventoryItemId && !isNaN(ing.quantityRequired) && ing.quantityRequired > 0)
+                    .map(ing => ({
+                        inventoryItemId: ing.inventoryItemId,
+                        quantityRequired: ing.quantityRequired
+                    }))
+            }
+
+            // If ingredients were added, maybe we should force useInventory to true? 
+            // The user might have forgotten to check the box.
+            if (payload.ingredients.length > 0 && !payload.useInventory) {
+                payload.useInventory = true
             }
 
             const response = await fetch(url, {
@@ -338,13 +395,19 @@ export default function MenuItemModal({ isOpen, onClose, onSuccess, categories, 
                                                     className="h-full px-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
                                                 >
                                                     {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-                                                    <span className="text-xs">Upload</span>
+                                                    <span className="text-xs">{t('admin.menu.upload')}</span>
                                                 </button>
                                             </div>
                                         </div>
                                         {formData.imageUrl && (
-                                            <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800">
-                                                <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                                            <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 relative">
+                                                <NextImage
+                                                    src={formData.imageUrl}
+                                                    alt="Preview"
+                                                    fill
+                                                    className="object-cover"
+                                                    unoptimized
+                                                />
                                             </div>
                                         )}
                                     </div>
@@ -393,32 +456,32 @@ export default function MenuItemModal({ isOpen, onClose, onSuccess, categories, 
                         ) : (
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center">
-                                    <h3 className="text-md font-medium text-slate-900 dark:text-white">Recipe Ingredients</h3>
+                                    <h3 className="text-md font-medium text-slate-900 dark:text-white">{t('admin.menu.recipe.ingredients')}</h3>
                                     <button
                                         type="button"
                                         onClick={addIngredient}
                                         className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1"
                                     >
-                                        <Plus size={16} /> Add Ingredient
+                                        <Plus size={16} /> {t('admin.menu.recipe.add')}
                                     </button>
                                 </div>
 
                                 {ingredients.length === 0 ? (
                                     <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
-                                        No ingredients added yet.
+                                        {t('admin.menu.recipe.empty')}
                                     </p>
                                 ) : (
                                     <div className="space-y-3">
                                         {ingredients.map((ing, idx) => (
                                             <div key={idx} className="flex items-end gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
                                                 <div className="flex-1 space-y-1">
-                                                    <label className="text-xs font-medium text-slate-500">Item</label>
+                                                    <label className="text-xs font-medium text-slate-500">{t('admin.menu.recipe.item')}</label>
                                                     <select
                                                         value={ing.inventoryItemId}
                                                         onChange={(e) => updateIngredient(idx, 'inventoryItemId', e.target.value)}
                                                         className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm text-slate-950 dark:text-white"
                                                     >
-                                                        <option value="">Select Item</option>
+                                                        <option value="">{t('admin.menu.recipe.select')}</option>
                                                         {inventoryItems.map(item => (
                                                             <option key={item.id} value={item.id}>
                                                                 {item.name} ({item.unit})
@@ -427,12 +490,15 @@ export default function MenuItemModal({ isOpen, onClose, onSuccess, categories, 
                                                     </select>
                                                 </div>
                                                 <div className="w-24 space-y-1">
-                                                    <label className="text-xs font-medium text-slate-500">Qty</label>
+                                                    <label className="text-xs font-medium text-slate-500">{t('admin.menu.recipe.qty')}</label>
                                                     <input
                                                         type="number"
                                                         step="0.0001"
-                                                        value={ing.quantityRequired}
-                                                        onChange={(e) => updateIngredient(idx, 'quantityRequired', parseFloat(e.target.value))}
+                                                        value={ing.quantityRequired || ''}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value === '' ? 0 : parseFloat(e.target.value)
+                                                            updateIngredient(idx, 'quantityRequired', val)
+                                                        }}
                                                         className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm text-slate-950 dark:text-white"
                                                     />
                                                 </div>

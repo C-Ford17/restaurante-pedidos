@@ -26,7 +26,7 @@ export async function PUT(request: NextRequest) {
         }
 
         const body = await request.json()
-        const { nit, phone, phoneCountry, email } = body
+        const { nit, phone, phoneCountry, email, tipPercentage } = body
 
         // Validate email format if provided
         if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -40,7 +40,8 @@ export async function PUT(request: NextRequest) {
                 nit: nit || null,
                 phone: phone || null,
                 phoneCountry: phoneCountry || '+57',
-                email: email || null
+                email: email || null,
+                tipPercentage: tipPercentage !== undefined ? parseInt(tipPercentage) : undefined
             }
         })
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLanguage } from '@/components/providers/language-provider'
 import { X, Save, Loader2, AlertCircle, Smartphone, Banknote } from 'lucide-react'
 
@@ -23,11 +23,29 @@ export default function PaymentMethodModal({ isOpen, onClose, onSuccess, method 
     const [error, setError] = useState('')
 
     const [formData, setFormData] = useState({
-        name: method?.name || '',
-        label: method?.label || '',
-        active: method?.active ?? true,
-        isDigital: method?.isDigital ?? false
+        name: '',
+        label: '',
+        active: true,
+        isDigital: false
     })
+
+    useEffect(() => {
+        if (method) {
+            setFormData({
+                name: method.name,
+                label: method.label,
+                active: method.active,
+                isDigital: method.isDigital
+            })
+        } else {
+            setFormData({
+                name: '',
+                label: '',
+                active: true,
+                isDigital: false
+            })
+        }
+    }, [method, isOpen])
 
     if (!isOpen) return null
 
@@ -127,7 +145,7 @@ export default function PaymentMethodModal({ isOpen, onClose, onSuccess, method 
                                 {!formData.isDigital && <div className="w-2 h-2 rounded-full bg-orange-500" />}
                             </div>
                             <Banknote size={16} className="text-slate-500" />
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Physical</span>
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('admin.payment.physical')}</span>
                         </div>
 
                         <div className="flex items-center gap-2 p-3 border border-slate-200 dark:border-slate-800 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
@@ -136,7 +154,7 @@ export default function PaymentMethodModal({ isOpen, onClose, onSuccess, method 
                                 {formData.isDigital && <div className="w-2 h-2 rounded-full bg-orange-500" />}
                             </div>
                             <Smartphone size={16} className="text-slate-500" />
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Digital</span>
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('admin.payment.digital')}</span>
                         </div>
                     </div>
 

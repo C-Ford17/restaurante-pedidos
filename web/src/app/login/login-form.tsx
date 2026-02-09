@@ -1,42 +1,72 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useActionState, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { authenticate } from '@/app/lib/actions'
 import { useLanguage } from '@/components/providers/language-provider'
 import { User, Lock, ArrowRight, AlertCircle, Loader2 } from 'lucide-react'
 
 export default function LoginForm() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const { t } = useLanguage()
+    const [isRedirecting, setIsRedirecting] = useState(false)
     const [errorMessage, formAction, isPending] = useActionState(
         authenticate,
         undefined,
     )
 
+    const initialUsername = searchParams.get('username') || ''
+
     // Handle successful login
     useEffect(() => {
         if (errorMessage === 'success') {
+            setIsRedirecting(true)
             // Fetch user's organization slug
             fetch('/api/user/organization')
                 .then(res => res.json())
                 .then(data => {
                     if (data.slug) {
-                        router.push(`/${data.slug}/dashboard`)
+                        let targetPath = `/${data.slug}`
+                        // Redirect based on role
+                        if (data.role === 'admin') {
+                            targetPath += '/admin/dashboard'
+                        } else if (data.role === 'mesero') {
+                            targetPath += '/waiter'
+                        } else if (data.role === 'cocinero') {
+                            targetPath += '/cook'
+                        } else if (data.role === 'cajero' || data.role === 'facturero') {
+                            targetPath += '/cashier'
+                        } else {
+                            // Fallback
+                            targetPath += '/admin/dashboard'
+                        }
+
+                        // Use window.location.href for a clean transition between roles/sessions
+                        window.location.href = targetPath
                     } else {
                         // Fallback to regular dashboard if no slug
-                        router.push('/dashboard')
+                        window.location.href = '/dashboard'
                     }
-                    router.refresh()
                 })
                 .catch(error => {
                     console.error('Error fetching organization:', error)
                     // Fallback to regular dashboard on error
-                    router.push('/dashboard')
-                    router.refresh()
+                    window.location.href = '/dashboard'
                 })
         }
     }, [errorMessage, router])
+
+    if (isRedirecting) {
+        return (
+            <div className="flex flex-col items-center justify-center p-8 space-y-4">
+                <Loader2 className="animate-spin text-orange-600" size={48} />
+                <p className="text-slate-600 dark:text-slate-400 font-medium">
+                    {t('loading.general')}
+                </p>
+            </div>
+        )
+    }
 
     return (
         <form action={formAction} className="flex flex-col gap-6">
@@ -51,6 +81,7 @@ export default function LoginForm() {
                         id="username"
                         type="text"
                         name="username"
+                        defaultValue={initialUsername}
                         placeholder={t('login.usernamePlaceholder')}
                         required
                         disabled={isPending}

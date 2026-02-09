@@ -85,7 +85,7 @@ export async function PUT(
                 imageUrl,
                 useInventory,
                 isDirect,
-                currentStock: useInventory ? null : (body.currentStock ? parseInt(body.currentStock) : null),
+                currentStock: useInventory ? null : (body.currentStock !== undefined && body.currentStock !== null && body.currentStock !== '' ? parseInt(body.currentStock) : null),
                 // Handle ingredients update
                 ingredients: ingredients ? {
                     deleteMany: {}, // Clear existing

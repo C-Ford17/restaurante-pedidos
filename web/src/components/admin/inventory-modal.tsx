@@ -28,9 +28,9 @@ export default function InventoryItemModal({ isOpen, onClose, onSuccess, item }:
     const [formData, setFormData] = useState({
         name: '',
         unit: 'kg',
-        currentStock: 0,
-        minStock: 0,
-        costPerUnit: 0
+        currentStock: 0 as number | string,
+        minStock: 0 as number | string,
+        costPerUnit: 0 as number | string
     })
 
     useEffect(() => {
@@ -153,8 +153,8 @@ export default function InventoryItemModal({ isOpen, onClose, onSuccess, item }:
                                     type="number"
                                     step="0.01"
                                     min="0"
-                                    value={formData.costPerUnit}
-                                    onChange={(e) => setFormData({ ...formData, costPerUnit: parseFloat(e.target.value) })}
+                                    value={formData.costPerUnit || ''}
+                                    onChange={(e) => setFormData({ ...formData, costPerUnit: e.target.value === '' ? '' : parseFloat(e.target.value) })}
                                     className="w-full pl-8 pr-4 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all placeholder:text-slate-400"
                                 />
                             </div>
@@ -169,8 +169,8 @@ export default function InventoryItemModal({ isOpen, onClose, onSuccess, item }:
                             <input
                                 type="number"
                                 step="0.001"
-                                value={formData.currentStock}
-                                onChange={(e) => setFormData({ ...formData, currentStock: parseFloat(e.target.value) })}
+                                value={formData.currentStock || ''}
+                                onChange={(e) => setFormData({ ...formData, currentStock: e.target.value === '' ? '' : parseFloat(e.target.value) })}
                                 className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all placeholder:text-slate-400"
                             />
                         </div>
@@ -183,8 +183,8 @@ export default function InventoryItemModal({ isOpen, onClose, onSuccess, item }:
                                 type="number"
                                 step="0.001"
                                 min="0"
-                                value={formData.minStock}
-                                onChange={(e) => setFormData({ ...formData, minStock: parseFloat(e.target.value) })}
+                                value={formData.minStock || ''}
+                                onChange={(e) => setFormData({ ...formData, minStock: e.target.value === '' ? '' : parseFloat(e.target.value) })}
                                 className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all placeholder:text-slate-400"
                             />
                         </div>

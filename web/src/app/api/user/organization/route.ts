@@ -37,7 +37,8 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
             slug: user.organization.slug,
             organizationId: user.organization.id,
-            organizationName: user.organization.name
+            organizationName: user.organization.name,
+            role: user.role
         })
     } catch (error) {
         console.error('Error fetching user organization:', error)

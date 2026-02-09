@@ -23,12 +23,46 @@ export async function GET(req: NextRequest) {
             where: {
                 organizationId: user.organizationId
             },
+            include: {
+                ingredients: {
+                    include: {
+                        inventoryItem: {
+                            select: {
+                                currentStock: true
+                            }
+                        }
+                    }
+                }
+            },
             orderBy: {
                 name: 'asc'
             }
         })
 
-        return NextResponse.json(menuItems)
+        // Calculate available stock
+        const itemsWithStock = menuItems.map(item => {
+            let stock = item.currentStock ?? 9999
+
+            if (item.useInventory && item.ingredients.length > 0) {
+                let minPossible = Infinity
+                for (const ing of item.ingredients) {
+                    const available = Number(ing.inventoryItem.currentStock)
+                    const required = Number(ing.quantityRequired)
+                    if (required > 0) {
+                        const possible = Math.floor(available / required)
+                        minPossible = Math.min(minPossible, possible)
+                    }
+                }
+                stock = minPossible === Infinity ? 0 : minPossible
+            }
+
+            return {
+                ...item,
+                calculatedStock: stock
+            }
+        })
+
+        return NextResponse.json(itemsWithStock)
     } catch (error) {
         console.error('Error fetching menu items:', error)
         return NextResponse.json({ error: 'Error fetching menu items' }, { status: 500 })
@@ -95,7 +129,7 @@ export async function POST(req: NextRequest) {
                 useInventory: useInventory ?? false,
                 isDirect: isDirect ?? false,
                 organizationId: user.organizationId,
-                currentStock: useInventory ? undefined : (body.currentStock ? parseInt(body.currentStock) : null),
+                currentStock: useInventory ? undefined : (body.currentStock !== undefined && body.currentStock !== null && body.currentStock !== '' ? parseInt(body.currentStock) : null),
                 ingredients: body.ingredients ? {
                     create: body.ingredients.map((ing: any) => ({
                         inventoryItemId: ing.inventoryItemId,

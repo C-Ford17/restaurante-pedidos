@@ -43,7 +43,7 @@ export async function PUT(
 
         const { id: idParam } = await params
         const body = await request.json()
-        const { number, capacity } = body
+        const { number, capacity, isBlockable } = body
 
         // Validate required fields
         if (!number || !capacity) {
@@ -92,7 +92,8 @@ export async function PUT(
             where: { id },
             data: {
                 number: parseInt(number),
-                capacity: parseInt(capacity)
+                capacity: parseInt(capacity),
+                isBlockable: isBlockable ?? existingTable.isBlockable
             }
         })
 

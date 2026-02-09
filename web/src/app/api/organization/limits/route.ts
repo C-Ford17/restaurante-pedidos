@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { getUsageLimits } from '@/lib/subscription-limits'
+import { getOrganizationWithUsage } from '@/lib/subscription-limits'
 import prisma from '@/lib/prisma'
 
 /**
@@ -31,10 +31,36 @@ export async function GET(request: NextRequest) {
             )
         }
 
-        // Get usage limits
-        const limits = await getUsageLimits(user.organizationId)
+        // Get organization with usage data
+        const organization = await getOrganizationWithUsage(user.organizationId)
 
-        return NextResponse.json(limits)
+        if (!organization) {
+            return NextResponse.json(
+                { error: 'Organization not found' },
+                { status: 404 }
+            )
+        }
+
+        // Calculate limits for each resource
+        const calculateLimit = (current: number, max: number | null) => {
+            const isUnlimited = max === null || max === undefined
+            const percentage = isUnlimited ? 0 : Math.round((current / max) * 100)
+            const canAdd = isUnlimited || current < max
+
+            return {
+                current,
+                max: max ?? 0,
+                percentage,
+                canAdd,
+                isUnlimited
+            }
+        }
+
+        return NextResponse.json({
+            users: calculateLimit(organization.usage.users, organization.maxUsers),
+            menuItems: calculateLimit(organization.usage.menuItems, organization.maxMenuItems),
+            tables: calculateLimit(organization.usage.tables, organization.maxTables)
+        })
     } catch (error) {
         console.error('Error fetching organization limits:', error)
         return NextResponse.json(

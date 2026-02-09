@@ -87,7 +87,9 @@ export async function PATCH(request: NextRequest) {
         const updatedOrg = await prisma.organization.update({
             where: { id: user.organizationId },
             data: {
-                name: name || undefined
+                name: name || undefined,
+                tipPercentage: body.tipPercentage !== undefined ? parseInt(body.tipPercentage) : undefined
+
             }
         })
 

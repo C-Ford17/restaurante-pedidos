@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json()
-        const { number, capacity } = body
+        const { number, capacity, isBlockable } = body
 
         // Validate required fields
         if (!number || !capacity) {
@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
             data: {
                 number: parseInt(number),
                 capacity: parseInt(capacity),
+                isBlockable: isBlockable ?? true,
                 organizationId: currentUser.organizationId
             }
         })

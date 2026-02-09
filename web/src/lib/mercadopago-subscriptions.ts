@@ -115,8 +115,8 @@ export async function getMPSubscriptionStatus(preapprovalId: string) {
  */
 export function getPlanLimits(plan: PlanType) {
     const limits = {
-        basic: { maxTables: 5, maxUsers: 2 },
-        professional: { maxTables: 15, maxUsers: 5 },
+        basic: { maxTables: 5, maxUsers: 3 },
+        professional: { maxTables: 15, maxUsers: 10 },
         enterprise: { maxTables: 999, maxUsers: 999 }
     }
 

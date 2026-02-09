@@ -15,7 +15,8 @@ export function AddTableModal({ isOpen, onClose, onSuccess }: AddTableModalProps
     const { t } = useLanguage()
     const [formData, setFormData] = useState({
         numero: '',
-        capacidad: '4'
+        capacidad: '4',
+        isBlockable: true
     })
 
     if (!isOpen) return null
@@ -30,7 +31,8 @@ export function AddTableModal({ isOpen, onClose, onSuccess }: AddTableModalProps
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     number: parseInt(formData.numero),
-                    capacity: parseInt(formData.capacidad)
+                    capacity: parseInt(formData.capacidad),
+                    isBlockable: formData.isBlockable
                 })
             })
 
@@ -41,7 +43,7 @@ export function AddTableModal({ isOpen, onClose, onSuccess }: AddTableModalProps
 
             onSuccess()
             onClose()
-            setFormData({ numero: '', capacidad: '4' })
+            setFormData({ numero: '', capacidad: '4', isBlockable: true })
         } catch (error) {
             console.error('Error creating table:', error)
             alert(error instanceof Error ? error.message : 'Error al crear mesa')
@@ -95,6 +97,19 @@ export function AddTableModal({ isOpen, onClose, onSuccess }: AddTableModalProps
                             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white text-slate-900 dark:bg-slate-700 dark:text-white"
                             placeholder="4"
                         />
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-2">
+                        <input
+                            type="checkbox"
+                            id="isBlockable-add"
+                            checked={formData.isBlockable}
+                            onChange={(e) => setFormData({ ...formData, isBlockable: e.target.checked })}
+                            className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-orange-600 focus:ring-orange-500 bg-white dark:bg-slate-700 cursor-pointer"
+                        />
+                        <label htmlFor="isBlockable-add" className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                            {t('tablemodal.is_blockable') || 'Waiters can block (QR)'}
+                        </label>
                     </div>
 
                     <div className="flex gap-3 pt-4">
