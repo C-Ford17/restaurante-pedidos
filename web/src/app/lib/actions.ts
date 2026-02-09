@@ -57,7 +57,7 @@ export async function switchAccount(
 
 export async function googleAuthenticate(redirectTo?: string) {
     try {
-        await signIn('google', { redirectTo: redirectTo || '/admin/dashboard' })
+        await signIn('google', { redirectTo: redirectTo || '/dashboard' })
     } catch (error) {
         if (error instanceof AuthError) {
             return 'Google Sign In failed.'

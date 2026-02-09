@@ -68,7 +68,7 @@ function SuccessContent() {
                         </div>
 
                         <Link
-                            href="/login"
+                            href="/dashboard"
                             className="inline-flex items-center gap-2 px-8 py-4 bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 text-white font-bold rounded-lg transition-colors shadow-lg"
                         >
                             {t('payment.success.button')}

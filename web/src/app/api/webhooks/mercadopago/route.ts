@@ -131,16 +131,41 @@ export async function POST(request: NextRequest) {
                 },
             })
 
-            // 2. Create Admin User
-            const user = await tx.user.create({
-                data: {
-                    username,
-                    password: hashedPassword,
-                    name: adminName,
-                    role: 'admin',
-                    organizationId: organization.id,
-                },
+            // 2. Create or Update Admin User
+            // Check if user already exists (common for Google OAuth users who started registration)
+            const existingUser = await tx.user.findFirst({
+                where: {
+                    OR: [
+                        { email: contactEmail },
+                        { username: username }
+                    ]
+                }
             })
+
+            let user;
+            if (existingUser) {
+                user = await tx.user.update({
+                    where: { id: existingUser.id },
+                    data: {
+                        username: existingUser.username || username,
+                        password: existingUser.password || hashedPassword,
+                        name: existingUser.name || adminName,
+                        role: 'admin',
+                        organizationId: organization.id,
+                    }
+                })
+            } else {
+                user = await tx.user.create({
+                    data: {
+                        username,
+                        password: hashedPassword,
+                        name: adminName,
+                        role: 'admin',
+                        organizationId: organization.id,
+                        email: contactEmail
+                    },
+                })
+            }
 
             // 3. Create Subscription
             const subscription = await tx.subscription.create({
